@@ -2,7 +2,7 @@
 
 ![Leash: a compromised agent tries eleven actions; the chain pays three genuine invoices and refuses the other eight](assets/cover.png)
 
-**Demo video (2:44):** https://youtu.be/W_VwOLNnAN4
+**Demo video (2:53, narrated):** https://youtu.be/DssIkkYx8gc
 
 **Category:** Post-Quantum AI Agents · **Network:** QoreChain testnet `qorechain-diana` only (test QOR has no value)
 
