@@ -1,5 +1,7 @@
 # Leash: an invoice agent that stays safe when its model does not
 
+![Leash: a compromised agent tries eleven actions; the chain pays three genuine invoices and refuses the other eight](assets/cover.png)
+
 **Category:** Post-Quantum AI Agents · **Network:** QoreChain testnet `qorechain-diana` only (test QOR has no value)
 
 An AI agent that pays your bills reads email written by strangers. Sooner or later one of those
