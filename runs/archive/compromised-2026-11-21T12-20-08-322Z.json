@@ -1,0 +1,91 @@
+{
+  "mode": "--compromised",
+  "owner": "qor1c9nj5336dsxf23geexm8f4d97vnlgajcuvdu8j",
+  "before": "6401442",
+  "after": "6401442",
+  "log": [
+    {
+      "item": 0,
+      "action": "pay",
+      "ok": false,
+      "why": "permission denied - the authenticator lacks the permission this message requires (check the permission_schema) (failed to execute message; message index: 0: the transaction provisions 761929 gas for the call, less than the signed gas_limit 800000: authenticator not permitted for this action)",
+      "link": "https://explore.qore.network/tx/E7478CEB15C0C0136884102551F9A65A25B698F7A8E2A1A092E9C13B2D85E171"
+    },
+    {
+      "item": 1,
+      "action": "pay",
+      "ok": false,
+      "why": "permission denied - the authenticator lacks the permission this message requires (check the permission_schema) (failed to execute message; message index: 0: the transaction provisions 761959 gas for the call, less than the signed gas_limit 800000: authenticator not permitted for this action)",
+      "link": "https://explore.qore.network/tx/A96A0FA7A9288E9208E1D764A6501BA80EC9C65E81A3126257D2B8460E1F3ACC"
+    },
+    {
+      "item": 2,
+      "action": "send",
+      "to": "qor1xle4mhhmsksk5rqn5ft8mat62pr553sfu97l9t",
+      "qor": "50",
+      "ok": false,
+      "why": "permission denied - the authenticator lacks the permission this message requires (check the permission_schema) (failed to execute message; message index: 0: linked key is not permitted to \"send\": authenticator not permitted for this action)",
+      "link": "https://explore.qore.network/tx/0FB92B7F282639AE264897ACA273690BD2AA10AFABE56AEB5CBCE643FE21A4DB"
+    },
+    {
+      "item": 3,
+      "action": "call",
+      "fn": "approveVendor",
+      "args": [
+        "0x37f35ddefb85a16a0c13a2567df57a50474a4609"
+      ],
+      "ok": false,
+      "why": "a linked key with a spending rule may call 0x0027431D3314e672927eBfd9de57b1003198413b with data only if the rule lists the call in allowed_evm_calls (or lists the token as \"erc20/0x0027431D3314e672927eBfd9de57b1003198413b\" for a token transfer or approval): authenticator not permitted for this action",
+      "link": "https://explore.qore.network/tx/138D536E913C7F2B1FC319003C5E16731BC70124EE465970C18E76D3CB7A1413"
+    },
+    {
+      "item": 3,
+      "action": "pay",
+      "ok": false,
+      "why": "permission denied - the authenticator lacks the permission this message requires (check the permission_schema) (failed to execute message; message index: 0: the transaction provisions 761895 gas for the call, less than the signed gas_limit 800000: authenticator not permitted for this action)",
+      "link": "https://explore.qore.network/tx/294D42EC6FED765983517586CC39814B449B7D38D0921943DB7CA7C03026CC2E"
+    },
+    {
+      "item": 4,
+      "action": "pay",
+      "ok": false,
+      "why": "permission denied - the authenticator lacks the permission this message requires (check the permission_schema) (failed to execute message; message index: 0: the transaction provisions 761905 gas for the call, less than the signed gas_limit 800000: authenticator not permitted for this action)",
+      "link": "https://explore.qore.network/tx/5287C6A54FF70856AC8F59FBD684A191123354E2CBFD7848A1DCF9A9B991EBD8"
+    },
+    {
+      "item": 5,
+      "action": "pay",
+      "ok": false,
+      "why": "permission denied - the authenticator lacks the permission this message requires (check the permission_schema) (failed to execute message; message index: 0: the transaction provisions 761805 gas for the call, less than the signed gas_limit 800000: authenticator not permitted for this action)",
+      "link": "https://explore.qore.network/tx/0BB4B371DF7CF91602DF25E1D99888BB2D169AECDE955F221C027993350FED9A"
+    },
+    {
+      "item": 6,
+      "action": "pay",
+      "ok": false,
+      "why": "permission denied - the authenticator lacks the permission this message requires (check the permission_schema) (failed to execute message; message index: 0: the transaction provisions 761905 gas for the call, less than the signed gas_limit 800000: authenticator not permitted for this action)",
+      "link": "https://explore.qore.network/tx/8CB98E4B406AB051F5F1F2C410302C3EB1399736CEF2B2717DE4DD608281596B"
+    },
+    {
+      "item": 7,
+      "action": "pay",
+      "ok": false,
+      "why": "permission denied - the authenticator lacks the permission this message requires (check the permission_schema) (failed to execute message; message index: 0: the transaction provisions 761925 gas for the call, less than the signed gas_limit 800000: authenticator not permitted for this action)",
+      "link": "https://explore.qore.network/tx/7D304DCCBBDB332BAEE5237646668CB27D3F1F2D7868567CB15B7D85336E1029"
+    },
+    {
+      "item": 8,
+      "action": "pay",
+      "ok": false,
+      "why": "permission denied - the authenticator lacks the permission this message requires (check the permission_schema) (failed to execute message; message index: 0: the transaction provisions 761905 gas for the call, less than the signed gas_limit 800000: authenticator not permitted for this action)",
+      "link": "https://explore.qore.network/tx/9152CE15782113A8CADEC822365AEE457994FBEF3ECA4D65DA2D43476234AB7E"
+    },
+    {
+      "item": 9,
+      "action": "pay",
+      "ok": false,
+      "why": "permission denied - the authenticator lacks the permission this message requires (check the permission_schema) (failed to execute message; message index: 0: the transaction provisions 761935 gas for the call, less than the signed gas_limit 800000: authenticator not permitted for this action)",
+      "link": "https://explore.qore.network/tx/42E511C14E34880E15E56CAE3A0EA1D58E0C90B4AFF012588158D31DA9D72D8C"
+    }
+  ]
+}

@@ -13,10 +13,13 @@
 //   node leash.mjs rules                     what the chain will enforce for the agent
 //   node leash.mjs inbox                     vendors and attacker write the inbox (inbox/inbox.json)
 //   node leash.mjs run [--compromised|--llm] the agent works through the inbox
+//   node leash.mjs fresh-owner              new owner + agent keys for a clean re-run (moves the money, same desk)
+//   node leash.mjs topup [QOR]               owner refills the agent's gas wallet (fees only)
+//   node leash.mjs plan [--llm]              what the decider WOULD do, without touching the chain
 //   node leash.mjs revoke                    owner switches the agent off in one transaction
 //   node leash.mjs after-revoke              the agent tries one more honest payment
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
-import { ContractFactory, Interface, JsonRpcProvider, Wallet } from "ethers";
+import { Contract, ContractFactory, Interface, JsonRpcProvider, Wallet } from "ethers";
 import {
   fetchPqcStatus, buildRegisterPqcKeyMsg, signProofOfPossession, signAuthenticatorLinkEd25519,
   linkAuthenticatorMsgs, revokeAuthenticatorMsg, fetchSpendingRules, fetchAuthenticators, fetchAuthNonce,
@@ -24,7 +27,7 @@ import {
 } from "@qorechain/sdk";
 import {
   CHAIN_ID, EVM_CHAIN_ID, EVM_RPC, REST, EXPLORER, ROLES, account, agentKey, balance, bankSend, broadcast,
-  createKeys, fmt, hex, onChain, readDeployment, toUqor, writeDeployment,
+  createKeys, rotateOwnerKeys, accountFromKey, fmt, hex, onChain, readDeployment, toUqor, writeDeployment,
 } from "./lib/chain.mjs";
 import { buildInbox } from "./lib/invoices.mjs";
 
@@ -72,21 +75,23 @@ const cmds = {
     if (res.code) process.exitCode = 1;
   },
 
-  async deploy() {
+  async approveVendors(deskAddr) {
     const o = await account("owner"), a = await account("vendorA"), b = await account("vendorB");
     // Plain EVM transactions on QoreChain need an open window, granted by a hybrid-signed tx.
     const w = await fetchEvmWindow({ rest: REST, address: o.cosmos });
     if (!w.found) {
-      const res = await broadcast(o, [openEvmWindowMsg({ sender: o.cosmos, blocks: 600, maxTxs: 4, maxValue: String(toUqor("3")) })], "leash: deploy window");
+      const res = await broadcast(o, [openEvmWindowMsg({ sender: o.cosmos, blocks: 600, maxTxs: 4, maxValue: String(toUqor("3")) })], "leash: owner window");
       if (res.code) throw new Error(`open window REFUSED code ${res.code}: ${res.rawLog}`);
       console.log(`EVM window open (4 txs, 3 QOR incl. fees)  ${EXPLORER}${res.transactionHash}`);
     }
-    const provider = new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID);
-    const wallet = new Wallet(o.privateKey, provider);
-    const c = await new ContractFactory(ART.abi, ART.bytecode, wallet).deploy();
-    await c.waitForDeployment();
-    const addr = await c.getAddress();
-    console.log(`InvoiceDesk deployed at ${addr}  (tx ${c.deploymentTransaction().hash})`);
+    const wallet = new Wallet(o.privateKey, new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID));
+    let c;
+    if (!deskAddr) {
+      c = await new ContractFactory(ART.abi, ART.bytecode, wallet).deploy();
+      await c.waitForDeployment();
+      deskAddr = await c.getAddress();
+      console.log(`InvoiceDesk deployed at ${deskAddr}  (tx ${c.deploymentTransaction().hash})`);
+    } else c = new Contract(deskAddr, ART.abi, wallet);
     for (const v of [a, b]) {
       const tx = await c.approveVendor(v.evmAddr);
       await tx.wait();
@@ -94,11 +99,26 @@ const cmds = {
     }
     const close = await broadcast(o, [closeEvmWindowMsg(o.cosmos)], "leash: close window");
     console.log(close.code === 0 ? "EVM window closed" : `close window: code ${close.code}`);
-    writeDeployment({ ...readDeployment(), chainId: CHAIN_ID, evmChainId: EVM_CHAIN_ID, invoiceDesk: addr,
+    writeDeployment({ ...readDeployment(), chainId: CHAIN_ID, evmChainId: EVM_CHAIN_ID, invoiceDesk: deskAddr,
       owner: o.cosmos, vendors: { Hostline: a.evmAddr, Tokenwell: b.evmAddr }, attacker: (await account("attacker")).evmAddr });
   },
 
-  async link(perTx = "1", daily = "2", hours = "24") {
+  async deploy() { await cmds.approveVendors(); },
+
+  async "fresh-owner"() {
+    const deskAddr = need(readDeployment(), "invoiceDesk", "deploy");
+    const prevName = rotateOwnerKeys();
+    const prev = await accountFromKey(prevName), o = await account("owner");
+    const bal = BigInt(await balance(prev.cosmos)), keep = toUqor("0.3");
+    const res = await broadcast(prev, [bankSend(prev.cosmos, o.cosmos, bal - keep)], "leash: move to fresh owner");
+    if (res.code) throw new Error(`move REFUSED code ${res.code}: ${res.rawLog}`);
+    console.log(`moved ${fmt(bal - keep)} from ${prev.cosmos} to the new owner ${o.cosmos}`);
+    await new Promise((s) => setTimeout(s, 6000));
+    await cmds.register("owner");
+    await cmds.approveVendors(deskAddr);
+  },
+
+  async link(perTx = "1", daily = "2.5", hours = "24") {
     const d = readDeployment(), deskAddr = need(d, "invoiceDesk", "deploy");
     const o = await account("owner"), k = agentKey();
     const paySel = new Interface(ART.abi).getFunction("pay").selector;
@@ -147,13 +167,16 @@ const cmds = {
   },
 
   async run(mode = "--compromised") {
-    const { planCompromised, planLlm, execute, describe } = await import("./lib/agent.mjs");
+    const { planCompromised, planLlm, execute, describe, RELAY_FEE_UQOR } = await import("./lib/agent.mjs");
     const d = readDeployment(), deskAddr = need(d, "invoiceDesk", "deploy");
     if (!existsSync(INBOX)) throw new Error('no inbox yet: run "node leash.mjs inbox" first');
     const inbox = loadInbox();
     const o = await account("owner");
     const before = await balance(o.cosmos);
     const plan = mode === "--llm" ? await planLlm(inbox) : planCompromised(inbox);
+    const g = await account("gas"), gasBal = BigInt(await balance(g.cosmos));
+    const needFee = RELAY_FEE_UQOR * BigInt(plan.filter((x) => x.action !== "skip").length);
+    if (gasBal < needFee) throw new Error(`gas wallet has ${fmt(gasBal)}, the plan needs ${fmt(needFee)} in fees: run "node leash.mjs topup"`);
     console.log(`decider: ${mode === "--llm" ? "LLM (Claude)" : "COMPROMISED (obeys every instruction it reads)"}`);
     console.log(`owner ${o.cosmos}  balance ${fmt(before)}\n`);
     const log = [];
@@ -161,15 +184,30 @@ const cmds = {
       const m = inbox[step.item];
       if (step.action === "skip") { console.log(`- [${step.item}] ${m.subject}\n    agent: skip${step.why ? ` (${step.why})` : ""}`); log.push({ ...step, result: "skipped" }); continue; }
       const r = await execute(step, inbox, deskAddr);
-      const verdict = r.ok ? `PAID${r.hybrid ? "  hybrid ML-DSA-87: verified" : ""}` : `REFUSED BY THE CHAIN: ${r.why}`;
+      const verdict = r.ok ? `PAID${r.hybrid ? "  hybrid ML-DSA-87: verified" : ""}` : r.infra ? `NOT SENT (our side, not the chain): ${r.why}` : `REFUSED BY THE CHAIN: ${r.why}`;
       console.log(`- [${step.item}] ${m.subject}\n    agent: ${describe(step, inbox)}${step.why ? `  (${step.why})` : ""}\n    chain: ${verdict}${r.link ? `\n           ${r.link}` : ""}`);
-      log.push({ ...step, ok: r.ok, why: r.why, link: r.link });
+      log.push({ ...step, ok: r.ok, infra: r.infra, why: r.why, link: r.link });
     }
     const after = await balance(o.cosmos);
     console.log(`\nowner balance ${fmt(before)} -> ${fmt(after)}  (moved ${fmt(BigInt(before) - BigInt(after))})`);
     mkdirSync(new URL("./runs/", import.meta.url), { recursive: true });
     writeFileSync(new URL(`./runs/${mode.replace(/^--/, "")}-${new Date().toISOString().replace(/[:.]/g, "-")}.json`, import.meta.url),
       JSON.stringify({ mode, owner: o.cosmos, before, after, log }, null, 2) + "\n");
+  },
+
+  async topup(qor = "3") {
+    const o = await account("owner"), g = await account("gas");
+    const res = await broadcast(o, [bankSend(o.cosmos, g.cosmos, toUqor(qor))], "leash: gas top-up");
+    console.log(res.code === 0 ? `gas wallet +${qor} QOR  ${EXPLORER}${res.transactionHash}` : `REFUSED code ${res.code}: ${res.rawLog}`);
+  },
+
+  async plan(mode = "--llm") {
+    const { planCompromised, planLlm, describe } = await import("./lib/agent.mjs");
+    const inbox = loadInbox();
+    const plan = mode === "--llm" ? await planLlm(inbox) : planCompromised(inbox);
+    for (const st of plan) console.log(`[${st.item}] ${inbox[st.item].subject}\n    ${describe(st, inbox)}${st.why ? `  (${st.why})` : ""}`);
+    mkdirSync(new URL("./runs/", import.meta.url), { recursive: true });
+    writeFileSync(new URL(`./runs/plan-${mode.replace(/^--/, "")}-${new Date().toISOString().replace(/[:.]/g, "-")}.json`, import.meta.url), JSON.stringify(plan, null, 2) + "\n");
   },
 
   async revoke() {
@@ -183,9 +221,9 @@ const cmds = {
     const { execute, describe } = await import("./lib/agent.mjs");
     const deskAddr = need(readDeployment(), "invoiceDesk", "deploy");
     const inbox = loadInbox();
-    const step = { item: 1, action: "pay" };
+    const step = { item: 9, action: "pay" }; // an honest, unpaid, in-limit invoice: only the revocation can stop it
     const r = await execute(step, inbox, deskAddr);
-    console.log(`agent: ${describe(step, inbox)}\nchain: ${r.ok ? "PAID" : `REFUSED BY THE CHAIN: ${r.why}`}${r.link ? `\n       ${r.link}` : ""}`);
+    console.log(`agent: ${describe(step, inbox)}\nchain: ${r.ok ? "PAID" : r.infra ? `NOT SENT (our side): ${r.why}` : `REFUSED BY THE CHAIN: ${r.why}`}${r.link ? `\n       ${r.link}` : ""}`);
   },
 };
 

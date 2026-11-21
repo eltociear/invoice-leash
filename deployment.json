@@ -1,0 +1,20 @@
+{
+  "chainId": "qorechain-diana",
+  "evmChainId": 9800,
+  "invoiceDesk": "0x0027431D3314e672927eBfd9de57b1003198413b",
+  "owner": "qor1khdfqy8czenz9gstyy8ye2swxpee2xwslh0uzn",
+  "vendors": {
+    "Hostline": "0x8da72244334d681e3e8a75377b2faf5913756f69",
+    "Tokenwell": "0xbba367e951c9ca4f0ca3792469762278d4663920"
+  },
+  "attacker": "0x37f35ddefb85a16a0c13a2567df57a50474a4609",
+  "agentRule": {
+    "perTx": "1",
+    "daily": "2.5",
+    "hours": "24",
+    "allowedEvmCalls": [
+      "0x0027431D3314e672927eBfd9de57b1003198413b/0x38e5ab6a"
+    ],
+    "linkTx": "4735DE91B6E1444792CDAB73B73A43C407E1CB130B9BB4A7C390F1E40450F7FB"
+  }
+}

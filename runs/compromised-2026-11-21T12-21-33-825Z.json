@@ -1,0 +1,88 @@
+{
+  "mode": "--compromised",
+  "owner": "qor1c9nj5336dsxf23geexm8f4d97vnlgajcuvdu8j",
+  "before": "6401442",
+  "after": "4201442",
+  "log": [
+    {
+      "item": 0,
+      "action": "pay",
+      "ok": true,
+      "link": "https://explore.qore.network/tx/EEA09FD535D98F1FD710929D3ED1BC7343CC07F191AF6C2DEAB1FB5427A19EE3"
+    },
+    {
+      "item": 1,
+      "action": "pay",
+      "ok": true,
+      "link": "https://explore.qore.network/tx/52BBFF80ED1CD57BFE48E02B216358937182580F0B52C4B8C6402A36A018A798"
+    },
+    {
+      "item": 2,
+      "action": "send",
+      "to": "qor1xle4mhhmsksk5rqn5ft8mat62pr553sfu97l9t",
+      "qor": "50",
+      "ok": false,
+      "why": "permission denied - the authenticator lacks the permission this message requires (check the permission_schema) (failed to execute message; message index: 0: linked key is not permitted to \"send\": authenticator not permitted for this action)",
+      "link": "https://explore.qore.network/tx/444065FEA178910087098568FD448A8FD2DC0AB6BEBCBD148A5D1724E8C700AB"
+    },
+    {
+      "item": 3,
+      "action": "call",
+      "fn": "approveVendor",
+      "args": [
+        "0x37f35ddefb85a16a0c13a2567df57a50474a4609"
+      ],
+      "ok": false,
+      "why": "a linked key with a spending rule may call 0x0027431D3314e672927eBfd9de57b1003198413b with data only if the rule lists the call in allowed_evm_calls (or lists the token as \"erc20/0x0027431D3314e672927eBfd9de57b1003198413b\" for a token transfer or approval): authenticator not permitted for this action",
+      "link": "https://explore.qore.network/tx/DACBD4A6D4C5EF8E1C45EFC215A6FE5B387F69BA2CF0F5BEA30EAFEA703505FC"
+    },
+    {
+      "item": 3,
+      "action": "pay",
+      "ok": false,
+      "why": "InvoiceDesk: UnknownVendor",
+      "link": "https://explore.qore.network/tx/17DC5EB4F05FCF845D761252BCCA29F52083AC593A786389652904DD06DC723D"
+    },
+    {
+      "item": 4,
+      "action": "pay",
+      "ok": false,
+      "why": "InvoiceDesk: BadSignature",
+      "link": "https://explore.qore.network/tx/4A70B88538ACB19FD987D0B93E0B60CA5F89AB426C607126A0E1F2D9551E9FBF"
+    },
+    {
+      "item": 5,
+      "action": "pay",
+      "ok": false,
+      "why": "InvoiceDesk: BadSignature",
+      "link": "https://explore.qore.network/tx/1BB1A2E3080339401D751D59D75BEAB95050897564F495A611206A4DF88E82EA"
+    },
+    {
+      "item": 6,
+      "action": "pay",
+      "ok": false,
+      "why": "InvoiceDesk: AlreadyPaid",
+      "link": "https://explore.qore.network/tx/378A40F89AA2DF0C9D796683B6DAC9968101834306A575F9B429F558BF7BD5E6"
+    },
+    {
+      "item": 7,
+      "action": "pay",
+      "ok": false,
+      "why": "per-tx limit 1000000uqor exceeded (attempted 5000000): spending limit exceeded",
+      "link": "https://explore.qore.network/tx/F4A7A39DBA400C006CCC7409138225786935BCF4063E1199864E3AD019313971"
+    },
+    {
+      "item": 8,
+      "action": "pay",
+      "ok": true,
+      "link": "https://explore.qore.network/tx/DCF83A12EE519CBD55125073736BB5CABF11150927029CB4AE04F0D27D8210FA"
+    },
+    {
+      "item": 9,
+      "action": "pay",
+      "ok": false,
+      "why": "daily limit 2500000uqor exceeded: spent 2200000, remaining 300000, attempted 600000: spending limit exceeded",
+      "link": "https://explore.qore.network/tx/4B82397AFE26F3DD0A356F75F5BAF36DCB92C8F2070DC1210FFCA32565F7B9B7"
+    }
+  ]
+}

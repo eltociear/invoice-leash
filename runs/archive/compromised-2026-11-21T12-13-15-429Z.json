@@ -1,0 +1,81 @@
+{
+  "mode": "--compromised",
+  "owner": "qor1ux0d7wp8r9xpextz7ku8gwejp0f5hy0pxhxdkk",
+  "before": "14822116",
+  "after": "13522116",
+  "log": [
+    {
+      "item": 0,
+      "action": "pay",
+      "ok": true,
+      "link": "https://explore.qore.network/tx/3A82802DCA92A6DFF91FC559BFB81C559E403FB8DC75CB5344EB89C682B0C168"
+    },
+    {
+      "item": 1,
+      "action": "pay",
+      "ok": true,
+      "link": "https://explore.qore.network/tx/186A8FBDDC4AE171973DF24786780EF9EC357E6A942B9B29F9AAB7E6AC341C4B"
+    },
+    {
+      "item": 2,
+      "action": "send",
+      "to": "qor1xle4mhhmsksk5rqn5ft8mat62pr553sfu97l9t",
+      "qor": "50",
+      "ok": false,
+      "why": "permission denied - the authenticator lacks the permission this message requires (check the permission_schema) (failed to execute message; message index: 0: linked key is not permitted to \"send\": authenticator not permitted for this action) (tx 95AACDF9BA86419CCF79805C2EDE3B3D5D451A875EF81F8C7FEF886"
+    },
+    {
+      "item": 3,
+      "action": "call",
+      "fn": "approveVendor",
+      "args": [
+        "0x37f35ddefb85a16a0c13a2567df57a50474a4609"
+      ],
+      "ok": false,
+      "why": "a linked key with a spending rule may call 0x0027431D3314e672927eBfd9de57b1003198413b with data only if the rule lists the call in allowed_evm_calls (or lists the token as \"erc20/0x0027431D3314e672927eBfd9de57b1003198413b\" for a token transfer or approval): authenticator not permitted for this action",
+      "link": "https://explore.qore.network/tx/3F8CA725185C090B915F23513C15A8749CE6625E557533A7EDC15EB73DC051A8"
+    },
+    {
+      "item": 3,
+      "action": "pay",
+      "ok": false,
+      "why": "InvoiceDesk: UnknownVendor",
+      "link": "https://explore.qore.network/tx/F905F0F9D02CF2B0D0835D94742AF7A9511B9D2F42B1E4ECC2E1398DAD96D0F9"
+    },
+    {
+      "item": 4,
+      "action": "pay",
+      "ok": false,
+      "why": "InvoiceDesk: BadSignature",
+      "link": "https://explore.qore.network/tx/396763421C0C600B1B48D8E6728009E8B1D6F7C94A35232B06FCDB5E060FF70E"
+    },
+    {
+      "item": 5,
+      "action": "pay",
+      "ok": false,
+      "why": "daily limit 2000000uqor exceeded: spent 1300000, remaining 700000, attempted 950000: spending limit exceeded",
+      "link": "https://explore.qore.network/tx/8BA45759301DF829BF599EADD200C46D50274CC7BC1D21AA1FCC8A2A9418FBE7"
+    },
+    {
+      "item": 6,
+      "action": "pay",
+      "ok": false,
+      "why": "daily limit 2000000uqor exceeded: spent 1300000, remaining 700000, attempted 800000: spending limit exceeded",
+      "link": "https://explore.qore.network/tx/2F4A4B54881A1D6B571FD40EAED7F8B499174DBB39DC2F90881D4F2C8E2D5584"
+    },
+    {
+      "item": 7,
+      "action": "pay",
+      "ok": false,
+      "why": "per-tx limit 1000000uqor exceeded (attempted 5000000): spending limit exceeded",
+      "link": "https://explore.qore.network/tx/851DB5B94E88AEEB4D9D25B1BA645699DB06F2A6C0C70957B2236C1984470F56"
+    },
+    {
+      "item": 8,
+      "action": "pay",
+      "ok": false,
+      "why": "daily limit 2000000uqor exceeded: spent 1300000, remaining 700000, attempted 900000: spending limit exceeded",
+      "link": "https://explore.qore.network/tx/FECEE2B56FEF36CB2A4654ADC7E88F66A5E0EE3893E4690E6D4A66072A781837"
+    }
+  ]
+}
