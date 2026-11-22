@@ -16,7 +16,7 @@
 > npm install && npm run verify
 > ```
 >
-> 36 checks against the live testnet: the deployed contract is byte-for-byte this source, the
+> 37 checks against the live testnet: the deployed contract is byte-for-byte this source, the
 > agent's rule is what the chain stores, every attack replayed against the real contract (plus six
 > tamperings the demo never sent), where every QOR went, and every recorded transaction re-read,
 > including the MCP runs.
