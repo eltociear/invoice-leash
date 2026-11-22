@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
 <title>Invoice Leash: every limit lives on QoreChain</title>
 <meta name="description" content="An invoice-paying AI agent that stays safe when its model does not. Recorded on the QoreChain testnet, every transaction linked.">
 <meta property="og:image" content="cover.png">
@@ -28,6 +28,7 @@ footer{margin-top:64px;color:var(--dim);font-size:14px}
 <h1>Invoice Leash</h1>
 <p class="lede">An invoice-paying AI agent that stays safe when its model does not. The agent's code has no limit check, no vendor check and no signature check. Every limit lives on QoreChain, so we can hand the agent to an attacker and watch the chain say no.</p>
 <div class="links">
+  <a href="lab.html" style="border-color:var(--acc);color:var(--acc)">Try to break it: attack lab (live, in your browser)</a>
   <a href="https://youtu.be/DssIkkYx8gc">Demo video (2:53)</a>
   <a href="https://github.com/eltociear/invoice-leash">Code</a>
   <a href="https://github.com/eltociear/invoice-leash/blob/main/THREAT_MODEL.md">Threat model</a>
@@ -200,7 +201,8 @@ npm install && npm run verify</pre>
   ✓ #7 TOKENWELL-INV-7790               genuine                     -&gt; AlreadyPaid
   ✓ #8 HOSTLINE-2026-11-0043            genuine                     -&gt; AlreadyPaid
   ✓ #9 TOKENWELL-INV-7795               genuine                     -&gt; ACCEPT  the contract accepts it; only the chain's spending rule stopped the agent
-  tampering with TOKENWELL-INV-7795 (genuine, unpaid):
+  ✓ TOKENWELL-INV-7795-LAB (genuine, unpaid, due 2027-06-30) as signed -&gt; ACCEPT
+  tampering with TOKENWELL-INV-7795-LAB (genuine, unpaid):
   ✓ one bit of the ML-DSA-87 signature flipped       -&gt; BadSignature
   ✓ amount raised by 1 wei (value matches)           -&gt; BadSignature
   ✓ payee switched to the other approved vendor      -&gt; BadSignature
@@ -227,7 +229,7 @@ npm install && npm run verify</pre>
   ✓ obey-everything MCP client: 11 attempts (send, approveVendor, every invoice), all 11 refused by the chain, each re-read
   ✓ MCP inbox: paid() is true for exactly the 3 genuine in-limit invoices (2.2 QOR)  HOSTLINE-2026-11-0042-MCP, TOKENWELL-INV-7781-MCP, HOSTLINE-2026-11-0043-MCP
 
-✓ 36 checks passed, 0 failed  (qorechain-diana, block 10564105)
+✓ 37 checks passed, 0 failed  (qorechain-diana, block 10564480)
   The agent's linked key is ed25519: QoreChain links only ed25519/secp256k1 keys today. Leash assumes it can be stolen;
   the rule above is what a thief, or a fooled model, gets. The owner's key, which writes and revokes that rule, is hybrid ML-DSA-87.
 </pre>

@@ -30,7 +30,8 @@
   ✓ #7 TOKENWELL-INV-7790               genuine                     -> AlreadyPaid
   ✓ #8 HOSTLINE-2026-11-0043            genuine                     -> AlreadyPaid
   ✓ #9 TOKENWELL-INV-7795               genuine                     -> ACCEPT  the contract accepts it; only the chain's spending rule stopped the agent
-  tampering with TOKENWELL-INV-7795 (genuine, unpaid):
+  ✓ TOKENWELL-INV-7795-LAB (genuine, unpaid, due 2027-06-30) as signed -> ACCEPT
+  tampering with TOKENWELL-INV-7795-LAB (genuine, unpaid):
   ✓ one bit of the ML-DSA-87 signature flipped       -> BadSignature
   ✓ amount raised by 1 wei (value matches)           -> BadSignature
   ✓ payee switched to the other approved vendor      -> BadSignature
@@ -57,6 +58,6 @@
   ✓ obey-everything MCP client: 11 attempts (send, approveVendor, every invoice), all 11 refused by the chain, each re-read
   ✓ MCP inbox: paid() is true for exactly the 3 genuine in-limit invoices (2.2 QOR)  HOSTLINE-2026-11-0042-MCP, TOKENWELL-INV-7781-MCP, HOSTLINE-2026-11-0043-MCP
 
-✓ 36 checks passed, 0 failed  (qorechain-diana, block 10564105)
+✓ 37 checks passed, 0 failed  (qorechain-diana, block 10564480)
   The agent's linked key is ed25519: QoreChain links only ed25519/secp256k1 keys today. Leash assumes it can be stolen;
   the rule above is what a thief, or a fooled model, gets. The owner's key, which writes and revokes that rule, is hybrid ML-DSA-87.

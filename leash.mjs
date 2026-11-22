@@ -13,7 +13,7 @@
 //   node leash.mjs rules                     what the chain will enforce for the agent
 //   node leash.mjs inbox                     vendors and attacker write the inbox (inbox/inbox.json)
 //   node leash.mjs run [--compromised|--llm] the agent works through the inbox
-//   node leash.mjs inbox <series>            the same inbox with new invoice numbers (inbox/inbox-<series>.json)
+//   node leash.mjs inbox <series> [dueDate]  the same inbox with new invoice numbers (inbox/inbox-<series>.json)
 //   node leash.mjs new-agent                 a new agent key for the same owner (then link)
 //   node leash.mjs fresh-owner              new owner + agent keys for a clean re-run (moves the money, same desk)
 //   node leash.mjs topup [QOR]               owner refills the agent's gas wallet (fees only)
@@ -160,10 +160,10 @@ const cmds = {
     console.log(`  agent key: ${me.revoked ? "REVOKED" : "linked"}, may: ${me.permissions.join(",")}, expires ${new Date(Number(me.expiryUnix) * 1000).toISOString().slice(0, 16)}Z, actions so far: ${n.nonce}`);
   },
 
-  async inbox(series = "") {
+  async inbox(series = "", due) {
     const d = readDeployment(), deskAddr = need(d, "invoiceDesk", "deploy");
     const [owner, vendorA, vendorB, attacker] = await Promise.all(["owner", "vendorA", "vendorB", "attacker"].map(account));
-    const inbox = buildInbox({ desk: deskAddr, owner, vendorA, vendorB, attacker, series });
+    const inbox = buildInbox({ desk: deskAddr, owner, vendorA, vendorB, attacker, series, due });
     const file = series ? new URL(`./inbox/inbox-${series}.json`, import.meta.url) : INBOX;
     mkdirSync(new URL("./inbox/", import.meta.url), { recursive: true });
     writeFileSync(file, JSON.stringify(inbox, null, 2) + "\n");

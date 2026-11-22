@@ -138,13 +138,20 @@ console.log(`  payer ${payer} (Claude run owner)`);
 for (const [i, m] of inbox.entries()) {
   if (!m.invoice) continue;
   const k = kind(i);
-  const want = k === "Mallory's own invoice" ? "UnknownVendor" : k === "genuine" ? (paidIds.has(m.invoice.id) ? "AlreadyPaid" : "ACCEPT") : "BadSignature";
+  // The demo invoices were due a week after the run; once that passes, an unpaid genuine one is PastDue.
+  const due = m.invoice.dueBy < (await provider.getBlock("latest")).timestamp;
+  const want = k === "Mallory's own invoice" ? "UnknownVendor" : k === "genuine" ? (paidIds.has(m.invoice.id) ? "AlreadyPaid" : due ? "PastDue" : "ACCEPT") : "BadSignature";
   const got = await sim(m.invoice);
-  const note = want === "ACCEPT" ? "the contract accepts it; only the chain's spending rule stopped the agent" : "";
+  const note = want === "ACCEPT" ? "the contract accepts it; only the chain's spending rule stopped the agent" : want === "PastDue" ? "signature valid and unpaid, but past its due date now (the spending rule stopped it at the time)" : "";
   ok(got === want, `#${i} ${m.invoice.ref.padEnd(32)} ${k.padEnd(27)} -> ${got}`, note);
 }
 // Five attacks the demo never sent: each tampers with a genuine, unpaid, correctly signed invoice.
-const fresh = inbox.map((m) => m.invoice).find((v) => v && VENDORS[getAddress(v.vendor)] && !paidIds.has(v.id) && kind(inbox.findIndex((m) => m.invoice === v)) === "genuine");
+// Tamper with a genuine, never-paid invoice that is due mid-2027 (inbox/inbox-LAB.json, also used by
+// the in-browser attack lab), so these checks stay meaningful after the demo invoices fall due.
+const lab = json("inbox/inbox-LAB.json");
+const fresh = lab[9].invoice;
+if (await isPaid(payer, fresh.id)) throw new Error(`${fresh.ref} was paid: pick another unpaid LAB invoice`);
+ok(await sim(fresh) === "ACCEPT", `${fresh.ref} (genuine, unpaid, due ${new Date(fresh.dueBy * 1000).toISOString().slice(0, 10)}) as signed -> ACCEPT`);
 if (fresh) {
   const flip = fresh.signature.slice(0, 200) + (fresh.signature[200] === "0" ? "1" : "0") + fresh.signature.slice(201);
   const other = Object.keys(VENDORS).find((a) => a !== getAddress(fresh.vendor));

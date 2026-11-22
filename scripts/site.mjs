@@ -53,7 +53,7 @@ const emails = inbox.map((m, i) => {
 }).join("\n");
 
 const html = `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
 <title>Invoice Leash: every limit lives on QoreChain</title>
 <meta name="description" content="An invoice-paying AI agent that stays safe when its model does not. Recorded on the QoreChain testnet, every transaction linked.">
 <meta property="og:image" content="cover.png">
@@ -82,6 +82,7 @@ footer{margin-top:64px;color:var(--dim);font-size:14px}
 <h1>Invoice Leash</h1>
 <p class="lede">An invoice-paying AI agent that stays safe when its model does not. The agent's code has no limit check, no vendor check and no signature check. Every limit lives on QoreChain, so we can hand the agent to an attacker and watch the chain say no.</p>
 <div class="links">
+  <a href="lab.html" style="border-color:var(--acc);color:var(--acc)">Try to break it: attack lab (live, in your browser)</a>
   <a href="https://youtu.be/DssIkkYx8gc">Demo video (2:53)</a>
   <a href="https://github.com/eltociear/invoice-leash">Code</a>
   <a href="https://github.com/eltociear/invoice-leash/blob/main/THREAT_MODEL.md">Threat model</a>

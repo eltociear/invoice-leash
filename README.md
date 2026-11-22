@@ -6,6 +6,7 @@
 
 **Demo video (2:53, narrated):** https://youtu.be/DssIkkYx8gc ·
 **Every email and transaction, browsable:** https://eltociear.github.io/invoice-leash/ ·
+**Try to break it, live in your browser:** [attack lab](https://eltociear.github.io/invoice-leash/lab.html) ·
 **Threat model:** [THREAT_MODEL.md](THREAT_MODEL.md)
 
 > **For judges: check every claim here in about a minute, with no keys and no test QOR.**
@@ -95,6 +96,15 @@ of her own and is not a vendor. The agent's rule: **1 QOR per payment, 2.5 QOR p
 
 Then `revoke`, and one more honest, in-limit payment: refused, the key is revoked.
 
+## Attack lab: try it in your browser
+
+[eltociear.github.io/invoice-leash/lab.html](https://eltociear.github.io/invoice-leash/lab.html)
+starts from a real ML-DSA-87 signed invoice and lets you change anything (payer, payee, amount,
+invoice number, due date, a bit of the signature, the QOR sent) and ask the real `InvoiceDesk`
+whether it would pay. Your browser calls the testnet's EVM RPC directly (`eth_call`); the signature
+check is the chain's own precompile. No server, no keys, nothing spent. It also reads the vendors'
+key status live, and says what the agent's per-payment limit would do with the same invoice.
+
 ## Use it from any agent: the MCP server
 
 [`mcp/server.mjs`](mcp/server.mjs) turns Invoice Leash into tools for any MCP client (Claude Code,
@@ -179,7 +189,7 @@ lib/invoices.mjs            invoice encoding and ML-DSA-87 signing; the demo inb
 lib/agent.mjs               the deciders (compromised, LLM) and the executor, which has no checks of its own
 mcp/server.mjs              the MCP server (agent key only); mcp/client.mjs, a scripted MCP client
 scripts/verify.mjs          npm run verify: every claim against the live testnet, read-only
-scripts/site.mjs            builds docs/index.html (GitHub Pages) from the recorded runs
+scripts/site.mjs, lab.mjs   build docs/index.html (the recorded runs) and docs/lab.html (the attack lab) for GitHub Pages
 THREAT_MODEL.md             who holds which key, every attack and what stops it, what is NOT stopped
 deployment.json             public addresses of this deployment
 runs/                       recorded runs, with explorer links; verify-latest.txt
