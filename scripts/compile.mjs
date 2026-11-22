@@ -1,19 +1,22 @@
-// Compile contracts/InvoiceDesk.sol with solc-js into build/InvoiceDesk.json (abi + bytecode).
+// Compile contracts/*.sol with solc-js into build/<Contract>.json (abi, bytecode, deployedBytecode).
+// InvoiceDesk is v1 (QOR only, deployed and recorded); InvoiceDeskV2 adds ERC-20 (fUSD) invoices.
 import solc from "solc";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
-const src = readFileSync(new URL("../contracts/InvoiceDesk.sol", import.meta.url), "utf8");
-const input = {
-  language: "Solidity",
-  sources: { "InvoiceDesk.sol": { content: src } },
-  settings: { optimizer: { enabled: true, runs: 200 }, evmVersion: "paris",
-    outputSelection: { "*": { InvoiceDesk: ["abi", "evm.bytecode.object", "evm.deployedBytecode.object"] } } },
-};
-const out = JSON.parse(solc.compile(JSON.stringify(input)));
-const errs = (out.errors ?? []).filter((e) => e.severity === "error");
-for (const e of out.errors ?? []) console.error(e.formattedMessage);
-if (errs.length) process.exit(1);
-const c = out.contracts["InvoiceDesk.sol"].InvoiceDesk;
-mkdirSync(new URL("../build", import.meta.url), { recursive: true });
-writeFileSync(new URL("../build/InvoiceDesk.json", import.meta.url),
-  JSON.stringify({ abi: c.abi, bytecode: "0x" + c.evm.bytecode.object, deployedBytecode: "0x" + c.evm.deployedBytecode.object, compiler: solc.version() }, null, 2));
-console.log(`compiled InvoiceDesk: ${c.evm.bytecode.object.length / 2} bytes (solc ${solc.version()})`);
+for (const name of ["InvoiceDesk", "InvoiceDeskV2"]) {
+  const src = readFileSync(new URL(`../contracts/${name}.sol`, import.meta.url), "utf8");
+  const input = {
+    language: "Solidity",
+    sources: { [`${name}.sol`]: { content: src } },
+    settings: { optimizer: { enabled: true, runs: 200 }, evmVersion: "paris",
+      outputSelection: { "*": { [name]: ["abi", "evm.bytecode.object", "evm.deployedBytecode.object"] } } },
+  };
+  const out = JSON.parse(solc.compile(JSON.stringify(input)));
+  const errs = (out.errors ?? []).filter((e) => e.severity === "error");
+  for (const e of out.errors ?? []) console.error(e.formattedMessage);
+  if (errs.length) process.exit(1);
+  const c = out.contracts[`${name}.sol`][name];
+  mkdirSync(new URL("../build", import.meta.url), { recursive: true });
+  writeFileSync(new URL(`../build/${name}.json`, import.meta.url),
+    JSON.stringify({ abi: c.abi, bytecode: "0x" + c.evm.bytecode.object, deployedBytecode: "0x" + c.evm.deployedBytecode.object, compiler: solc.version() }, null, 2));
+  console.log(`compiled ${name}: ${c.evm.bytecode.object.length / 2} bytes (solc ${solc.version()})`);
+}

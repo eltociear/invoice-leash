@@ -19,6 +19,8 @@
 //   node leash.mjs topup [QOR]               owner refills the agent's gas wallet (fees only)
 //   node leash.mjs plan [--llm]              what the decider WOULD do, without touching the chain
 //   node leash.mjs approve <email>           a human pays an over-limit invoice the agent could not
+//   node leash.mjs fresh-owner-v2 | deploy-v2 [allowance] | link-v2 [perTx daily h] | inbox-v2 | run-v2 [--compromised|--llm]
+//                  approve-v2 <email> | balance-v2      v2: invoices in fUSD through InvoiceDeskV2
 //   node leash.mjs revoke                    owner switches the agent off in one transaction
 //   node leash.mjs after-revoke              the agent tries one more honest payment
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
@@ -32,10 +34,15 @@ import {
   CHAIN_ID, EVM_CHAIN_ID, EVM_RPC, REST, EXPLORER, ROLES, account, agentKey, balance, bankSend, broadcast,
   createKeys, rotateOwnerKeys, rotateAgentKey, accountFromKey, fmt, hex, onChain, readDeployment, toUqor, writeDeployment,
 } from "./lib/chain.mjs";
-import { buildInbox } from "./lib/invoices.mjs";
+import { buildInbox, buildInboxV2, FUSD, toFusd } from "./lib/invoices.mjs";
 
 const INBOX = process.env.LEASH_INBOX ? new URL(process.env.LEASH_INBOX, `file://${process.cwd()}/`) : new URL("./inbox/inbox.json", import.meta.url);
 const ART = JSON.parse(readFileSync(new URL("./build/InvoiceDesk.json", import.meta.url), "utf8"));
+const ART2 = JSON.parse(readFileSync(new URL("./build/InvoiceDeskV2.json", import.meta.url), "utf8"));
+const INBOX2 = new URL("./inbox/inbox-v2.json", import.meta.url);
+const ERC20 = ["function approve(address,uint256) returns (bool)", "function allowance(address,address) view returns (uint256)", "function balanceOf(address) view returns (uint256)", "function transfer(address,uint256) returns (bool)"];
+const fusd = (u) => `${(Number(u) / 1e6).toLocaleString("en-US", { maximumFractionDigits: 6 })} fUSD`;
+const v2 = () => need(readDeployment(), "v2", "deploy-v2");
 const loadInbox = () => JSON.parse(readFileSync(INBOX, "utf8"));
 const need = (d, k, hint) => { if (!d[k]) throw new Error(`no ${k} yet: run "node leash.mjs ${hint}" first`); return d[k]; };
 
@@ -249,6 +256,121 @@ const cmds = {
     mkdirSync(new URL("./runs/", import.meta.url), { recursive: true });
     writeFileSync(new URL(`./runs/approve-${item}-${new Date().toISOString().replace(/[:.]/g, "-")}.json`, import.meta.url),
       JSON.stringify({ item: Number(item), ref: inv.ref, qor: inv.qor, owner: o.cosmos, windowTx: w.transactionHash, evmTx: tx.hash, status: rc.status, gasUsed: String(rc.gasUsed) }, null, 2) + "\n");
+  },
+
+  // ------------------------------------------------------------------ v2: fUSD invoices
+
+  /** A new owner + agent for v2, taking the previous owner's QOR (minus 0.3) and ALL its fUSD. */
+  async "fresh-owner-v2"() {
+    const prevName = rotateOwnerKeys();
+    const prev = await accountFromKey(prevName), o = await account("owner");
+    const bal = BigInt(await balance(prev.cosmos)), keep = toUqor("0.3");
+    const fb = (await (await fetch(`${REST}/cosmos/bank/v1beta1/balances/${prev.cosmos}`)).json()).balances.find((b) => b.denom.toLowerCase() === `erc20:${FUSD}`.toLowerCase());
+    const msgs = [bankSend(prev.cosmos, o.cosmos, bal - keep)];
+    if (fb) msgs.push({ typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: { fromAddress: prev.cosmos, toAddress: o.cosmos, amount: [{ denom: fb.denom, amount: fb.amount }] } });
+    const res = await broadcast(prev, msgs, "leash: move to the v2 owner");
+    if (res.code) throw new Error(`move REFUSED code ${res.code}: ${res.rawLog}`);
+    console.log(`moved ${fmt(bal - keep)}${fb ? ` and ${fusd(fb.amount)}` : ""} from ${prev.cosmos} to the v2 owner ${o.cosmos}  ${EXPLORER}${res.transactionHash}`);
+    await new Promise((r) => setTimeout(r, 6000));
+    await cmds.register("owner");
+  },
+
+  /** Owner deploys InvoiceDeskV2, approves the two vendors, and gives the desk an fUSD allowance (the AP budget). */
+  async "deploy-v2"(allowanceFusd = "600") {
+    const o = await account("owner"), a = await account("vendorA"), b = await account("vendorB");
+    const res = await broadcast(o, [openEvmWindowMsg({ sender: o.cosmos, blocks: 600, maxTxs: 4, maxValue: String(toUqor("3")) })], "leash: owner window (v2)");
+    if (res.code) throw new Error(`open window REFUSED code ${res.code}: ${res.rawLog}`);
+    const wallet = new Wallet(o.privateKey, new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID));
+    const c = await new ContractFactory(ART2.abi, ART2.bytecode, wallet).deploy();
+    await c.waitForDeployment();
+    const deskAddr = await c.getAddress();
+    console.log(`InvoiceDeskV2 deployed at ${deskAddr}  (tx ${c.deploymentTransaction().hash})`);
+    const txs = { deploy: c.deploymentTransaction().hash };
+    for (const v of [a, b]) { const tx = await c.approveVendor(v.evmAddr); await tx.wait(); txs[`approve_${v.role}`] = tx.hash; console.log(`owner approved vendor ${v.role}  (tx ${tx.hash})`); }
+    const t = new Contract(FUSD, ERC20, wallet);
+    const tx = await t.approve(deskAddr, toFusd(allowanceFusd)); await tx.wait(); txs.allowance = tx.hash;
+    console.log(`owner gave the desk an allowance of ${allowanceFusd} fUSD  (tx ${tx.hash})`);
+    const close = await broadcast(o, [closeEvmWindowMsg(o.cosmos)], "leash: close window");
+    console.log(close.code === 0 ? "EVM window closed" : `close window: code ${close.code}`);
+    writeDeployment({ ...readDeployment(), v2: { invoiceDesk: deskAddr, token: FUSD, owner: o.cosmos, allowanceFusd, txs } });
+  },
+
+  /** Link the agent for v2: fUSD is the ONLY denom it may move (no QOR at all), per-denom limits, pay() only. */
+  async "link-v2"(perTx = "100", daily = "250", hours = "72") {
+    const d = v2(), o = await account("owner"), k = agentKey();
+    const paySel = new Interface(ART2.abi).getFunction("pay").selector;
+    const denom = `erc20/${FUSD.toLowerCase()}`;
+    const proof = signAuthenticatorLinkEd25519({ chainId: CHAIN_ID, account: o.cosmos, privateKey: k.sk });
+    const msgs = linkAuthenticatorMsgs({
+      owner: o.cosmos, chainId: CHAIN_ID, ...proof, permissions: ["evm"],
+      expiryUnix: Math.floor(Date.now() / 1000) + Number(hours) * 3600, label: "leash invoice agent v2",
+      spendingRule: {
+        id: "leash-v2", enabled: true, perTxLimit: "0", dailyLimit: "0",
+        allowedDenoms: [denom], denomLimits: [{ denom, perTxLimit: String(toFusd(perTx)), dailyLimit: String(toFusd(daily)) }],
+        allowedEvmCalls: [`${d.invoiceDesk.toLowerCase()}/${paySel}`],
+      },
+    });
+    const res = await broadcast(o, msgs, "leash: link agent (v2, fUSD)");
+    if (res.code) { console.log(`REFUSED code ${res.code}: ${res.rawLog}`); process.exitCode = 1; return; }
+    console.log(`agent linked to ${o.cosmos}: may move fUSD only (${perTx} per payment, ${daily} per day), may call ${d.invoiceDesk}/${paySel} only, ${hours} h\n  ${EXPLORER}${res.transactionHash}`);
+    writeDeployment({ ...readDeployment(), v2: { ...d, agentRule: { perTx, daily, hours, denom, allowedEvmCalls: [`${d.invoiceDesk}/${paySel}`], linkTx: res.transactionHash } } });
+  },
+
+  async "inbox-v2"(series = "", due) {
+    const d = v2();
+    const [owner, vendorA, vendorB, attacker] = await Promise.all(["owner", "vendorA", "vendorB", "attacker"].map(account));
+    const inbox = buildInboxV2({ desk: d.invoiceDesk, owner, vendorA, vendorB, attacker, series, due });
+    const file = series ? new URL(`./inbox/inbox-v2-${series}.json`, import.meta.url) : INBOX2;
+    writeFileSync(file, JSON.stringify(inbox, null, 2) + "\n");
+    console.log(`${file.pathname.split("/").slice(-2).join("/")}: ${inbox.length} emails, fUSD invoices signed with ML-DSA-87`);
+  },
+
+  async "run-v2"(mode = "--compromised") {
+    const { planCompromisedV2, planLlm, executeV2, describeV2 } = await import("./lib/agent.mjs");
+    const d = v2(), inbox = JSON.parse(readFileSync(process.env.LEASH_INBOX2 ? new URL(process.env.LEASH_INBOX2, `file://${process.cwd()}/`) : INBOX2, "utf8"));
+    const o = await account("owner"), token = new Contract(FUSD, ERC20, new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID));
+    const before = await token.balanceOf(o.evmAddr), beforeQ = await balance(o.cosmos);
+    const plan = mode === "--llm" ? await planLlm(inbox) : planCompromisedV2(inbox);
+    console.log(`decider: ${mode === "--llm" ? "LLM (Claude)" : "COMPROMISED (obeys every instruction it reads)"}\nowner ${o.cosmos}  ${fusd(before)}, ${fmt(beforeQ)}\n`);
+    const log = [];
+    for (const step of plan) {
+      const m = inbox[step.item];
+      if (step.action === "skip") { console.log(`- [${step.item}] ${m.subject}\n    agent: skip${step.why ? ` (${step.why})` : ""}`); log.push({ ...step, result: "skipped" }); continue; }
+      const r = await executeV2(step, inbox, d.invoiceDesk);
+      const verdict = r.ok ? `PAID${r.hybrid ? "  hybrid ML-DSA-87: verified" : ""}` : r.infra ? `NOT SENT (our side): ${r.why}` : `REFUSED BY THE CHAIN: ${r.why}`;
+      console.log(`- [${step.item}] ${m.subject}\n    agent: ${describeV2(step, inbox)}${step.why ? `  (${step.why})` : ""}\n    chain: ${verdict}${r.link ? `\n           ${r.link}` : ""}`);
+      const { invoice, ...rest } = step;
+      log.push({ ...rest, ref: (invoice ?? m.invoice)?.ref, ok: r.ok, infra: r.infra, why: r.why, link: r.link });
+    }
+    const after = await token.balanceOf(o.evmAddr), afterQ = await balance(o.cosmos);
+    console.log(`\nowner ${fusd(before)} -> ${fusd(after)}  (moved ${fusd(before - after)});  QOR ${fmt(beforeQ)} -> ${fmt(afterQ)}`);
+    writeFileSync(new URL(`./runs/v2-${mode.replace(/^--/, "")}-${new Date().toISOString().replace(/[:.]/g, "-")}.json`, import.meta.url),
+      JSON.stringify({ version: 2, mode, owner: o.cosmos, desk: d.invoiceDesk, fusdBefore: String(before), fusdAfter: String(after), qorBefore: beforeQ, qorAfter: afterQ, log }, null, 2) + "\n");
+  },
+
+  /** v2 human approval: the owner pays an over-limit fUSD invoice directly, after a dry run. */
+  async "approve-v2"(item) {
+    const d = v2(), inv = JSON.parse(readFileSync(INBOX2, "utf8"))[Number(item)]?.invoice;
+    if (!inv) throw new Error(`email ${item} has no invoice`);
+    const o = await account("owner"), wallet = new Wallet(o.privateKey, new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID));
+    const c = new Contract(d.invoiceDesk, ART2.abi, wallet), args = [inv.token, inv.vendor, inv.amount, inv.id, inv.dueBy, inv.signature];
+    console.log(`owner reviews ${inv.ref}: ${inv.fusd} fUSD to ${inv.vendor}`);
+    try { await c.pay.staticCall(...args); } catch (e) { const dd = e.data ?? e.info?.error?.data; let n = e.shortMessage; try { n = c.interface.parseError(dd).name; } catch { /* keep */ } throw new Error(`InvoiceDeskV2 would refuse it: ${n}`); }
+    console.log("  dry run: vendor approved, ML-DSA-87 signature valid, unpaid, not past due");
+    const w = await broadcast(o, [openEvmWindowMsg({ sender: o.cosmos, blocks: 300, maxTxs: 1, maxValue: String(toUqor("0.5")) })], "leash: owner approves an fUSD invoice");
+    if (w.code) throw new Error(`open window REFUSED code ${w.code}: ${w.rawLog}`);
+    const tx = await c.pay(...args, { gasLimit: 700_000 }); const rc = await tx.wait();
+    console.log(`  owner paid ${inv.ref}: ${rc.status === 1 ? "PAID" : "FAILED"}  evm tx ${tx.hash}`);
+    const close = await broadcast(o, [closeEvmWindowMsg(o.cosmos)], "leash: close window");
+    console.log(close.code === 0 ? "  EVM window closed" : `  close window: code ${close.code}`);
+    writeFileSync(new URL(`./runs/v2-approve-${item}-${new Date().toISOString().replace(/[:.]/g, "-")}.json`, import.meta.url),
+      JSON.stringify({ version: 2, item: Number(item), ref: inv.ref, fusd: inv.fusd, owner: o.cosmos, windowTx: w.transactionHash, evmTx: tx.hash, status: rc.status }, null, 2) + "\n");
+  },
+
+  async "balance-v2"() {
+    const t = new Contract(FUSD, ERC20, new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID)), d = readDeployment().v2;
+    for (const r of ROLES) { const a = await account(r); console.log(`${r.padEnd(9)} ${a.cosmos}  ${fmt(await balance(a.cosmos))}  ${fusd(await t.balanceOf(a.evmAddr))}`); }
+    if (d) { const o = await account("owner"); console.log(`desk allowance ${fusd(await t.allowance(o.evmAddr, d.invoiceDesk))}`); }
   },
 
   async revoke() {
