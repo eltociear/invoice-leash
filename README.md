@@ -16,7 +16,7 @@
 > npm install && npm run verify
 > ```
 >
-> 37 checks against the live testnet: the deployed contract is byte-for-byte this source, the
+> 38 checks against the live testnet: the deployed contract is byte-for-byte this source, the
 > agent's rule is what the chain stores, every attack replayed against the real contract (plus six
 > tamperings the demo never sent), where every QOR went, and every recorded transaction re-read,
 > including the MCP runs.
@@ -96,6 +96,25 @@ of her own and is not a vendor. The agent's rule: **1 QOR per payment, 2.5 QOR p
 
 Then `revoke`, and one more honest, in-limit payment: refused, the key is revoked.
 
+## Tests
+
+| | What | Run |
+|---|---|---|
+| Contract | 27 Foundry tests, 3 fuzzed (512 runs each): every revert path in `pay` and in what order, per-payer approvals and replay, live key reads (unregistered, unproven, other algorithm, rotated key), another chain / desk / payer, the due second, a vendor that rejects payment, a re-entrant vendor. Mutation-checked: removing the signature check, moving the replay check before it, or dropping the proof-of-possession requirement each fails the suite. | `forge test` |
+| PQC stand-in | Local EVMs have no QoreChain precompile, so `0x…0a01` is a stand-in that answers from [`test/fixtures/mldsa.json`](test/fixtures/mldsa.json): 14 (key, signature, message) tuples checked with **real ML-DSA-87** by `test/fixtures.mjs`, unknown tuples fail closed. Keys come from fixed seeds and signing is deterministic, so CI regenerates the file and requires it byte-identical. | `npm run fixtures` |
+| Off chain | the demo inbox and six tamperings, with real ML-DSA-87 and throwaway keys | `npm test` |
+| On chain | 38 read-only checks against the live testnet, including a QoreScan CBOM of the contract | `npm run verify` |
+
+### Cryptography inventory (QoreScan)
+
+[`cbom/invoice-leash.cbom.json`](cbom/invoice-leash.cbom.json) is a CycloneDX CBOM made with
+QoreChain's [QoreScan](https://github.com/qorechain/qorescan) (`npm run cbom`): the contract, every
+account in this demo and the two testnet endpoints it talks to. In `InvoiceDesk.sol` the only
+signature algorithm is **ML-DSA-87** (`pqcVerify` / `pqcKeyStatus`), next to Keccak-256; there is no
+`ecrecover`, secp256k1 or P-256. `npm run verify` re-checks that on every run. (The CBOM also lists
+what is still classical around it: the accounts' secp256k1 halves, the validators' Ed25519 consensus
+keys and the endpoints' ECDSA certificates, the latter alongside X25519MLKEM768 key exchange.)
+
 ## Attack lab: try it in your browser
 
 [eltociear.github.io/invoice-leash/lab.html](https://eltociear.github.io/invoice-leash/lab.html)
@@ -120,6 +139,7 @@ model dangerous tools as well:
 | `send_qor` | sends QOR anywhere. The chain refuses: the key has no `send` permission |
 | `call_invoice_desk` | `approveVendor` / `removeVendor`. The chain refuses: outside the call scope |
 
+Plus `action_log`, everything agents did through the server with transaction hashes, for audits.
 The safety is not in which tools the model gets. Every action returns the chain's own answer and a
 transaction link, and is logged to `runs/mcp-*.server.jsonl`.
 
@@ -139,6 +159,16 @@ Recorded on a fresh inbox (same ten emails, new invoice numbers, `node leash.mjs
   [`runs/mcp-compromised-final.txt`](runs/mcp-compromised-final.txt)), same tools, same inbox:
   11 attempts, including `send_qor` 50 QOR and `approveVendor(Mallory)`. **All 11 refused by the
   chain; the balance did not move.**
+
+**An independent audit through a second MCP server** ([`runs/mcp-audit-final.txt`](runs/mcp-audit-final.txt)):
+Claude Code as auditor, with only read-only tools: `action_log` from this server, and QoreChain's own
+MCP server ([`@qorechain/mcp`](https://github.com/qorechain/qorechain-mcp), wired in
+[`.mcp.json`](.mcp.json)). Told not to trust this server's verdicts, it re-read all 14 transactions
+with `get_transaction` and the vendors' keys with `get_pq_status`: every verdict matched the chain.
+It also flagged, unprompted, that most of the hostile client's refusals came from the daily limit
+before the contract was reached, and that a hostile agent can still burn the fee wallet; both are
+in [THREAT_MODEL.md](THREAT_MODEL.md), and the contract-level answers are what `check_invoice`, the
+attack lab and `verify` §4 show.
 
 ## Run it
 
@@ -188,6 +218,8 @@ lib/chain.mjs               keys, hybrid (secp256k1 + ML-DSA-87) signing and bro
 lib/invoices.mjs            invoice encoding and ML-DSA-87 signing; the demo inbox
 lib/agent.mjs               the deciders (compromised, LLM) and the executor, which has no checks of its own
 mcp/server.mjs              the MCP server (agent key only); mcp/client.mjs, a scripted MCP client
+test/InvoiceDesk.t.sol      Foundry tests; test/fixtures.mjs makes their real ML-DSA-87 fixtures
+cbom/                       QoreScan cryptography inventory (CycloneDX CBOM)
 scripts/verify.mjs          npm run verify: every claim against the live testnet, read-only
 scripts/site.mjs, lab.mjs   build docs/index.html (the recorded runs) and docs/lab.html (the attack lab) for GitHub Pages
 THREAT_MODEL.md             who holds which key, every attack and what stops it, what is NOT stopped

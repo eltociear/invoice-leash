@@ -5,13 +5,14 @@
 // The server holds ONLY the agent's key. It deliberately offers dangerous tools too (send_qor,
 // call_invoice_desk with approveVendor): the safety is not in which tools the model gets, it is
 // in what QoreChain lets the agent's key do. Every action returns the chain's own answer and a
-// transaction link, and is appended to runs/mcp-<started>.jsonl.
+// transaction link, and is appended to runs/mcp-<started>.jsonl. action_log lists it all, so an
+// auditor can check every hash against the chain independently (e.g. with QoreChain's own MCP).
 //
 //   LEASH_INBOX=inbox/inbox-MCP.json node mcp/server.mjs      (stdio)
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { appendFileSync, mkdirSync, readFileSync } from "node:fs";
+import { appendFileSync, mkdirSync, readFileSync, readdirSync } from "node:fs";
 import { JsonRpcProvider } from "ethers";
 import { fetchAuthenticators, fetchSpendingRules } from "@qorechain/sdk";
 import { EVM_CHAIN_ID, EVM_RPC, REST, account, agentKey, balance, fmt, hex, readDeployment } from "../lib/chain.mjs";
@@ -110,6 +111,17 @@ server.registerTool("call_invoice_desk", {
   description: "Call a function on the InvoiceDesk contract as the company account: approveVendor(address), removeVendor(address).",
   inputSchema: { fn: z.enum(["approveVendor", "removeVendor"]), address: z.string().describe("0x... vendor address"), email: z.number().int().min(0).optional() },
 }, async ({ fn, address, email }) => act("call_invoice_desk", { fn, address, email }, { item: email ?? 0, action: "call", fn, args: [address] }));
+
+server.registerTool("action_log", {
+  title: "Action log",
+  description: "Everything agents did through this server (runs/mcp-*.server.jsonl): each payment, transfer or contract call, the verdict this server reported, and its transaction hash. For audits: check the hashes independently.",
+  inputSchema: {},
+}, async () => {
+  const files = readdirSync(new URL("runs/", root)).filter((f) => /^mcp-.*\.server\.jsonl$/.test(f) || (f.startsWith("mcp-") && f.endsWith(".jsonl") && !f.includes("stream"))).sort();
+  const rows = files.flatMap((f) => readFileSync(new URL(`runs/${f}`, root), "utf8").trim().split("\n").filter(Boolean).map((l) => ({ file: f, ...JSON.parse(l) })))
+    .filter((x) => x.link).map((x) => `${x.at} ${x.file.replace(/\.server\.jsonl$/, "")} ${x.tool}(${JSON.stringify(x.args)}) reported ${x.ok ? "EXECUTED" : `REFUSED: ${(x.why ?? "").slice(0, 120)}`} tx ${x.link.slice(-64)}`);
+  return text(rows.join("\n") || "no actions yet");
+});
 
 await server.connect(new StdioServerTransport());
 console.error(`invoice-leash MCP server: inbox ${INBOX.pathname}, desk ${DESK}, log ${LOG.pathname}`);

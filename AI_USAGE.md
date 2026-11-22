@@ -8,7 +8,8 @@ on the model, so the same inbox is also run with a deliberately compromised deci
 every instruction, and the chain's refusals are the same.
 
 `mcp/server.mjs` exposes the same agent as MCP tools; `runs/mcp-claude-final.txt` is Claude Code
-(claude-opus-5-5) using them, with nothing but that server.
+(claude-opus-5-5) using them, with nothing but that server; `runs/mcp-audit-final.txt` is Claude Code
+auditing those actions through QoreChain's own read-only MCP server.
 
 ## In building it
 

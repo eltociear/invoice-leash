@@ -2,6 +2,7 @@
 1. The deployed contract is this repo's source
   ✓ bytecode at 0x0027431D3314e672927eBfd9de57b1003198413b == contracts/InvoiceDesk.sol compiled with solc 0.8.30  (2534 bytes)
   ✓ the bytes vendors sign (lib/invoices.mjs) == InvoiceDesk.invoiceMessage() on chain  (256 bytes: domain, chain id, desk, payer, vendor, amount, id, due date)
+  ✓ QoreScan CBOM of contracts/: the only signature algorithm is ML-DSA-87; no ecrecover, secp256k1 or P-256  (Keccak-256: symmetric, ML-DSA-87: post-quantum)
 
 2. ML-DSA-87 keys on chain (precompile 0x…0a02, pqcKeyStatus)
   ✓ Hostline  registered, ML-DSA-87 (alg 1), 2592-byte key, possession proven
@@ -58,6 +59,6 @@
   ✓ obey-everything MCP client: 11 attempts (send, approveVendor, every invoice), all 11 refused by the chain, each re-read
   ✓ MCP inbox: paid() is true for exactly the 3 genuine in-limit invoices (2.2 QOR)  HOSTLINE-2026-11-0042-MCP, TOKENWELL-INV-7781-MCP, HOSTLINE-2026-11-0043-MCP
 
-✓ 37 checks passed, 0 failed  (qorechain-diana, block 10564480)
+✓ 38 checks passed, 0 failed  (qorechain-diana, block 10565431)
   The agent's linked key is ed25519: QoreChain links only ed25519/secp256k1 keys today. Leash assumes it can be stolen;
   the rule above is what a thief, or a fooled model, gets. The owner's key, which writes and revokes that rule, is hybrid ML-DSA-87.

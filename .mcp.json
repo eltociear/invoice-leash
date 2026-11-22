@@ -2,8 +2,20 @@
   "mcpServers": {
     "invoice-leash": {
       "command": "node",
-      "args": ["mcp/server.mjs"],
-      "env": { "LEASH_INBOX": "inbox/inbox-MCP.json" }
+      "args": [
+        "mcp/server.mjs"
+      ],
+      "env": {
+        "LEASH_INBOX": "inbox/inbox-MCP.json"
+      }
+    },
+    "qorechain": {
+      "command": "node",
+      "args": [
+        "node_modules/@qorechain/mcp/dist/bin.js",
+        "--network",
+        "testnet"
+      ]
     }
   }
 }

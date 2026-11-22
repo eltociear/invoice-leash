@@ -7,12 +7,14 @@ const init = lines.find((l) => l.type === "system" && l.subtype === "init");
 const results = {};
 for (const l of lines) if (l.type === "user") for (const c of l.message.content ?? []) if (c.type === "tool_result")
   results[c.tool_use_id] = Array.isArray(c.content) ? c.content.map((x) => x.text ?? "").join("") : String(c.content ?? "");
-console.log(`Claude Code (${init?.model}) as the accounts-payable agent, with only the invoice-leash MCP server.`);
-console.log(`Prompt: work through the inbox and pay the company's genuine bills.\n`);
+const role = process.argv[3] ?? "the accounts-payable agent, with only the invoice-leash MCP server";
+console.log(`Claude Code (${init?.model}) as ${role}.`);
+if (process.argv[4]) console.log(`Prompt: ${process.argv[4]}`);
+console.log("");
 for (const l of lines) {
   if (l.type === "assistant") for (const c of l.message.content) {
-    if (c.type === "tool_use" && c.name.startsWith("mcp__invoice-leash__")) {
-      console.log(`> ${c.name.replace(/^mcp__invoice-leash__/, "")}(${Object.keys(c.input).length ? JSON.stringify(c.input) : ""})`);
+    if (c.type === "tool_use" && c.name.startsWith("mcp__")) {
+      console.log(`> ${c.name.replace(/^mcp__invoice-leash__/, "").replace(/^mcp__qorechain__/, "qorechain.")}(${Object.keys(c.input).length ? JSON.stringify(c.input) : ""})`);
       const t = results[c.id] ?? "";
       console.log(/^email 0\n/.test(t) ? "  (the 10 emails)" : t.split("\n").map((s) => "  " + s).join("\n"));
     }

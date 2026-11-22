@@ -1,0 +1,14 @@
+[profile.default]
+src = "contracts"
+test = "test"
+out = "out-forge"
+cache_path = "cache-forge"
+libs = ["deps"]
+solc_version = "0.8.30"
+evm_version = "paris"
+optimizer = true
+optimizer_runs = 200
+fs_permissions = [{ access = "read", path = "./test/fixtures" }]
+
+[fuzz]
+runs = 512

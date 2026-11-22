@@ -2,7 +2,8 @@
 // npm run verify: check every claim in the README against the live qorechain-diana testnet.
 // Read-only. No keys, no test QOR, no account needed. About a minute.
 //
-//   1. the deployed InvoiceDesk is byte-for-byte this repo's source (recompiled here with solc)
+//   1. the deployed InvoiceDesk is byte-for-byte this repo's source (recompiled here with solc), and
+//      QoreScan finds no classical signature scheme in it
 //   2. the vendors' ML-DSA-87 keys are registered on chain with proof of possession
 //   3. the agent's rule as the chain stores it: scheme, permissions, limits, call scope, revocation
 //   4. the attacks replayed against the real contract with eth_call, plus five new ones
@@ -82,6 +83,17 @@ ok(code.slice(2) === compiled.evm.deployedBytecode.object, `bytecode at ${DESK} 
   const onchain = desk.decodeFunctionResult("invoiceMessage", await provider.call({ to: DESK, data: desk.encodeFunctionData("invoiceMessage", [p, v.vendor, v.amountWei, v.id, v.dueBy]) }))[0];
   const local = "0x" + Buffer.from(invoiceMessage({ desk: DESK, payer: p, vendor: v.vendor, amountWei: BigInt(v.amountWei), id: v.id, dueBy: v.dueBy })).toString("hex");
   ok(onchain === local, "the bytes vendors sign (lib/invoices.mjs) == InvoiceDesk.invoiceMessage() on chain", `(${(local.length - 2) / 2} bytes: domain, chain id, desk, payer, vendor, amount, id, due date)`);
+}
+
+{
+  // QoreScan (QoreChain's cryptography inventory tool) on the contract source: the only signature
+  // scheme in it must be ML-DSA-87, with no ecrecover / secp256k1 / P-256 anywhere.
+  const { execFileSync } = await import("node:child_process");
+  const bin = new URL("node_modules/.bin/qorescan", root).pathname;
+  const bom = JSON.parse(execFileSync(bin, ["solidity", new URL("contracts", root).pathname], { encoding: "utf8", maxBuffer: 1 << 24 }));
+  const algs = bom.components.filter((c) => c.type === "cryptographic-asset").map((c) => ({ name: c.name, cls: (c.properties ?? []).find((p) => p.name === "qorescan:classification")?.value }));
+  const sigs = algs.filter((a) => a.cls !== "symmetric");
+  ok(sigs.length === 1 && sigs[0].name === "ML-DSA-87" && sigs[0].cls === "post-quantum", "QoreScan CBOM of contracts/: the only signature algorithm is ML-DSA-87; no ecrecover, secp256k1 or P-256", `(${algs.map((a) => `${a.name}: ${a.cls}`).join(", ")})`);
 }
 
 // ---------------------------------------------------------------- 2. vendor keys
