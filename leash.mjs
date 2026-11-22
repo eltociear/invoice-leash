@@ -16,6 +16,7 @@
 //   node leash.mjs fresh-owner              new owner + agent keys for a clean re-run (moves the money, same desk)
 //   node leash.mjs topup [QOR]               owner refills the agent's gas wallet (fees only)
 //   node leash.mjs plan [--llm]              what the decider WOULD do, without touching the chain
+//   node leash.mjs approve <email>           a human pays an over-limit invoice the agent could not
 //   node leash.mjs revoke                    owner switches the agent off in one transaction
 //   node leash.mjs after-revoke              the agent tries one more honest payment
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
@@ -208,6 +209,38 @@ const cmds = {
     for (const st of plan) console.log(`[${st.item}] ${inbox[st.item].subject}\n    ${describe(st, inbox)}${st.why ? `  (${st.why})` : ""}`);
     mkdirSync(new URL("./runs/", import.meta.url), { recursive: true });
     writeFileSync(new URL(`./runs/plan-${mode.replace(/^--/, "")}-${new Date().toISOString().replace(/[:.]/g, "-")}.json`, import.meta.url), JSON.stringify(plan, null, 2) + "\n");
+  },
+
+  /**
+   * A human pays an invoice the agent was not allowed to: the escalation path for anything over the
+   * agent's limits. The owner signs this one directly (hybrid ML-DSA-87), so no agent rule applies,
+   * but InvoiceDesk still checks the vendor, the ML-DSA-87 signature, replay and the due date.
+   */
+  async approve(item) {
+    const deskAddr = need(readDeployment(), "invoiceDesk", "deploy");
+    const inv = loadInbox()[Number(item)]?.invoice;
+    if (!inv) throw new Error(`email ${item} has no invoice`);
+    const o = await account("owner");
+    const provider = new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID);
+    const c = new Contract(deskAddr, ART.abi, new Wallet(o.privateKey, provider));
+    const args = [inv.vendor, inv.amountWei, inv.id, inv.dueBy, inv.signature];
+    console.log(`owner reviews ${inv.ref}: ${inv.qor} QOR to ${inv.vendor}`);
+    // Dry run first: the desk's own checks, without spending anything.
+    try { await c.pay.staticCall(...args, { value: inv.amountWei }); }
+    catch (e) { const d = e.data ?? e.info?.error?.data; let n = e.shortMessage; try { n = c.interface.parseError(d).name; } catch { /* keep */ } throw new Error(`InvoiceDesk would refuse it: ${n}`); }
+    console.log("  InvoiceDesk dry run: vendor approved, ML-DSA-87 signature valid, unpaid, not past due");
+    const fees = toUqor("0.5");
+    const w = await broadcast(o, [openEvmWindowMsg({ sender: o.cosmos, blocks: 300, maxTxs: 1, maxValue: String(BigInt(inv.amountWei) / 10n ** 12n + fees) })], "leash: owner approves an invoice");
+    if (w.code) throw new Error(`open window REFUSED code ${w.code}: ${w.rawLog}`);
+    console.log(`  EVM window: 1 tx, at most ${inv.qor} QOR + fees  ${EXPLORER}${w.transactionHash}`);
+    const tx = await c.pay(...args, { value: inv.amountWei, gasLimit: 700_000 });
+    const rc = await tx.wait();
+    console.log(`  owner paid ${inv.ref}: ${rc.status === 1 ? "PAID" : "FAILED"}  evm tx ${tx.hash}  gas used ${rc.gasUsed}`);
+    const close = await broadcast(o, [closeEvmWindowMsg(o.cosmos)], "leash: close window");
+    console.log(close.code === 0 ? "  EVM window closed" : `  close window: code ${close.code}`);
+    mkdirSync(new URL("./runs/", import.meta.url), { recursive: true });
+    writeFileSync(new URL(`./runs/approve-${item}-${new Date().toISOString().replace(/[:.]/g, "-")}.json`, import.meta.url),
+      JSON.stringify({ item: Number(item), ref: inv.ref, qor: inv.qor, owner: o.cosmos, windowTx: w.transactionHash, evmTx: tx.hash, status: rc.status, gasUsed: String(rc.gasUsed) }, null, 2) + "\n");
   },
 
   async revoke() {

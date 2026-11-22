@@ -1,0 +1,24 @@
+name: ci
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "17 3 * * *" # daily: the testnet state the README claims, re-checked
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: build/ matches the contract source
+        run: npm run compile && git diff --exit-code build/
+      - name: offline invoice signatures (ML-DSA-87)
+        run: npm test
+      - name: every README claim against the live qorechain-diana testnet (read-only, no keys)
+        run: npm run verify
