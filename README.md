@@ -1,5 +1,7 @@
 # Leash: an invoice agent that stays safe when its model does not
 
+[![Built on QoreChain](https://build.qorechain.io/badge/leash-3.svg)](https://build.qorechain.io/p/leash-3)
+
 ![Leash: a compromised agent tries eleven actions; the chain pays three genuine invoices and refuses the other eight](assets/cover.png)
 
 **Demo video (2:53, narrated):** https://youtu.be/DssIkkYx8gc
