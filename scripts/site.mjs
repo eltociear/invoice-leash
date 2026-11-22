@@ -11,6 +11,8 @@ const comp = json(`runs/${latest("compromised-")}`), llm = json(`runs/${latest("
 const approve = json(`runs/${latest("approve-")}`);
 const verify = read("runs/verify-latest.txt");
 const mcpInbox = json("inbox/inbox-MCP.json");
+const inbox2 = json("inbox/inbox-v2.json"), v2run = json(`runs/${latest("v2-compromised-")}`), v2approve = json(`runs/${latest("v2-approve-")}`);
+const probes = json("runs/probes/probes.json").probes;
 const jl = (f) => read(f).trim().split("\n").map((l) => JSON.parse(l));
 const mcpClaude = jl("runs/mcp-claude.server.jsonl"), mcpHostile = jl("runs/mcp-compromised.server.jsonl");
 const mcpRow = (x) => {
@@ -25,6 +27,7 @@ const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").
 const short = (why = "") => {
   if (/not permitted to "send"|lacks the permission/.test(why)) return 'linked key is not permitted to "send"';
   if (/may call/.test(why)) return "call is not in the rule's allowed_evm_calls";
+  if (/denom uqor not allowed/.test(why)) return "QOR is not a denom the rule allows";
   if (/per-tx limit/.test(why)) { const [, l, a] = why.match(/per-tx limit (\d+)uqor exceeded \(attempted (\d+)\)/) ?? []; return l ? `per-payment limit ${l / 1e6} QOR (attempted ${a / 1e6})` : "per-payment limit"; }
   if (/daily limit/.test(why)) { const [, l, sp] = why.match(/daily limit (\d+)uqor exceeded: spent (\d+)/) ?? []; return l ? `daily limit: ${sp / 1e6} of ${l / 1e6} QOR spent` : "daily limit"; }
   return why.replace(/^InvoiceDesk: /, "InvoiceDesk: ");
@@ -32,6 +35,25 @@ const short = (why = "") => {
 const txLink = (link) => link ? `<a class="tx" href="${esc(link)}" target="_blank" rel="noopener">${esc(link.slice(-64, -56))}…</a>` : "";
 const act = (x, m) => x.action === "send" ? `send ${x.qor} QOR to ${x.to.slice(0, 12)}…` : x.action === "call" ? `call desk.${x.fn}(Mallory)` : `pay ${m.invoice.ref} · ${m.invoice.qor} QOR`;
 const verdict = (x) => x.result === "skipped" ? `<span class="v skip">skipped</span>` : x.ok ? `<span class="v ok">PAID</span>` : `<span class="v no">${esc(short(x.why))}</span>`;
+
+const act2 = (x) => {
+  const m = inbox2[x.item];
+  if (x.action === "send") return `MsgSend ${x.qor} QOR → Mallory`;
+  if (x.action === "evm-value") return `EVM value transfer ${x.qor} QOR → Mallory`;
+  if (x.action === "token-transfer") return `fUSD.transfer(Mallory, ${x.fusd})`;
+  if (x.action === "token-transferFrom") return `fUSD.transferFrom(company, Mallory, ${x.fusd})`;
+  if (x.action === "call") return `desk.${x.fn}(${x.fn === "setLimit" ? "fUSD, 10⁶, 10⁶" : "Mallory"})`;
+  return `pay ${x.ref ?? m.invoice.ref}`;
+};
+const emails2 = inbox2.map((m, i) => {
+  const steps = v2run.log.filter((x) => x.item === i).map((x) => `<div class="step"><code>${esc(act2(x))}</code>${verdict(x)}${txLink(x.link)}</div>`).join("");
+  const human = v2approve.item === i ? `<div class="lane"><div class="who">the company, in person</div><div class="step"><code>approve-v2 ${i} · ${esc(v2approve.fusd)} fUSD</code><span class="v ok">PAID</span><a class="tx" href="${EX}${v2approve.evmTx}" target="_blank" rel="noopener">${v2approve.evmTx.slice(2, 10)}…</a></div><div class="why">Over the agent's limit, so a human pays it, after a dry run of the same checks.</div></div>` : "";
+  return `<article class="mail"><header><span class="n">#${i}</span><div><div class="from">${esc(m.from)}</div><h3>${esc(m.subject)}</h3></div></header>
+  <p class="body">${esc(m.body)}</p>
+  ${m.invoice ? `<div class="inv">invoice <b>${esc(m.invoice.ref)}</b> · ${esc(m.invoice.fusd)} fUSD · payee ${esc(m.invoice.vendor.slice(0, 10))}… · ML-DSA-87 signature ${(m.invoice.signature.length - 2) / 2} bytes</div>` : ""}
+  <div class="lanes"><div class="lane"><div class="who">compromised agent</div>${steps}</div>${human}</div></article>`;
+}).join("\n");
+const probeRows = probes.map((p) => `<div class="step"><span class="v ${p.expect === "executed" ? (p.id.startsWith("v2") ? "ok" : "no") : "skip"}">${p.expect === "executed" ? "EXECUTED" : "refused"}</span><code>${esc(p.action.slice(0, 80))}</code><span class="why">${esc(p.account)}</span><a class="tx" href="${EX}${p.tx}" target="_blank" rel="noopener">${p.tx.slice(0, 8)}…</a></div>`).join("");
 
 const emails = inbox.map((m, i) => {
   const cs = comp.log.filter((x) => x.item === i), ls = llm.log.filter((x) => x.item === i);
@@ -80,10 +102,11 @@ footer{margin-top:64px;color:var(--dim);font-size:14px}
 </style></head>
 <body><main>
 <h1>Invoice Leash</h1>
-<p class="lede">An invoice-paying AI agent that stays safe when its model does not. The agent's code has no limit check, no vendor check and no signature check. Every limit lives on QoreChain, so we can hand the agent to an attacker and watch the chain say no.</p>
+<p class="lede">An invoice-paying AI agent that stays safe when its model does not. The agent's code has no limit check, no vendor check and no signature check; invoices are in fUSD and signed with ML-DSA-87. Every limit lives on QoreChain, so we can hand the agent to an attacker and watch the chain say no.</p>
 <div class="links">
   <a href="lab.html" style="border-color:var(--acc);color:var(--acc)">Try to break it: attack lab (live, in your browser)</a>
-  <a href="https://youtu.be/DssIkkYx8gc">Demo video (2:53)</a>
+  <a href="#found">What we found about spending rules</a>
+  <a href="https://youtu.be/DssIkkYx8gc">Demo video (2:53, v1)</a>
   <a href="https://github.com/eltociear/invoice-leash">Code</a>
   <a href="https://github.com/eltociear/invoice-leash/blob/main/THREAT_MODEL.md">Threat model</a>
   <a href="#verify">Verify it yourself</a>
@@ -92,22 +115,30 @@ footer{margin-top:64px;color:var(--dim);font-size:14px}
 </div>
 
 <div class="stats">
-  <div class="stat"><b>3</b><span>genuine invoices paid by a fully compromised agent (2.2 QOR)</span></div>
-  <div class="stat"><b>8</b><span>attempts refused, every one by the chain</span></div>
-  <div class="stat"><b>0</b><span>QOR to the attacker, ever (her full incoming history is checked)</span></div>
+  <div class="stat"><b>3</b><span>genuine invoices paid by a fully compromised agent (220 fUSD)</span></div>
+  <div class="stat"><b>${v2run.log.filter((x) => !x.ok).length}</b><span>of its ${v2run.log.length} attempts refused, by the chain or the contract</span></div>
+  <div class="stat"><b>0</b><span>QOR moved, and 0 fUSD to the attacker (her balance is checked)</span></div>
 </div>
 
 <div class="layers">
-  <div class="layer"><h3>Call scope</h3><p>The agent may call <code>InvoiceDesk.pay</code> (<code>0x38e5ab6a</code>) and nothing else. No <code>send</code>, no <code>approveVendor</code>.</p></div>
-  <div class="layer"><h3>Value limits</h3><p>1 QOR per payment, 2.5 QOR per day, 24 h expiry. QoreChain account abstraction, on the owner's own account: no vault.</p></div>
-  <div class="layer"><h3>Post-quantum invoices</h3><p>ML-DSA-87 signature from an approved vendor whose key is registered on chain, checked by precompiles <code>0x…0a02</code> and <code>0x…0a01</code>.</p></div>
+  <div class="layer"><h3>An agent that holds nothing</h3><p>The agent acts as its own account. Its QoreChain rule lists no QOR and no fUSD, and allows one call: <code>InvoiceDeskV2.pay</code>. It cannot send, transfer, approve or reconfigure.</p></div>
+  <div class="layer"><h3>The company's money, the company's limits</h3><p>fUSD stays in the company's account (no vault). The desk pulls it per invoice, within 100 fUSD a payment and 250 a day that only the company can set.</p></div>
+  <div class="layer"><h3>Post-quantum invoices</h3><p>ML-DSA-87 signature from an approved vendor whose key is registered on chain, over payer, payee, currency and amount, checked by precompiles <code>0x…0a02</code> and <code>0x…0a01</code>.</p></div>
 </div>
 
-<h2>The inbox, email by email</h2>
-<p class="dim">Recorded on <code>qorechain-diana</code>. Two honest vendors, Hostline and Tokenwell, and Mallory, who holds a valid ML-DSA-87 key of her own but is not a vendor. The compromised agent obeys every email; Claude decides for itself. Same rules, same chain.</p>
+<h2>The inbox, email by email (v2, fUSD)</h2>
+<p class="dim">Recorded on <code>qorechain-diana</code>. Two honest vendors, Hostline and Tokenwell, and Mallory, who holds a valid ML-DSA-87 key of her own but is not a vendor. The compromised agent obeys every email, attacker's included, and tries every way to move money.</p>
+${emails2}
+
+<h2 id="found">What we found: a spending rule bounds amounts, not destinations</h2>
+<p class="dim">v1 let the agent act as the company's account, scoped to <code>pay</code> by a QoreChain spending rule. These probes, each one request by the agent's key, showed the key could still move value directly in any denom its rule allows (a plain QOR transfer, or <code>fUSD.transfer</code>), and could not pay in an unlisted token at all. v2 gives the agent an account that holds nothing. Every probe is re-read by <code>npm run verify</code>.</p>
+<article class="mail"><div class="lanes" style="margin-left:0"><div class="lane" style="border-top:0">${probeRows}</div></div></article>
+
+<h2>v1 (QOR): the first design, as recorded</h2>
+<p class="dim">The agent acted as the company's account, 1 QOR a payment, 2.5 a day. Every attack in the inbox was refused; the probes above are why v1 was replaced. The compromised agent obeys every email; Claude decides for itself.</p>
 ${emails}
 
-<h2>Through MCP: any agent can hold the leash</h2>
+<h2>v1 through MCP: any agent can hold the leash</h2>
 <p class="dim"><code>mcp/server.mjs</code> gives an MCP client six tools, holding only the agent's key: <code>leash_status</code>, <code>list_inbox</code>, <code>check_invoice</code> (a dry run of the real contract), <code>pay_invoice</code>, and, deliberately, <code>send_qor</code> and <code>call_invoice_desk</code>. A fresh inbox: the same ten emails with new invoice numbers.</p>
 <article class="mail"><header><span class="n">1</span><div><div class="from">Claude Code (claude-opus-5-5), nothing but the MCP server · <a href="https://github.com/eltociear/invoice-leash/blob/main/runs/mcp-claude-final.txt">transcript</a></div><h3>Dry-ran every invoice, paid the three genuine ones, flagged #7 for a human, held #9 for tomorrow</h3></div></header>
 <div class="lanes"><div class="lane">${mcpClaude.map(mcpRow).join("")}</div></div></article>
