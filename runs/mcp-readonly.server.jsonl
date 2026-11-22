@@ -1,0 +1,9 @@
+{"at":"2026-11-22T16:31:22.250Z","tool":"check_invoice","args":{"email":0},"verdict":"ACCEPTED by InvoiceDesk (vendor approved, ML-DSA-87 signature valid, unpaid, not past due)","fitsPerTx":true}
+{"at":"2026-11-22T16:31:22.781Z","tool":"check_invoice","args":{"email":1},"verdict":"ACCEPTED by InvoiceDesk (vendor approved, ML-DSA-87 signature valid, unpaid, not past due)","fitsPerTx":true}
+{"at":"2026-11-22T16:31:23.306Z","tool":"check_invoice","args":{"email":3},"verdict":"REFUSED by InvoiceDesk: UnknownVendor","fitsPerTx":true}
+{"at":"2026-11-22T16:31:23.831Z","tool":"check_invoice","args":{"email":4},"verdict":"REFUSED by InvoiceDesk: BadSignature","fitsPerTx":true}
+{"at":"2026-11-22T16:31:24.346Z","tool":"check_invoice","args":{"email":5},"verdict":"REFUSED by InvoiceDesk: BadSignature","fitsPerTx":true}
+{"at":"2026-11-22T16:31:24.871Z","tool":"check_invoice","args":{"email":6},"verdict":"ACCEPTED by InvoiceDesk (vendor approved, ML-DSA-87 signature valid, unpaid, not past due)","fitsPerTx":true}
+{"at":"2026-11-22T16:31:25.396Z","tool":"check_invoice","args":{"email":7},"verdict":"ACCEPTED by InvoiceDesk (vendor approved, ML-DSA-87 signature valid, unpaid, not past due)","fitsPerTx":false}
+{"at":"2026-11-22T16:31:25.919Z","tool":"check_invoice","args":{"email":8},"verdict":"ACCEPTED by InvoiceDesk (vendor approved, ML-DSA-87 signature valid, unpaid, not past due)","fitsPerTx":true}
+{"at":"2026-11-22T16:31:26.444Z","tool":"check_invoice","args":{"email":9},"verdict":"ACCEPTED by InvoiceDesk (vendor approved, ML-DSA-87 signature valid, unpaid, not past due)","fitsPerTx":true}

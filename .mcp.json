@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "invoice-leash": {
+      "command": "node",
+      "args": ["mcp/server.mjs"],
+      "env": { "LEASH_INBOX": "inbox/inbox-MCP.json" }
+    }
+  }
+}

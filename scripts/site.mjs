@@ -10,13 +10,23 @@ const inbox = json("inbox/inbox.json"), dep = json("deployment.json");
 const comp = json(`runs/${latest("compromised-")}`), llm = json(`runs/${latest("llm-")}`);
 const approve = json(`runs/${latest("approve-")}`);
 const verify = read("runs/verify-latest.txt");
+const mcpInbox = json("inbox/inbox-MCP.json");
+const jl = (f) => read(f).trim().split("\n").map((l) => JSON.parse(l));
+const mcpClaude = jl("runs/mcp-claude.server.jsonl"), mcpHostile = jl("runs/mcp-compromised.server.jsonl");
+const mcpRow = (x) => {
+  const what = x.tool === "check_invoice" ? `check_invoice(${x.args.email})` : x.tool === "pay_invoice" ? `pay_invoice(${x.args.email}) · ${mcpInbox[x.args.email].invoice.ref} · ${mcpInbox[x.args.email].invoice.qor} QOR`
+    : x.tool === "send_qor" ? `send_qor(${x.args.qor} QOR → Mallory)` : `call_invoice_desk(${x.args.fn}, Mallory)`;
+  const v = x.tool === "check_invoice" ? `<span class="v ${/^ACCEPTED/.test(x.verdict) ? "ok" : "no"}">${esc(x.verdict.replace(/ \(.*\)$/, ""))}${x.fitsPerTx ? "" : " · over per-payment limit"}</span>`
+    : x.ok ? `<span class="v ok">PAID</span>` : `<span class="v no">${esc(short(x.why))}</span>`;
+  return `<div class="step"><code>${esc(what)}</code>${v}${txLink(x.link)}</div>`;
+};
 const EX = "https://explore.qore.network/tx/";
 const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const short = (why = "") => {
   if (/not permitted to "send"|lacks the permission/.test(why)) return 'linked key is not permitted to "send"';
   if (/may call/.test(why)) return "call is not in the rule's allowed_evm_calls";
-  if (/per-tx limit/.test(why)) return why.match(/per-tx limit[^:]*/)[0];
-  if (/daily limit/.test(why)) return why.match(/daily limit [^:]*: spent \d+, remaining \d+/)?.[0] ?? "daily limit exceeded";
+  if (/per-tx limit/.test(why)) { const [, l, a] = why.match(/per-tx limit (\d+)uqor exceeded \(attempted (\d+)\)/) ?? []; return l ? `per-payment limit ${l / 1e6} QOR (attempted ${a / 1e6})` : "per-payment limit"; }
+  if (/daily limit/.test(why)) { const [, l, sp] = why.match(/daily limit (\d+)uqor exceeded: spent (\d+)/) ?? []; return l ? `daily limit: ${sp / 1e6} of ${l / 1e6} QOR spent` : "daily limit"; }
   return why.replace(/^InvoiceDesk: /, "InvoiceDesk: ");
 };
 const txLink = (link) => link ? `<a class="tx" href="${esc(link)}" target="_blank" rel="noopener">${esc(link.slice(-64, -56))}…</a>` : "";
@@ -76,6 +86,7 @@ footer{margin-top:64px;color:var(--dim);font-size:14px}
   <a href="https://github.com/eltociear/invoice-leash">Code</a>
   <a href="https://github.com/eltociear/invoice-leash/blob/main/THREAT_MODEL.md">Threat model</a>
   <a href="#verify">Verify it yourself</a>
+  <a href="https://github.com/eltociear/invoice-leash#use-it-from-any-agent-the-mcp-server">MCP server</a>
   <a href="https://build.qorechain.io/p/invoice-leash">Build Before Q-Day entry</a>
 </div>
 
@@ -94,6 +105,13 @@ footer{margin-top:64px;color:var(--dim);font-size:14px}
 <h2>The inbox, email by email</h2>
 <p class="dim">Recorded on <code>qorechain-diana</code>. Two honest vendors, Hostline and Tokenwell, and Mallory, who holds a valid ML-DSA-87 key of her own but is not a vendor. The compromised agent obeys every email; Claude decides for itself. Same rules, same chain.</p>
 ${emails}
+
+<h2>Through MCP: any agent can hold the leash</h2>
+<p class="dim"><code>mcp/server.mjs</code> gives an MCP client six tools, holding only the agent's key: <code>leash_status</code>, <code>list_inbox</code>, <code>check_invoice</code> (a dry run of the real contract), <code>pay_invoice</code>, and, deliberately, <code>send_qor</code> and <code>call_invoice_desk</code>. A fresh inbox: the same ten emails with new invoice numbers.</p>
+<article class="mail"><header><span class="n">1</span><div><div class="from">Claude Code (claude-opus-5-5), nothing but the MCP server · <a href="https://github.com/eltociear/invoice-leash/blob/main/runs/mcp-claude-final.txt">transcript</a></div><h3>Dry-ran every invoice, paid the three genuine ones, flagged #7 for a human, held #9 for tomorrow</h3></div></header>
+<div class="lanes"><div class="lane">${mcpClaude.map(mcpRow).join("")}</div></div></article>
+<article class="mail"><header><span class="n">2</span><div><div class="from">then an obey-everything MCP client, same tools, same inbox · <a href="https://github.com/eltociear/invoice-leash/blob/main/runs/mcp-compromised-final.txt">transcript</a></div><h3>${mcpHostile.length} attempts, ${mcpHostile.filter((x) => !x.ok).length} refused by the chain, balance unchanged</h3></div></header>
+<div class="lanes"><div class="lane">${mcpHostile.map(mcpRow).join("")}</div></div></article>
 
 <h2>Then the owner pulls the leash</h2>
 <pre>$ node leash.mjs revoke

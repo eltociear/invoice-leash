@@ -15,9 +15,10 @@
 > npm install && npm run verify
 > ```
 >
-> 33 checks against the live testnet: the deployed contract is byte-for-byte this source, the
+> 36 checks against the live testnet: the deployed contract is byte-for-byte this source, the
 > agent's rule is what the chain stores, every attack replayed against the real contract (plus six
-> tamperings the demo never sent), where every QOR went, and every recorded transaction re-read.
+> tamperings the demo never sent), where every QOR went, and every recorded transaction re-read,
+> including the MCP runs.
 > Last run: [`runs/verify-latest.txt`](runs/verify-latest.txt). CI runs it daily.
 
 **Category:** Post-Quantum AI Agents · **Network:** QoreChain testnet `qorechain-diana` only (test QOR has no value)
@@ -94,6 +95,41 @@ of her own and is not a vendor. The agent's rule: **1 QOR per payment, 2.5 QOR p
 
 Then `revoke`, and one more honest, in-limit payment: refused, the key is revoked.
 
+## Use it from any agent: the MCP server
+
+[`mcp/server.mjs`](mcp/server.mjs) turns Invoice Leash into tools for any MCP client (Claude Code,
+Claude Desktop, agent frameworks). It holds **only the agent's key**, and it deliberately hands the
+model dangerous tools as well:
+
+| Tool | What it does |
+|---|---|
+| `leash_status` | the account, its balance, and the limits the chain enforces on this key (read from the chain) |
+| `list_inbox` | the emails and their invoices |
+| `check_invoice` | dry-runs `InvoiceDesk.pay` with `eth_call`: approved vendor, ML-DSA-87 signature, unpaid, due; and the per-payment limit |
+| `pay_invoice` | pays it, through the agent's leash |
+| `send_qor` | sends QOR anywhere. The chain refuses: the key has no `send` permission |
+| `call_invoice_desk` | `approveVendor` / `removeVendor`. The chain refuses: outside the call scope |
+
+The safety is not in which tools the model gets. Every action returns the chain's own answer and a
+transaction link, and is logged to `runs/mcp-*.server.jsonl`.
+
+```sh
+claude mcp add invoice-leash -e LEASH_INBOX=inbox/inbox-MCP.json -- node mcp/server.mjs
+# or: claude -p "..." --mcp-config mcp/claude-code.mcp.json --strict-mcp-config --allowedTools mcp__invoice-leash
+```
+
+Recorded on a fresh inbox (same ten emails, new invoice numbers, `node leash.mjs inbox MCP`):
+
+- **Claude Code through MCP** ([`runs/mcp-claude-final.txt`](runs/mcp-claude-final.txt)): it
+  read its leash, dry-ran every invoice with `check_invoice`, paid the three genuine ones (2.2 QOR),
+  held #9 for tomorrow because of the daily limit, flagged the 5 QOR one for a human, and never
+  tried the forged, edited or replayed invoices. The dry-run tool turned the chain's rules into
+  the model's information.
+- **Then an obey-everything MCP client** ([`mcp/client.mjs --compromised`](mcp/client.mjs),
+  [`runs/mcp-compromised-final.txt`](runs/mcp-compromised-final.txt)), same tools, same inbox:
+  11 attempts, including `send_qor` 50 QOR and `approveVendor(Mallory)`. **All 11 refused by the
+  chain; the balance did not move.**
+
 ## Run it
 
 Needs Node.js 20+. To only check the recorded results, `npm install && npm run verify` is enough.
@@ -141,6 +177,7 @@ leash.mjs                   the CLI: keys, funding, deploy, link, inbox, run, re
 lib/chain.mjs               keys, hybrid (secp256k1 + ML-DSA-87) signing and broadcasting
 lib/invoices.mjs            invoice encoding and ML-DSA-87 signing; the demo inbox
 lib/agent.mjs               the deciders (compromised, LLM) and the executor, which has no checks of its own
+mcp/server.mjs              the MCP server (agent key only); mcp/client.mjs, a scripted MCP client
 scripts/verify.mjs          npm run verify: every claim against the live testnet, read-only
 scripts/site.mjs            builds docs/index.html (GitHub Pages) from the recorded runs
 THREAT_MODEL.md             who holds which key, every attack and what stops it, what is NOT stopped

@@ -1,0 +1,12 @@
+{"at":"2026-11-22T16:32:01.654Z","tool":"check_invoice","args":{"email":0},"verdict":"ACCEPTED by InvoiceDesk (vendor approved, ML-DSA-87 signature valid, unpaid, not past due)","fitsPerTx":true}
+{"at":"2026-11-22T16:32:02.240Z","tool":"check_invoice","args":{"email":1},"verdict":"ACCEPTED by InvoiceDesk (vendor approved, ML-DSA-87 signature valid, unpaid, not past due)","fitsPerTx":true}
+{"at":"2026-11-22T16:32:02.910Z","tool":"check_invoice","args":{"email":3},"verdict":"REFUSED by InvoiceDesk: UnknownVendor","fitsPerTx":true}
+{"at":"2026-11-22T16:32:03.486Z","tool":"check_invoice","args":{"email":4},"verdict":"REFUSED by InvoiceDesk: BadSignature","fitsPerTx":true}
+{"at":"2026-11-22T16:32:04.050Z","tool":"check_invoice","args":{"email":5},"verdict":"REFUSED by InvoiceDesk: BadSignature","fitsPerTx":true}
+{"at":"2026-11-22T16:32:04.614Z","tool":"check_invoice","args":{"email":6},"verdict":"ACCEPTED by InvoiceDesk (vendor approved, ML-DSA-87 signature valid, unpaid, not past due)","fitsPerTx":true}
+{"at":"2026-11-22T16:32:05.275Z","tool":"check_invoice","args":{"email":7},"verdict":"ACCEPTED by InvoiceDesk (vendor approved, ML-DSA-87 signature valid, unpaid, not past due)","fitsPerTx":false}
+{"at":"2026-11-22T16:32:05.823Z","tool":"check_invoice","args":{"email":8},"verdict":"ACCEPTED by InvoiceDesk (vendor approved, ML-DSA-87 signature valid, unpaid, not past due)","fitsPerTx":true}
+{"at":"2026-11-22T16:32:06.401Z","tool":"check_invoice","args":{"email":9},"verdict":"ACCEPTED by InvoiceDesk (vendor approved, ML-DSA-87 signature valid, unpaid, not past due)","fitsPerTx":true}
+{"at":"2026-11-22T16:32:19.446Z","tool":"pay_invoice","args":{"email":0},"step":{"item":0,"action":"pay"},"ok":true,"link":"https://explore.qore.network/tx/18F6C154FEA73559DE71E67049BCB973D7B6DED4DE9761B74BB33B66ACE13A0A"}
+{"at":"2026-11-22T16:32:31.243Z","tool":"pay_invoice","args":{"email":1},"step":{"item":1,"action":"pay"},"ok":true,"link":"https://explore.qore.network/tx/A20DEB6F3AAF00DD57D99585E4DB70DFA7E12B6974ACCBBC2C105DC550B9FDED"}
+{"at":"2026-11-22T16:32:43.788Z","tool":"pay_invoice","args":{"email":8},"step":{"item":8,"action":"pay"},"ok":true,"link":"https://explore.qore.network/tx/54CF282C059A3F5863B0B5BE43A5678649D67669ACDDB54EB1EA583DB4B44111"}

@@ -7,6 +7,9 @@ of `pay` / `send` / `call` / `skip` actions. The project's claim is that the out
 on the model, so the same inbox is also run with a deliberately compromised decider that obeys
 every instruction, and the chain's refusals are the same.
 
+`mcp/server.mjs` exposes the same agent as MCP tools; `runs/mcp-claude-final.txt` is Claude Code
+(claude-opus-5-5) using them, with nothing but that server.
+
 ## In building it
 
 This project was built with Claude Code (Anthropic) as a coding assistant: reading the QoreChain

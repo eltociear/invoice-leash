@@ -13,6 +13,8 @@
 //   node leash.mjs rules                     what the chain will enforce for the agent
 //   node leash.mjs inbox                     vendors and attacker write the inbox (inbox/inbox.json)
 //   node leash.mjs run [--compromised|--llm] the agent works through the inbox
+//   node leash.mjs inbox <series>            the same inbox with new invoice numbers (inbox/inbox-<series>.json)
+//   node leash.mjs new-agent                 a new agent key for the same owner (then link)
 //   node leash.mjs fresh-owner              new owner + agent keys for a clean re-run (moves the money, same desk)
 //   node leash.mjs topup [QOR]               owner refills the agent's gas wallet (fees only)
 //   node leash.mjs plan [--llm]              what the decider WOULD do, without touching the chain
@@ -28,11 +30,11 @@ import {
 } from "@qorechain/sdk";
 import {
   CHAIN_ID, EVM_CHAIN_ID, EVM_RPC, REST, EXPLORER, ROLES, account, agentKey, balance, bankSend, broadcast,
-  createKeys, rotateOwnerKeys, accountFromKey, fmt, hex, onChain, readDeployment, toUqor, writeDeployment,
+  createKeys, rotateOwnerKeys, rotateAgentKey, accountFromKey, fmt, hex, onChain, readDeployment, toUqor, writeDeployment,
 } from "./lib/chain.mjs";
 import { buildInbox } from "./lib/invoices.mjs";
 
-const INBOX = new URL("./inbox/inbox.json", import.meta.url);
+const INBOX = process.env.LEASH_INBOX ? new URL(process.env.LEASH_INBOX, `file://${process.cwd()}/`) : new URL("./inbox/inbox.json", import.meta.url);
 const ART = JSON.parse(readFileSync(new URL("./build/InvoiceDesk.json", import.meta.url), "utf8"));
 const loadInbox = () => JSON.parse(readFileSync(INBOX, "utf8"));
 const need = (d, k, hint) => { if (!d[k]) throw new Error(`no ${k} yet: run "node leash.mjs ${hint}" first`); return d[k]; };
@@ -158,13 +160,19 @@ const cmds = {
     console.log(`  agent key: ${me.revoked ? "REVOKED" : "linked"}, may: ${me.permissions.join(",")}, expires ${new Date(Number(me.expiryUnix) * 1000).toISOString().slice(0, 16)}Z, actions so far: ${n.nonce}`);
   },
 
-  async inbox() {
+  async inbox(series = "") {
     const d = readDeployment(), deskAddr = need(d, "invoiceDesk", "deploy");
     const [owner, vendorA, vendorB, attacker] = await Promise.all(["owner", "vendorA", "vendorB", "attacker"].map(account));
-    const inbox = buildInbox({ desk: deskAddr, owner, vendorA, vendorB, attacker });
+    const inbox = buildInbox({ desk: deskAddr, owner, vendorA, vendorB, attacker, series });
+    const file = series ? new URL(`./inbox/inbox-${series}.json`, import.meta.url) : INBOX;
     mkdirSync(new URL("./inbox/", import.meta.url), { recursive: true });
-    writeFileSync(INBOX, JSON.stringify(inbox, null, 2) + "\n");
-    console.log(`inbox/inbox.json: ${inbox.length} emails, ${inbox.filter((m) => m.invoice).length} with ML-DSA-87 signed invoices`);
+    writeFileSync(file, JSON.stringify(inbox, null, 2) + "\n");
+    console.log(`${file.pathname.split("/").slice(-2).join("/")}: ${inbox.length} emails, ${inbox.filter((m) => m.invoice).length} with ML-DSA-87 signed invoices`);
+  },
+
+  /** A new agent key for the same owner (the old one is kept, renamed). Then run "link". */
+  async "new-agent"() {
+    console.log(`old agent key kept as ${rotateAgentKey()}; new agent ed25519 ${hex(agentKey().pk).slice(0, 16)}...`);
   },
 
   async run(mode = "--compromised") {

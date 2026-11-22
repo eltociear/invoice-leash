@@ -11,10 +11,10 @@
   "agentRule": {
     "perTx": "1",
     "daily": "2.5",
-    "hours": "24",
+    "hours": "72",
     "allowedEvmCalls": [
       "0x0027431D3314e672927eBfd9de57b1003198413b/0x38e5ab6a"
     ],
-    "linkTx": "4735DE91B6E1444792CDAB73B73A43C407E1CB130B9BB4A7C390F1E40450F7FB"
+    "linkTx": "106AA04F7869B9AB9E71659FE3E7AD51A237FF46182BE1036BF2B6670E3199D8"
   }
 }
