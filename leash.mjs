@@ -19,7 +19,7 @@
 //   node leash.mjs topup [QOR]               owner refills the agent's gas wallet (fees only)
 //   node leash.mjs plan [--llm]              what the decider WOULD do, without touching the chain
 //   node leash.mjs approve <email>           a human pays an over-limit invoice the agent could not
-//   node leash.mjs fresh-owner-v2 | deploy-v2 [allowance] | link-v2 [perTx daily h] | inbox-v2 | run-v2 [--compromised|--llm]
+//   node leash.mjs fresh-owner-v2 | convert-fusd | deploy-v2 [perTx daily allowance h] | inbox-v2 | run-v2 [--compromised|--llm]
 //                  approve-v2 <email> | balance-v2      v2: invoices in fUSD through InvoiceDeskV2
 //   node leash.mjs revoke                    owner switches the agent off in one transaction
 //   node leash.mjs after-revoke              the agent tries one more honest payment
@@ -32,7 +32,7 @@ import {
 } from "@qorechain/sdk";
 import {
   CHAIN_ID, EVM_CHAIN_ID, EVM_RPC, REST, EXPLORER, ROLES, account, agentKey, balance, bankSend, broadcast,
-  createKeys, rotateOwnerKeys, rotateAgentKey, accountFromKey, fmt, hex, onChain, readDeployment, toUqor, writeDeployment,
+  createKeys, rotateOwnerKeys, rotateAgentKey, convertCoin, accountFromKey, fmt, hex, onChain, readDeployment, toUqor, writeDeployment,
 } from "./lib/chain.mjs";
 import { buildInbox, buildInboxV2, FUSD, toFusd } from "./lib/invoices.mjs";
 
@@ -43,6 +43,10 @@ const INBOX2 = new URL("./inbox/inbox-v2.json", import.meta.url);
 const ERC20 = ["function approve(address,uint256) returns (bool)", "function allowance(address,address) view returns (uint256)", "function balanceOf(address) view returns (uint256)", "function transfer(address,uint256) returns (bool)"];
 const fusd = (u) => `${(Number(u) / 1e6).toLocaleString("en-US", { maximumFractionDigits: 6 })} fUSD`;
 const v2 = () => need(readDeployment(), "v2", "deploy-v2");
+// The agent account's rule must list (and bound) at least one denom, and the chain must be able to
+// measure it, so it lists fBTC with a 1-satoshi limit: a token the agent account does not hold.
+// Neither QOR nor fUSD is listed, so the agent's key cannot move either (measured on diana).
+const NO_DENOM = "erc20/0x4604e7e45b2ecdbfbdc157103f5b2b62cb16451a";
 const loadInbox = () => JSON.parse(readFileSync(INBOX, "utf8"));
 const need = (d, k, hint) => { if (!d[k]) throw new Error(`no ${k} yet: run "node leash.mjs ${hint}" first`); return d[k]; };
 
@@ -275,47 +279,74 @@ const cmds = {
     await cmds.register("owner");
   },
 
-  /** Owner deploys InvoiceDeskV2, approves the two vendors, and gives the desk an fUSD allowance (the AP budget). */
-  async "deploy-v2"(allowanceFusd = "600") {
-    const o = await account("owner"), a = await account("vendorA"), b = await account("vendorB");
-    const res = await broadcast(o, [openEvmWindowMsg({ sender: o.cosmos, blocks: 600, maxTxs: 4, maxValue: String(toUqor("3")) })], "leash: owner window (v2)");
-    if (res.code) throw new Error(`open window REFUSED code ${res.code}: ${res.rawLog}`);
+  /** Convert the owner's fUSD bank coin (faucet form) into its ERC-20 balance, which contracts can spend. */
+  async "convert-fusd"(amount) {
+    const o = await account("owner");
+    const fb = (await (await fetch(`${REST}/cosmos/bank/v1beta1/balances/${o.cosmos}`)).json()).balances.find((b) => b.denom.toLowerCase() === `erc20:${FUSD}`.toLowerCase());
+    if (!fb) throw new Error("no fUSD bank coin on the owner");
+    const amt = amount ? String(toFusd(amount)) : fb.amount;
+    const res = await broadcast(o, [convertCoin(o.cosmos, o.evmAddr, fb.denom, amt)], "leash: fUSD coin -> ERC-20");
+    console.log(res.code === 0 ? `converted ${fusd(amt)} to the ERC-20 balance of ${o.evmAddr}  ${EXPLORER}${res.transactionHash}` : `REFUSED code ${res.code}: ${res.rawLog}`);
+  },
+
+  /**
+   * v2 setup, all by the owner (hybrid ML-DSA-87 txs):
+   *  - the agent ACCOUNT ("agentacct"): a separate account that will hold no money. Its own key
+   *    (kept by the human) registers its ML-DSA-87 key and links the agent's ed25519 key to it with a
+   *    rule that allows NO denom and exactly one call, InvoiceDeskV2.pay;
+   *  - InvoiceDeskV2 deployed by the owner, who approves the vendors, names the agent account,
+   *    sets the fUSD limits and gives the desk an fUSD allowance (the budget).
+   */
+  async "deploy-v2"(perTx = "100", daily = "250", allowance = "600", hours = "72") {
+    const { ensureRoleKey } = await import("./lib/chain.mjs");
+    if (ensureRoleKey("agentacct")) console.log("created the agent account's key (agentacct) in the keys file");
+    const o = await account("owner"), aa = await account("agentacct"), a = await account("vendorA"), b = await account("vendorB");
+    // 1. the agent account: fee money, ML-DSA-87 key
+    if (BigInt(await balance(aa.cosmos)) < toUqor("0.5")) {
+      const f = await broadcast(o, [bankSend(o.cosmos, aa.cosmos, toUqor("1"))], "leash: fee money for the agent account");
+      if (f.code) throw new Error(`fund REFUSED ${f.rawLog}`);
+      console.log(`agent account ${aa.cosmos} (${aa.evmAddr}) funded with 1 QOR for its own setup fees`);
+      await new Promise((r) => setTimeout(r, 6000));
+    }
+    await cmds.register("agentacct");
+    // 2. the desk
+    const w = await broadcast(o, [openEvmWindowMsg({ sender: o.cosmos, blocks: 600, maxTxs: 8, maxValue: String(toUqor("3")) })], "leash: owner window (v2)");
+    if (w.code) throw new Error(`open window REFUSED code ${w.code}: ${w.rawLog}`);
     const wallet = new Wallet(o.privateKey, new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID));
     const c = await new ContractFactory(ART2.abi, ART2.bytecode, wallet).deploy();
     await c.waitForDeployment();
-    const deskAddr = await c.getAddress();
-    console.log(`InvoiceDeskV2 deployed at ${deskAddr}  (tx ${c.deploymentTransaction().hash})`);
-    const txs = { deploy: c.deploymentTransaction().hash };
-    for (const v of [a, b]) { const tx = await c.approveVendor(v.evmAddr); await tx.wait(); txs[`approve_${v.role}`] = tx.hash; console.log(`owner approved vendor ${v.role}  (tx ${tx.hash})`); }
-    const t = new Contract(FUSD, ERC20, wallet);
-    const tx = await t.approve(deskAddr, toFusd(allowanceFusd)); await tx.wait(); txs.allowance = tx.hash;
-    console.log(`owner gave the desk an allowance of ${allowanceFusd} fUSD  (tx ${tx.hash})`);
+    const deskAddr = await c.getAddress(), txs = { window: w.transactionHash, deploy: c.deploymentTransaction().hash };
+    console.log(`InvoiceDeskV2 deployed at ${deskAddr}`);
+    const step = async (label, p) => { const tx = await p; await tx.wait(); txs[label] = tx.hash; console.log(`  ${label.padEnd(18)} ${tx.hash}`); };
+    await step("approve_hostline", c.approveVendor(a.evmAddr));
+    await step("approve_tokenwell", c.approveVendor(b.evmAddr));
+    await step("set_agent", c.setAgent(aa.evmAddr, true));
+    await step("set_limit_fusd", c.setLimit(FUSD, toFusd(perTx), toFusd(daily)));
+    await step("fusd_allowance", new Contract(FUSD, ERC20, wallet).approve(deskAddr, toFusd(allowance)));
     const close = await broadcast(o, [closeEvmWindowMsg(o.cosmos)], "leash: close window");
     console.log(close.code === 0 ? "EVM window closed" : `close window: code ${close.code}`);
-    writeDeployment({ ...readDeployment(), v2: { invoiceDesk: deskAddr, token: FUSD, owner: o.cosmos, allowanceFusd, txs } });
+    writeDeployment({ ...readDeployment(), v2: { invoiceDesk: deskAddr, token: FUSD, payer: o.cosmos, payerEvm: o.evmAddr, agentAccount: aa.cosmos, agentAccountEvm: aa.evmAddr,
+      limits: { perTx, daily, allowance }, txs } });
+    await cmds["link-v2"](hours);
   },
 
-  /** Link the agent for v2: fUSD is the ONLY denom it may move (no QOR at all), per-denom limits, pay() only. */
-  async "link-v2"(perTx = "100", daily = "250", hours = "72") {
-    const d = v2(), o = await account("owner"), k = agentKey();
-    const paySel = new Interface(ART2.abi).getFunction("pay").selector;
-    const denom = `erc20/${FUSD.toLowerCase()}`;
-    const proof = signAuthenticatorLinkEd25519({ chainId: CHAIN_ID, account: o.cosmos, privateKey: k.sk });
+  /** Link the agent's key to its own account: no real denom, exactly one call (InvoiceDeskV2.pay). */
+  async "link-v2"(hours = "72") {
+    const d = v2(), aa = await account("agentacct"), deskAddr = d.invoiceDesk;
+    const k = agentKey(), paySel = new Interface(ART2.abi).getFunction("pay").selector;
+    const proof = signAuthenticatorLinkEd25519({ chainId: CHAIN_ID, account: aa.cosmos, privateKey: k.sk });
     const msgs = linkAuthenticatorMsgs({
-      owner: o.cosmos, chainId: CHAIN_ID, ...proof, permissions: ["evm"],
+      owner: aa.cosmos, chainId: CHAIN_ID, ...proof, permissions: ["evm"],
       expiryUnix: Math.floor(Date.now() / 1000) + Number(hours) * 3600, label: "leash invoice agent v2",
-      spendingRule: {
-        id: "leash-v2", enabled: true, perTxLimit: "0", dailyLimit: "0",
-        allowedDenoms: [denom], denomLimits: [{ denom, perTxLimit: String(toFusd(perTx)), dailyLimit: String(toFusd(daily)) }],
-        allowedEvmCalls: [`${d.invoiceDesk.toLowerCase()}/${paySel}`],
-      },
+      spendingRule: { id: "leash-v2", enabled: true, perTxLimit: "0", dailyLimit: "0", allowedDenoms: [NO_DENOM], denomLimits: [{ denom: NO_DENOM, perTxLimit: "1", dailyLimit: "1" }],
+        allowedEvmCalls: [`${deskAddr.toLowerCase()}/${paySel}`] },
     });
-    const res = await broadcast(o, msgs, "leash: link agent (v2, fUSD)");
-    if (res.code) { console.log(`REFUSED code ${res.code}: ${res.rawLog}`); process.exitCode = 1; return; }
-    console.log(`agent linked to ${o.cosmos}: may move fUSD only (${perTx} per payment, ${daily} per day), may call ${d.invoiceDesk}/${paySel} only, ${hours} h\n  ${EXPLORER}${res.transactionHash}`);
-    writeDeployment({ ...readDeployment(), v2: { ...d, agentRule: { perTx, daily, hours, denom, allowedEvmCalls: [`${d.invoiceDesk}/${paySel}`], linkTx: res.transactionHash } } });
+    const l = await broadcast(aa, msgs, "leash: link agent to its own account (v2)");
+    if (l.code) throw new Error(`link REFUSED code ${l.code}: ${l.rawLog}`);
+    
+    console.log(`agent key linked to the agent account: no denom, only ${deskAddr}/${paySel}, ${hours} h  ${EXPLORER}${l.transactionHash}`);
+    writeDeployment({ ...readDeployment(), v2: { ...v2(), agentRule: { allowedDenoms: [NO_DENOM], allowedEvmCalls: [`${deskAddr}/${paySel}`], hours, linkTx: l.transactionHash } } });
   },
-
   async "inbox-v2"(series = "", due) {
     const d = v2();
     const [owner, vendorA, vendorB, attacker] = await Promise.all(["owner", "vendorA", "vendorB", "attacker"].map(account));
@@ -328,7 +359,7 @@ const cmds = {
   async "run-v2"(mode = "--compromised") {
     const { planCompromisedV2, planLlm, executeV2, describeV2 } = await import("./lib/agent.mjs");
     const d = v2(), inbox = JSON.parse(readFileSync(process.env.LEASH_INBOX2 ? new URL(process.env.LEASH_INBOX2, `file://${process.cwd()}/`) : INBOX2, "utf8"));
-    const o = await account("owner"), token = new Contract(FUSD, ERC20, new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID));
+    const o = await account("owner"), token = new Contract(FUSD, ERC20, new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID)); // the payer's money
     const before = await token.balanceOf(o.evmAddr), beforeQ = await balance(o.cosmos);
     const plan = mode === "--llm" ? await planLlm(inbox) : planCompromisedV2(inbox);
     console.log(`decider: ${mode === "--llm" ? "LLM (Claude)" : "COMPROMISED (obeys every instruction it reads)"}\nowner ${o.cosmos}  ${fusd(before)}, ${fmt(beforeQ)}\n`);
@@ -336,7 +367,7 @@ const cmds = {
     for (const step of plan) {
       const m = inbox[step.item];
       if (step.action === "skip") { console.log(`- [${step.item}] ${m.subject}\n    agent: skip${step.why ? ` (${step.why})` : ""}`); log.push({ ...step, result: "skipped" }); continue; }
-      const r = await executeV2(step, inbox, d.invoiceDesk);
+      const r = await executeV2(step, inbox, d);
       const verdict = r.ok ? `PAID${r.hybrid ? "  hybrid ML-DSA-87: verified" : ""}` : r.infra ? `NOT SENT (our side): ${r.why}` : `REFUSED BY THE CHAIN: ${r.why}`;
       console.log(`- [${step.item}] ${m.subject}\n    agent: ${describeV2(step, inbox)}${step.why ? `  (${step.why})` : ""}\n    chain: ${verdict}${r.link ? `\n           ${r.link}` : ""}`);
       const { invoice, ...rest } = step;

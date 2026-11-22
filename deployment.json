@@ -16,5 +16,38 @@
       "0x0027431D3314e672927eBfd9de57b1003198413b/0x38e5ab6a"
     ],
     "linkTx": "106AA04F7869B9AB9E71659FE3E7AD51A237FF46182BE1036BF2B6670E3199D8"
+  },
+  "v2": {
+    "invoiceDesk": "0xe53Be6C5b96E099Fd9610bBb56BAe564f12dEf98",
+    "token": "0x97143B771D34ddb9130b807b135Ae675A5a963CA",
+    "payer": "qor16fluqkmkgaqq98hkgdyccny93gwsm32c4awtmg",
+    "payerEvm": "0xd27fc05b764740029ef643498c4c858a1d0dc558",
+    "agentAccount": "qor1llw052ph5xqwm2cv2ene8mtqv4lt2epfl5tr3f",
+    "agentAccountEvm": "0xffdcfa2837a180edab0c566793ed60657eb56429",
+    "limits": {
+      "perTx": "100",
+      "daily": "250",
+      "allowance": "600"
+    },
+    "agentRule": {
+      "allowedDenoms": [
+        "erc20/0x4604e7e45b2ecdbfbdc157103f5b2b62cb16451a"
+      ],
+      "allowedEvmCalls": [
+        "0xe53Be6C5b96E099Fd9610bBb56BAe564f12dEf98/0xf19ff4ff"
+      ],
+      "hours": "72",
+      "linkTx": "B4714E929FB9B968350FB3FF7353C74D4138193D614276E4FA7222E68D3B91A5"
+    },
+    "txs": {
+      "window": "975F5091C310D3B02E9F122076BB4079BDFF86D4120A4F5AC31843197E2ADB29",
+      "deploy": "0x9f979e23dadfe9410351a8461c6f8dbc91fc36b16fa7aa947e37c9287a853ed0",
+      "approve_hostline": "0x0f8dc5d6172dd3bffbf137a9a46125b701a5e305c23f5f96fb4730be0fde2d32",
+      "approve_tokenwell": "0xc7a85737f26a99fa300b02c08495921bb3c8a01e773c1f580efbcbfe64feeb86",
+      "set_agent": "0x7b6f4f394e69638ed8a1f1355aa97dd563de32eca0c2b3b522d8bf16722c6b21",
+      "set_limit_fusd": "0xef43547e5adc6d7006a97256b62b9b28cdf0865cef6bca22ea593f8d5189403b",
+      "fusd_allowance": "0x243b94b6a705c1a3afe60ac0b8adf69b117502d06abe87e5e233f0fecdf51493",
+      "link": "B3683E73AC6091E5E66561437B7BFDA3871ABC74F4FABDB8C485EE40E8F65196"
+    }
   }
 }

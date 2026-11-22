@@ -25,13 +25,13 @@ contract FalseToken {
 contract InvoiceDeskV2Test is Test {
     address constant VERIFY = 0x0000000000000000000000000000000000000a01;
     address constant STATUS = 0x0000000000000000000000000000000000000a02;
-    uint256 constant N = 12;
+    uint256 constant N = 13;
     string fx;
     InvoiceDeskV2 desk;
     MockToken fusd;
     address payer; address payer2; address hostline; address tokenwell; address mallory; address otherToken;
 
-    event InvoicePaid(address indexed payer, address indexed vendor, bytes32 indexed id, address token, uint256 amount);
+    event InvoicePaid(address indexed payer, address indexed vendor, bytes32 indexed id, address token, uint256 amount, address by);
 
     struct Case { bytes pubkey; bytes signature; bytes message; bool valid; address payer; address vendor; address token; uint256 amount; bytes32 id; uint64 dueBy; }
 
@@ -84,7 +84,7 @@ contract InvoiceDeskV2Test is Test {
     }
     function _pay(Case memory c, uint256 value) internal {
         vm.prank(c.payer);
-        desk.pay{value: value}(c.token, payable(c.vendor), c.amount, c.id, c.dueBy, c.signature);
+        desk.pay{value: value}(c.payer, c.token, payable(c.vendor), c.amount, c.id, c.dueBy, c.signature);
     }
 
     function test_standIn_answers_as_real_mldsa87() public view {
@@ -105,7 +105,7 @@ contract InvoiceDeskV2Test is Test {
     function test_pays_fusd_invoice_from_the_payers_balance() public {
         Case memory c = _named("genuine_fusd");
         vm.expectEmit(true, true, true, true, address(desk));
-        emit InvoicePaid(c.payer, c.vendor, c.id, c.token, c.amount);
+        emit InvoicePaid(c.payer, c.vendor, c.id, c.token, c.amount, c.payer);
         _pay(c, 0);
         assertEq(fusd.balanceOf(hostline), 80e6);
         assertEq(fusd.balanceOf(payer), 920e6);
@@ -138,7 +138,7 @@ contract InvoiceDeskV2Test is Test {
             Case memory c = _named(names[i]);
             vm.prank(payer);
             vm.expectRevert(InvoiceDeskV2.BadSignature.selector);
-            desk.pay(c.token, payable(c.vendor), c.amount, c.id, c.dueBy, c.signature);
+            desk.pay(c.payer, c.token, payable(c.vendor), c.amount, c.id, c.dueBy, c.signature);
         }
         assertEq(fusd.balanceOf(payer), 1000e6);
     }
@@ -151,14 +151,14 @@ contract InvoiceDeskV2Test is Test {
         fusd.approve(other, 600e6);
         Case memory c = _named("genuine_fusd"); // signed for the first desk
         vm.expectRevert(InvoiceDeskV2.BadSignature.selector);
-        InvoiceDeskV2(other).pay(c.token, payable(c.vendor), c.amount, c.id, c.dueBy, c.signature);
+        InvoiceDeskV2(other).pay(c.payer, c.token, payable(c.vendor), c.amount, c.id, c.dueBy, c.signature);
         vm.stopPrank();
     }
 
     function test_refuses_other_payer() public {
         vm.prank(payer2);
         desk.approveVendor(hostline);
-        Case memory c = _named("other_payer");
+        Case memory c = _named("other_payer"); // fields name payer2, signature is for payer
         vm.expectRevert(InvoiceDeskV2.BadSignature.selector);
         _pay(c, 0);
     }
@@ -224,7 +224,7 @@ contract InvoiceDeskV2Test is Test {
         vm.assume(amount != c.amount && amount <= 600e6);
         vm.prank(payer);
         vm.expectRevert(InvoiceDeskV2.BadSignature.selector);
-        desk.pay(c.token, payable(c.vendor), amount, c.id, c.dueBy, c.signature);
+        desk.pay(c.payer, c.token, payable(c.vendor), amount, c.id, c.dueBy, c.signature);
     }
 
     function testFuzz_any_other_token_is_refused(address token) public {
@@ -232,6 +232,130 @@ contract InvoiceDeskV2Test is Test {
         vm.assume(token != c.token);
         vm.prank(payer);
         vm.expectRevert(InvoiceDeskV2.BadSignature.selector);
-        desk.pay(token, payable(c.vendor), c.amount, c.id, c.dueBy, c.signature);
+        desk.pay(c.payer, token, payable(c.vendor), c.amount, c.id, c.dueBy, c.signature);
+    }
+
+    // ------------------------------------------------------------------ the agent: its own account, the payer's money
+
+    address agent = address(0xA9E7);
+
+    function _asAgent() internal {
+        vm.startPrank(payer);
+        desk.setAgent(agent, true);
+        desk.setLimit(address(fusd), 100e6, 250e6);
+        vm.stopPrank();
+    }
+    function _agentPays(Case memory c) internal {
+        vm.prank(agent);
+        desk.pay(c.payer, c.token, payable(c.vendor), c.amount, c.id, c.dueBy, c.signature);
+    }
+
+    function test_agent_pays_from_the_payers_balance_and_holds_nothing() public {
+        _asAgent();
+        Case memory c = _named("genuine_fusd");
+        vm.expectEmit(true, true, true, true, address(desk));
+        emit InvoicePaid(c.payer, c.vendor, c.id, c.token, c.amount, agent);
+        _agentPays(c);
+        assertEq(fusd.balanceOf(hostline), 80e6);
+        assertEq(fusd.balanceOf(payer), 920e6);
+        assertEq(fusd.balanceOf(agent), 0);
+        assertEq(desk.remainingToday(payer, address(fusd)), 170e6);
+    }
+
+    function test_unnamed_account_cannot_pay_for_the_payer() public {
+        Case memory c = _named("genuine_fusd");
+        vm.expectRevert(abi.encodeWithSelector(InvoiceDeskV2.NotPayersAgent.selector, agent));
+        _agentPays(c);
+    }
+
+    function test_removing_the_agent_is_a_kill_switch() public {
+        _asAgent();
+        vm.prank(payer);
+        desk.setAgent(agent, false);
+        vm.expectRevert(abi.encodeWithSelector(InvoiceDeskV2.NotPayersAgent.selector, agent));
+        _agentPays(_named("genuine_fusd"));
+    }
+
+    function test_agent_limits_are_the_payers_alone() public {
+        _asAgent();
+        // the agent configures ITS OWN payer entry: no effect on the payer's limits or agents
+        vm.startPrank(agent);
+        desk.setLimit(address(fusd), type(uint256).max, type(uint256).max);
+        desk.setAgent(mallory, true);
+        desk.approveVendor(mallory);
+        vm.stopPrank();
+        (uint256 perPayment, uint256 daily) = desk.limits(payer, address(fusd));
+        assertEq(perPayment, 100e6); assertEq(daily, 250e6);
+        assertFalse(desk.isAgent(payer, mallory));
+        assertFalse(desk.approved(payer, mallory));
+    }
+
+    function test_agent_without_limits_pays_nothing() public {
+        vm.prank(payer);
+        desk.setAgent(agent, true); // named, but no limit set for fUSD
+        vm.expectRevert(abi.encodeWithSelector(InvoiceDeskV2.OverPerPaymentLimit.selector, 80e6, 0));
+        _agentPays(_named("genuine_fusd"));
+    }
+
+    function test_agent_per_payment_limit() public {
+        vm.startPrank(payer);
+        desk.setAgent(agent, true);
+        desk.setLimit(address(fusd), 79e6, 250e6);
+        vm.stopPrank();
+        vm.expectRevert(abi.encodeWithSelector(InvoiceDeskV2.OverPerPaymentLimit.selector, 80e6, 79e6));
+        _agentPays(_named("genuine_fusd"));
+    }
+
+    function test_agent_daily_limit_and_utc_day_reset() public {
+        vm.startPrank(payer);
+        desk.setAgent(agent, true);
+        desk.setLimit(address(fusd), 100e6, 100e6);
+        vm.stopPrank();
+        vm.warp(1795046400 + 3600); // 01:00 UTC
+        _agentPays(_named("genuine_fusd")); // 80 of 100
+        Case memory second = _named("tokenwell_genuine_fusd"); // 60 more: 140 > 100
+        vm.expectRevert(abi.encodeWithSelector(InvoiceDeskV2.OverDailyLimit.selector, 80e6, 60e6, 100e6));
+        _agentPays(second);
+        vm.warp(1795046400 + 86400 + 60); // next UTC day
+        _agentPays(second);
+        assertEq(fusd.balanceOf(tokenwell), 60e6);
+    }
+
+    function test_refused_agent_payments_do_not_count() public {
+        _asAgent();
+        vm.expectRevert(InvoiceDeskV2.BadSignature.selector);
+        _agentPays(_named("amount_edited"));
+        assertEq(desk.remainingToday(payer, address(fusd)), 250e6);
+    }
+
+    function test_agent_cannot_pay_native_qor() public {
+        _asAgent();
+        Case memory c = _named("genuine_native_qor");
+        vm.deal(agent, 1 ether);
+        vm.prank(agent);
+        vm.expectRevert(InvoiceDeskV2.AgentCannotPayNative.selector);
+        desk.pay{value: c.amount}(c.payer, c.token, payable(c.vendor), c.amount, c.id, c.dueBy, c.signature);
+    }
+
+    function test_payer_in_person_is_not_bound_by_agent_limits() public {
+        vm.prank(payer);
+        desk.setLimit(address(fusd), 1, 1);
+        _pay(_named("genuine_fusd"), 0); // the human approval path
+        assertEq(fusd.balanceOf(hostline), 80e6);
+    }
+
+    /// For any limits the payer sets, the agent's 80 fUSD payment succeeds exactly when it fits both.
+    function testFuzz_agent_limits_decide_exactly(uint256 perPayment, uint256 daily) public {
+        perPayment = bound(perPayment, 0, 200e6);
+        daily = bound(daily, 0, 200e6);
+        vm.startPrank(payer);
+        desk.setAgent(agent, true);
+        desk.setLimit(address(fusd), perPayment, daily);
+        vm.stopPrank();
+        Case memory c = _named("genuine_fusd");
+        if (c.amount > perPayment) vm.expectRevert(abi.encodeWithSelector(InvoiceDeskV2.OverPerPaymentLimit.selector, c.amount, perPayment));
+        else if (c.amount > daily) vm.expectRevert(abi.encodeWithSelector(InvoiceDeskV2.OverDailyLimit.selector, 0, c.amount, daily));
+        _agentPays(c);
+        assertEq(fusd.balanceOf(hostline), c.amount <= perPayment && c.amount <= daily ? c.amount : 0);
     }
 }

@@ -89,7 +89,8 @@ console.log(`test/fixtures/mldsa.json: ${cases.length} cases, ${cases.filter((c)
   add2("one_bit_flipped", "hostline", f2, {});
   add2("mallory_own_invoice", "mallory", s2("mallory", { vendor: A.mallory, amount: 60000000n }), { vendor: A.mallory, amount: 60000000n });
   add2("genuine_native_qor", "hostline", s2("hostline", { token: T.zero, amount: 800000000000000000n, id: keccak256(toUtf8Bytes("HOSTLINE-V2-QOR")) }), { token: T.zero, amount: 800000000000000000n, id: keccak256(toUtf8Bytes("HOSTLINE-V2-QOR")) });
-  const valid2 = new Set(["genuine_fusd", "mallory_own_invoice", "genuine_native_qor"]);
+  add2("tokenwell_genuine_fusd", "tokenwell", s2("tokenwell", { vendor: A.tokenwell, amount: 60000000n, id: keccak256(toUtf8Bytes("TOKENWELL-V2-8781")) }), { vendor: A.tokenwell, amount: 60000000n, id: keccak256(toUtf8Bytes("TOKENWELL-V2-8781")) });
+  const valid2 = new Set(["genuine_fusd", "mallory_own_invoice", "genuine_native_qor", "tokenwell_genuine_fusd"]);
   for (const c of cases2) if (c.valid !== valid2.has(c.name)) throw new Error(`v2 fixture ${c.name}: real ML-DSA-87 says ${c.valid}`);
   writeFileSync(new URL("./fixtures/mldsa-v2.json", import.meta.url), JSON.stringify({ note: out.note, chainId: 9800, addresses: A, tokens: T, keys: out.keys, cases: cases2 }, null, 1) + "\n");
   console.log(`test/fixtures/mldsa-v2.json: ${cases2.length} cases, ${cases2.filter((c) => c.valid).length} valid under real ML-DSA-87`);
