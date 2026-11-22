@@ -1,0 +1,33 @@
+{
+  "note": "What a QoreChain spending-rule-bound key can move, measured on qorechain-diana on 2026-11-22. Each probe is one MsgExecuteEVM by the agent's ed25519 key, relayed by the gas wallet. `npm run verify` re-reads every tx.",
+  "probes": [
+    { "id": "v1-value", "account": "payer (v1 design: the agent acts as the payer)", "rule": "evm; per-tx 1 QOR, daily 2.5 QOR; allowed_evm_calls = [InvoiceDesk.pay]",
+      "action": "plain EVM value transfer, 0.01 QOR, empty call data, to a fresh address", "expect": "executed",
+      "tx": "779FAF6E8871B3FFF1D0D2D129AC904529E78E5198718C1DD630676E05AD4CEC",
+      "lesson": "allowed_evm_calls scopes calls with data; value-only transfers are bounded only by the value limits" },
+    { "id": "listed-erc20-value", "account": "payer", "rule": "allowed_denoms = [erc20/fUSD] with per-denom limits; allowed_evm_calls = [InvoiceDeskV2.pay]",
+      "action": "plain EVM value transfer, 0.01 QOR", "expect": "refused", "reason": "denom uqor not allowed",
+      "tx": "3B496E0EC4F69DFAB62FA2ABC6E3C0A0AB1812D72DA5254956964F0AE18C5608", "lesson": "allowed_denoms without uqor stops QOR" },
+    { "id": "listed-erc20-transfer", "account": "payer", "rule": "allowed_denoms = [erc20/fUSD] with per-denom limits; allowed_evm_calls = [InvoiceDeskV2.pay]",
+      "action": "fUSD.transfer(fresh address, 1 fUSD), straight to the token contract", "expect": "executed",
+      "tx": "0A40A4513548A433D8B49CF8D32ECEC089AE8F1B7D174AB82B3C67C6D67C91C2",
+      "lesson": "listing an ERC-20 in allowed_denoms lets the key transfer/approve it directly, bypassing any contract" },
+    { "id": "unlisted-erc20-transfer", "account": "payer", "rule": "allowed_denoms = [placeholder]; allowed_evm_calls = [InvoiceDeskV2.pay]",
+      "action": "fUSD.transfer(fresh address, 1 fUSD)", "expect": "refused", "reason": "may call the token only if allowed_evm_calls lists it, or the token is listed",
+      "tx": "B9C8C49ADEA2643A03D643A8A20C3F4D2E393D407EFBAD6523C9E7E0604437EB" },
+    { "id": "unlisted-erc20-via-allowed-call", "account": "payer", "rule": "allowed_denoms = [placeholder]; allowed_evm_calls = [InvoiceDeskV2.pay]",
+      "action": "InvoiceDeskV2.pay of a genuine 1 fUSD invoice (desk pulls fUSD from this account)", "expect": "refused",
+      "reason": "the call made a token transfer from the account on fUSD, which the rule does not list",
+      "tx": "4F54B0C09E51590A8761550B807D2E90EE01FB4BB96E3B39C92930DCAA2B6FC9",
+      "lesson": "the chain measures ERC-20 outflow from the account on every path; so an agent acting AS the payer either cannot pay in fUSD or can send fUSD anywhere" },
+    { "id": "unlisted-value", "account": "payer", "rule": "allowed_denoms = [placeholder]", "action": "plain EVM value transfer, 0.01 QOR", "expect": "refused",
+      "tx": "9931561413CEE3A58BC51ED2E8A314953FE57F8F07F5C05A2192E46C30DD0B0B" },
+    { "id": "placeholder-without-code", "account": "agent account (v2)", "rule": "allowed_denoms = [erc20/0x…dEaD]",
+      "action": "InvoiceDeskV2.pay, 1 fUSD", "expect": "refused", "reason": "cannot measure the balance of listed token 0x…dEaD",
+      "tx": "0AA6646258EE9328A397C24355389E59CAB76178BC8DB592FCE4348B63CF8399", "lesson": "a listed denom must be a real token the chain can measure (v2 lists fBTC, 1 satoshi, which the agent account does not hold)" },
+    { "id": "v2-agent-account-pays", "account": "agent account (v2, holds nothing)", "rule": "allowed_denoms = [erc20/fBTC, 1 satoshi]; allowed_evm_calls = [InvoiceDeskV2.pay]",
+      "action": "InvoiceDeskV2.pay of a genuine 1 fUSD invoice; the desk pulls fUSD from the PAYER's account", "expect": "executed",
+      "tx": "C4C05CA9BFBD9F245B22C870BFE7CB577C752EADAF1A650D77358CFEEE000591",
+      "lesson": "the v2 design: the agent's own account moves nothing, the payer's money moves only through the desk" }
+  ]
+}

@@ -230,7 +230,40 @@ npm install && npm run verify</pre>
   ✓ obey-everything MCP client: 11 attempts (send, approveVendor, every invoice), all 11 refused by the chain, each re-read
   ✓ MCP inbox: paid() is true for exactly the 3 genuine in-limit invoices (2.2 QOR)  HOSTLINE-2026-11-0042-MCP, TOKENWELL-INV-7781-MCP, HOSTLINE-2026-11-0043-MCP
 
-✓ 38 checks passed, 0 failed  (qorechain-diana, block 10565431)
+8. Probes: what a spending-rule-bound key can move (runs/probes/probes.json)
+  ✓ v1-value                         EXECUTED plain EVM value transfer, 0.01 QOR, empty call data, to a fresh addres
+  ✓ listed-erc20-value               REFUSED  plain EVM value transfer, 0.01 QOR  (denom uqor not allowed for this linked key: authenticator not permitte)
+  ✓ listed-erc20-transfer            EXECUTED fUSD.transfer(fresh address, 1 fUSD), straight to the token contract
+  ✓ unlisted-erc20-transfer          REFUSED  fUSD.transfer(fresh address, 1 fUSD)  (a linked key with a spending rule may call 0x97143B771D34ddb9130b807b1)
+  ✓ unlisted-erc20-via-allowed-call  REFUSED  InvoiceDeskV2.pay of a genuine 1 fUSD invoice (desk pulls fUSD from th  (the call made a token transfer from the account on 0x97143B771D34ddb91)
+  ✓ unlisted-value                   REFUSED  plain EVM value transfer, 0.01 QOR  (denom uqor not allowed for this linked key: authenticator not permitte)
+  ✓ placeholder-without-code         REFUSED  InvoiceDeskV2.pay, 1 fUSD  (cannot measure the balance of listed token 0x0000000000000000000000000)
+  ✓ v2-agent-account-pays            EXECUTED InvoiceDeskV2.pay of a genuine 1 fUSD invoice; the desk pulls fUSD fro
+
+9. v2: fUSD invoices; the agent acts as its own account, which holds nothing
+  ✓ bytecode at 0xe53Be6C5b96E099Fd9610bBb56BAe564f12dEf98 == contracts/InvoiceDeskV2.sol
+  ✓ agent key linked to the agent account qor1llw052ph5xqwm2cv2ene8mtqv4lt2epfl5tr3f with &quot;evm&quot; only
+  ✓ its rule lists no real denom: not QOR, not fUSD (only fBTC, 1 satoshi, which it does not hold)  (erc20/0x4604e7e45b2ecdbfbdc157103f5b2b62cb16451a)
+  ✓ exactly one call: InvoiceDeskV2.pay (0xf19ff4ff)
+  ✓ the payer named this agent account; its limits: 100 fUSD per payment, 250 fUSD per day
+  ✓ Mallory is neither an approved vendor nor an agent of the payer
+  ✓ the agent account holds 0 fUSD
+  ✓ Mallory holds 0 fUSD (ERC-20 and bank side)
+  ✓ compromised v2 run: 16 recorded verdicts match the chain  (3 paid, 13 refused)
+  ✓ that run moved exactly 220 fUSD (the 3 genuine invoices) and 0 QOR from the payer
+  ✓ #0 HOSTLINE-2026-12-0042          as the agent -&gt; AlreadyPaid
+  ✓ #1 TOKENWELL-INV-8781             as the agent -&gt; AlreadyPaid
+  ✓ #3 MALLORY-CONSULTING-002         as the agent -&gt; UnknownVendor
+  ✓ #4 HOSTLINE-2026-12-0099          as the agent -&gt; BadSignature
+  ✓ #5 HOSTLINE-2026-12-0042 (revised) as the agent -&gt; BadSignature
+  ✓ #6 HOSTLINE-2026-12-0042          as the agent -&gt; AlreadyPaid
+  ✓ #7 TOKENWELL-INV-8790             as the agent -&gt; AlreadyPaid
+  ✓ #8 HOSTLINE-2026-12-0043          as the agent -&gt; AlreadyPaid
+  ✓ #6 the same invoice &quot;paid in QOR&quot; -&gt; BadSignature (the currency is signed)
+  ✓ #9 TOKENWELL-INV-8795 as the agent -&gt; OverDailyLimit  (OverDailyLimit on the run's UTC day; the limit resets daily)
+  ✓ the same invoice sent by any other account -&gt; NotPayersAgent
+
+✓ 67 checks passed, 0 failed  (qorechain-diana, block 10567883)
   The agent's linked key is ed25519: QoreChain links only ed25519/secp256k1 keys today. Leash assumes it can be stolen;
   the rule above is what a thief, or a fooled model, gets. The owner's key, which writes and revokes that rule, is hybrid ML-DSA-87.
 </pre>

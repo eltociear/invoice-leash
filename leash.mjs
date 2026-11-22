@@ -384,7 +384,7 @@ const cmds = {
     const d = v2(), inv = JSON.parse(readFileSync(INBOX2, "utf8"))[Number(item)]?.invoice;
     if (!inv) throw new Error(`email ${item} has no invoice`);
     const o = await account("owner"), wallet = new Wallet(o.privateKey, new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID));
-    const c = new Contract(d.invoiceDesk, ART2.abi, wallet), args = [inv.token, inv.vendor, inv.amount, inv.id, inv.dueBy, inv.signature];
+    const c = new Contract(d.invoiceDesk, ART2.abi, wallet), args = [o.evmAddr, inv.token, inv.vendor, inv.amount, inv.id, inv.dueBy, inv.signature];
     console.log(`owner reviews ${inv.ref}: ${inv.fusd} fUSD to ${inv.vendor}`);
     try { await c.pay.staticCall(...args); } catch (e) { const dd = e.data ?? e.info?.error?.data; let n = e.shortMessage; try { n = c.interface.parseError(dd).name; } catch { /* keep */ } throw new Error(`InvoiceDeskV2 would refuse it: ${n}`); }
     console.log("  dry run: vendor approved, ML-DSA-87 signature valid, unpaid, not past due");
@@ -396,6 +396,17 @@ const cmds = {
     console.log(close.code === 0 ? "  EVM window closed" : `  close window: code ${close.code}`);
     writeFileSync(new URL(`./runs/v2-approve-${item}-${new Date().toISOString().replace(/[:.]/g, "-")}.json`, import.meta.url),
       JSON.stringify({ version: 2, item: Number(item), ref: inv.ref, fusd: inv.fusd, owner: o.cosmos, windowTx: w.transactionHash, evmTx: tx.hash, status: rc.status }, null, 2) + "\n");
+  },
+
+  /** Owner sets the desk's fUSD allowance (the budget the desk may pull, for agents and in-person payments alike). */
+  async "allowance-v2"(amount) {
+    const d = v2(), o = await account("owner");
+    const w = await broadcast(o, [openEvmWindowMsg({ sender: o.cosmos, blocks: 300, maxTxs: 1, maxValue: String(toUqor("0.5")) })], "leash: owner window (allowance)");
+    if (w.code) throw new Error(`open window REFUSED code ${w.code}: ${w.rawLog}`);
+    const tx = await new Contract(FUSD, ERC20, new Wallet(o.privateKey, new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID))).approve(d.invoiceDesk, toFusd(amount));
+    await tx.wait();
+    await broadcast(o, [closeEvmWindowMsg(o.cosmos)], "leash: close window");
+    console.log(`desk allowance set to ${amount} fUSD  (evm tx ${tx.hash})`);
   },
 
   async "balance-v2"() {

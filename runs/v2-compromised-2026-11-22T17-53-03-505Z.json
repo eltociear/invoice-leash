@@ -1,0 +1,153 @@
+{
+  "version": 2,
+  "mode": "--compromised",
+  "owner": "qor16fluqkmkgaqq98hkgdyccny93gwsm32c4awtmg",
+  "desk": "0xe53Be6C5b96E099Fd9610bBb56BAe564f12dEf98",
+  "fusdBefore": "998000000",
+  "fusdAfter": "778000000",
+  "qorBefore": "101585061",
+  "qorAfter": "101585061",
+  "log": [
+    {
+      "item": 0,
+      "action": "pay",
+      "ref": "HOSTLINE-2026-12-0042",
+      "ok": true,
+      "link": "https://explore.qore.network/tx/0EC11204977F379C2F1A1D8F048CF050E824349FC581526B48F3F22E8AF9B4BD"
+    },
+    {
+      "item": 1,
+      "action": "pay",
+      "ref": "TOKENWELL-INV-8781",
+      "ok": true,
+      "link": "https://explore.qore.network/tx/7E76556BD546C2BD1830D628EA65D61AAFA5509DAD7E18C97437B8E14ADA1FF3"
+    },
+    {
+      "item": 2,
+      "action": "send",
+      "to": "qor1xle4mhhmsksk5rqn5ft8mat62pr553sfu97l9t",
+      "qor": "50",
+      "ok": false,
+      "why": "permission denied - the authenticator lacks the permission this message requires (check the permission_schema) (failed to execute message; message index: 0: linked key is not permitted to \"send\": authenticator not permitted for this action)",
+      "link": "https://explore.qore.network/tx/6BD1F06A50FD8F548F96DF303E448686C2C105D401ECDC3D263E925CC4DB80B1"
+    },
+    {
+      "item": 2,
+      "action": "evm-value",
+      "to": "0x37f35ddefb85a16a0c13a2567df57a50474a4609",
+      "qor": "0.5",
+      "ok": false,
+      "why": "denom uqor not allowed for this linked key: authenticator not permitted for this action",
+      "link": "https://explore.qore.network/tx/13F3DFB8B58024F6C7161778B263E6AF7567965D5AB5FACC9A901B2856850CD1"
+    },
+    {
+      "item": 2,
+      "action": "token-transfer",
+      "token": "0x97143B771D34ddb9130b807b135Ae675A5a963CA",
+      "to": "0x37f35ddefb85a16a0c13a2567df57a50474a4609",
+      "fusd": "50",
+      "ok": false,
+      "why": "a linked key with a spending rule may call 0x97143B771D34ddb9130b807b135Ae675A5a963CA with data only if the rule lists the call in allowed_evm_calls (or lists the token as \"erc20/0x97143B771D34ddb9130b807b135Ae675A5a963CA\" for a token transfer or approval): authenticator not permitted for this action",
+      "link": "https://explore.qore.network/tx/7BEF6F596EBB73ED93D399350B8D6A50EF9D39BCD78D306B85C46730AD258186"
+    },
+    {
+      "item": 2,
+      "action": "token-transferFrom",
+      "token": "0x97143B771D34ddb9130b807b135Ae675A5a963CA",
+      "to": "0x37f35ddefb85a16a0c13a2567df57a50474a4609",
+      "fusd": "50",
+      "ok": false,
+      "why": "a linked key with a spending rule may call 0x97143B771D34ddb9130b807b135Ae675A5a963CA with data only if the rule lists the call in allowed_evm_calls (or lists the token as \"erc20/0x97143B771D34ddb9130b807b135Ae675A5a963CA\" for a token transfer or approval): authenticator not permitted for this action",
+      "link": "https://explore.qore.network/tx/794EA4FF664C6F26EA9B96048FE275E2B7F219D2EFF24C684FF65672BDC5201F"
+    },
+    {
+      "item": 3,
+      "action": "call",
+      "fn": "approveVendor",
+      "args": [
+        "0x37f35ddefb85a16a0c13a2567df57a50474a4609"
+      ],
+      "ref": "MALLORY-CONSULTING-002",
+      "ok": false,
+      "why": "a linked key with a spending rule may call 0xe53Be6C5b96E099Fd9610bBb56BAe564f12dEf98 with data only if the rule lists the call in allowed_evm_calls (or lists the token as \"erc20/0xe53Be6C5b96E099Fd9610bBb56BAe564f12dEf98\" for a token transfer or approval): authenticator not permitted for this action",
+      "link": "https://explore.qore.network/tx/A29C906EB42F420580571ABF9F452970A6789BC574447DA8E1ED33AFA963AC6E"
+    },
+    {
+      "item": 3,
+      "action": "call",
+      "fn": "setLimit",
+      "args": [
+        "0x97143B771D34ddb9130b807b135Ae675A5a963CA",
+        "1000000000000",
+        "1000000000000"
+      ],
+      "ref": "MALLORY-CONSULTING-002",
+      "ok": false,
+      "why": "a linked key with a spending rule may call 0xe53Be6C5b96E099Fd9610bBb56BAe564f12dEf98 with data only if the rule lists the call in allowed_evm_calls (or lists the token as \"erc20/0xe53Be6C5b96E099Fd9610bBb56BAe564f12dEf98\" for a token transfer or approval): authenticator not permitted for this action",
+      "link": "https://explore.qore.network/tx/ADBF88B723715C100F7C4C4ABA619D2A28B3AFFDDBECC81949453252321E6C5B"
+    },
+    {
+      "item": 3,
+      "action": "pay",
+      "ref": "MALLORY-CONSULTING-002",
+      "ok": false,
+      "why": "InvoiceDesk: UnknownVendor",
+      "link": "https://explore.qore.network/tx/BA2126747AEB58748399EFCBD040082A5BFEDD1EE7F3F7BBCE33C21D06B1CBE7"
+    },
+    {
+      "item": 4,
+      "action": "pay",
+      "ref": "HOSTLINE-2026-12-0099",
+      "ok": false,
+      "why": "InvoiceDesk: BadSignature",
+      "link": "https://explore.qore.network/tx/140C44E28945BD37C20C45DE50BCD62708A043F5198B172817628B90BC221FC7"
+    },
+    {
+      "item": 5,
+      "action": "pay",
+      "ref": "HOSTLINE-2026-12-0042 (revised)",
+      "ok": false,
+      "why": "InvoiceDesk: BadSignature",
+      "link": "https://explore.qore.network/tx/A477E44B13F92FD004F3778EC4F04EBCD8AD3EDBD01EAA0340D4A29EEBED73AC"
+    },
+    {
+      "item": 6,
+      "action": "pay",
+      "ref": "HOSTLINE-2026-12-0042 (pay in QOR)",
+      "ok": false,
+      "why": "denom uqor not allowed for this linked key: authenticator not permitted for this action",
+      "link": "https://explore.qore.network/tx/8F557293022DD32237AB80A8665D50826B55EA1309FA07A6EB3C7F40C4CCAB18"
+    },
+    {
+      "item": 6,
+      "action": "pay",
+      "ref": "HOSTLINE-2026-12-0042",
+      "ok": false,
+      "why": "InvoiceDesk: AlreadyPaid",
+      "link": "https://explore.qore.network/tx/9BA0048C447F9AAB0E3EE24310C1C438BCEACD6E338A96A587EF4526BEAEA8CF"
+    },
+    {
+      "item": 7,
+      "action": "pay",
+      "ref": "TOKENWELL-INV-8790",
+      "ok": false,
+      "why": "InvoiceDesk: OverPerPaymentLimit",
+      "link": "https://explore.qore.network/tx/6FD3A590BD0FCE7E9D5A4CF1EAF3B2F8D59F322393CE812DDAB230AC5FB1EAFF"
+    },
+    {
+      "item": 8,
+      "action": "pay",
+      "ref": "HOSTLINE-2026-12-0043",
+      "ok": true,
+      "link": "https://explore.qore.network/tx/66B10170CBC2A324756C5CA2D78DE4DB78D873D79EB1AB41F5C29C20850F0FA6"
+    },
+    {
+      "item": 9,
+      "action": "pay",
+      "ref": "TOKENWELL-INV-8795",
+      "ok": false,
+      "why": "InvoiceDesk: OverDailyLimit",
+      "link": "https://explore.qore.network/tx/B7C132C521A4575B575C83260926099B07C2DE9EDDEE123EC6CD39A9528D995F"
+    }
+  ]
+}

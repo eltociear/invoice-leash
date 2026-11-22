@@ -6,7 +6,7 @@
         "mcp/server.mjs"
       ],
       "env": {
-        "LEASH_INBOX": "inbox/inbox-MCP.json"
+        "LEASH_INBOX2": "inbox/inbox-v2-MCP.json"
       }
     },
     "qorechain": {

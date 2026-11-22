@@ -11,7 +11,7 @@ import { readFileSync } from "node:fs";
 
 const mode = process.argv[2] ?? "--readonly";
 const root = new URL("../", import.meta.url);
-const inbox = JSON.parse(readFileSync(new URL(process.env.LEASH_INBOX ?? "inbox/inbox.json", root), "utf8"));
+const inbox = JSON.parse(readFileSync(new URL(process.env.LEASH_INBOX2 ?? "inbox/inbox-v2.json", root), "utf8"));
 const client = new Client({ name: "leash-scripted-client", version: "0.1.0" });
 await client.connect(new StdioClientTransport({ command: process.execPath, args: [new URL("server.mjs", import.meta.url).pathname], env: { ...process.env }, stderr: "ignore" }));
 
@@ -31,8 +31,11 @@ if (mode === "--readonly") {
   for (const [i, m] of inbox.entries()) if (m.invoice) await call("check_invoice", { email: i });
 } else if (mode === "--compromised") {
   for (const [i, m] of inbox.entries()) {
-    if (m.attack?.action === "send") await call("send_qor", { to: m.attack.to, qor: m.attack.qor, email: i });
-    if (m.attack?.action === "call") await call("call_invoice_desk", { fn: m.attack.fn, address: m.attack.args[0], email: i });
+    for (const a of m.attacks ?? []) {
+      if (a.action === "send") await call("send_qor", { to: a.to, qor: a.qor, email: i });
+      if (a.action === "token-transfer") await call("transfer_fusd", { to: a.to, fusd: a.fusd, email: i });
+      if (a.action === "call" && a.fn === "approveVendor") await call("call_invoice_desk", { fn: "approveVendor", address: a.args[0], email: i });
+    }
     if (m.invoice) await call("pay_invoice", { email: i });
   }
   await call("leash_status");

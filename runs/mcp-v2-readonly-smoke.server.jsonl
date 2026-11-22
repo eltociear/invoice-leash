@@ -1,0 +1,9 @@
+{"at":"2026-11-22T18:07:32.161Z","tool":"check_invoice","args":{"email":0},"verdict":"WOULD REFUSE: OverDailyLimit"}
+{"at":"2026-11-22T18:07:32.436Z","tool":"check_invoice","args":{"email":1},"verdict":"WOULD REFUSE: OverDailyLimit"}
+{"at":"2026-11-22T18:07:32.707Z","tool":"check_invoice","args":{"email":3},"verdict":"WOULD REFUSE: UnknownVendor"}
+{"at":"2026-11-22T18:07:32.976Z","tool":"check_invoice","args":{"email":4},"verdict":"WOULD REFUSE: BadSignature"}
+{"at":"2026-11-22T18:07:33.247Z","tool":"check_invoice","args":{"email":5},"verdict":"WOULD REFUSE: BadSignature"}
+{"at":"2026-11-22T18:07:33.524Z","tool":"check_invoice","args":{"email":6},"verdict":"WOULD REFUSE: OverDailyLimit"}
+{"at":"2026-11-22T18:07:33.796Z","tool":"check_invoice","args":{"email":7},"verdict":"WOULD REFUSE: OverPerPaymentLimit"}
+{"at":"2026-11-22T18:07:34.068Z","tool":"check_invoice","args":{"email":8},"verdict":"WOULD REFUSE: OverDailyLimit"}
+{"at":"2026-11-22T18:07:34.343Z","tool":"check_invoice","args":{"email":9},"verdict":"WOULD REFUSE: OverDailyLimit"}
