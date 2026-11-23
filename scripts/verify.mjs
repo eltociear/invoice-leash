@@ -349,6 +349,19 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
     }
   }
 
+  // sealed invoices: the agent account's ML-KEM-1024 key in the chain's KEM key registry; envelopes sealed to it
+  {
+    const { kemKeyOf, describeEnvelope } = await import("../lib/sealed.mjs");
+    const sr = json("runs/sealed.json"), k = await retry(() => kemKeyOf(d2.agentAccount));
+    const reg = await rest(`/cosmos/tx/v1beta1/txs/${sr.registerTx}`);
+    ok(k.registered && k.algorithmId === 2 && k.publicKey?.length === 1568 && reg?.tx_response?.code === 0 && reg.tx.body.messages[0]["@type"] === "/qorechain.pqc.v1.MsgRegisterKEMKey" && reg.tx.body.messages[0].sender === d2.agentAccount,
+      "the agent account published an ML-KEM-1024 key in the chain's KEM registry (for sealed invoices)", `(${k.algorithmName ?? "alg " + k.algorithmId}, ${k.publicKey?.length} B, tx ${sr.registerTx.slice(0, 8)}…)`);
+    const sealedInbox = json("inbox/inbox-v2-SEALED.json");
+    const envs = sealedInbox.map((m) => describeEnvelope(m.sealed));
+    ok(envs.every((e) => e.mode === "mlkem" && e.recipients === 1) && sealedInbox.every((m) => !m.invoice && !/TOKENWELL-INV-8810|HOSTLINE-2026-12-0110/.test(m.sealed)) && sr.steps[0].asCompany === "WOULD PAY" && sr.steps[1].asAgent === "BadSignature",
+      "both sealed invoices are ML-KEM-1024 envelopes with nothing readable outside; opened, the genuine one verifies and the forged one is BadSignature", "(sealing hides, the signature decides)");
+  }
+
   // v2 through MCP: Claude Code, then the obey-everything client, then a read-only audit
   const lines2 = (f) => readFileSync(new URL(f, root), "utf8").trim().split("\n").map((l) => JSON.parse(l)).filter((x) => x.link);
   const c2run = lines2("runs/mcp-v2-claude.server.jsonl"), h2run = lines2("runs/mcp-v2-compromised.server.jsonl");

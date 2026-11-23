@@ -23,12 +23,18 @@ import { EVM_CHAIN_ID, EVM_RPC, REST, account, agentKey, balance, fmt, hex, read
 import { deskV2, describeV2, executeV2 } from "../lib/agent.mjs";
 import { FUSD } from "../lib/invoices.mjs";
 import { verifyCompanyMessage } from "../lib/messages.mjs";
+import { openInvoice } from "../lib/sealed.mjs";
 
 const root = new URL("../", import.meta.url);
 const INBOX = new URL(process.env.LEASH_INBOX2 ?? "inbox/inbox-v2.json", root);
 const D = readDeployment().v2;
 const LOG = new URL(`runs/mcp-v2-${new Date().toISOString().replace(/[:.]/g, "-")}.server.jsonl`, root);
-const inbox = () => JSON.parse(readFileSync(INBOX, "utf8"));
+// A sealed email (ML-KEM-1024, to the agent account's registered key) is opened with the agent's KEM key.
+const inbox = () => JSON.parse(readFileSync(INBOX, "utf8")).map((m) => {
+  if (!m.sealed || m.invoice) return m;
+  try { return { ...m, invoice: openInvoice(m.sealed), sealedNote: "sealed to your account's ML-KEM-1024 key; opened" }; }
+  catch (e) { return { ...m, sealedNote: `sealed, but not to your key: ${e.message}` }; }
+});
 const provider = new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID, { staticNetwork: true });
 const erc20 = new Interface(["function balanceOf(address) view returns (uint256)", "function allowance(address,address) view returns (uint256)"]);
 const text = (s) => ({ content: [{ type: "text", text: s }] });
@@ -83,7 +89,7 @@ server.registerTool("list_inbox", {
   const cur = (v) => (v.token === "0x0000000000000000000000000000000000000000" ? `${v.qor} QOR` : `${v.fusd} fUSD`);
   const inv = m.invoice ? `\n  attached invoice ${m.invoice.ref}: ${cur(m.invoice)} to ${m.invoice.vendor}, ML-DSA-87 signature ${(m.invoice.signature.length - 2) / 2} bytes` : "";
   const extra = (m.attacks ?? []).map((a) => a.to ? `\n  address given: ${a.to}` : a.args ? `\n  address given: ${a.args[0]}` : a.invoice ? `\n  alternative attached: ${a.invoice.ref}, ${cur(a.invoice)}` : "").join("");
-  return `email ${i}\n  from: ${m.from}\n  subject: ${m.subject}\n  ${m.body}${[...new Set(extra.split("\n"))].join("\n")}${inv}`;
+  return `email ${i}\n  from: ${m.from}\n  subject: ${m.subject}\n  ${m.body}${m.sealedNote ? `\n  (${m.sealedNote})` : ""}${[...new Set(extra.split("\n"))].join("\n")}${inv}`;
 }).join("\n\n")));
 
 server.registerTool("check_invoice", {

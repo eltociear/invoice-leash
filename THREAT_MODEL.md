@@ -44,6 +44,8 @@ tests (`test/InvoiceDeskV2.t.sol`).
 | Agent reconfigures its leash (`approveVendor`, `setLimit`, `setAgent`) | chain: only `pay` (`0xf19ff4ff`) is allowed; and in the desk, settings are per `msg.sender`, so the agent would only configure its own empty entry | inbox #3, test `test_agent_limits_are_the_payers_alone` |
 | The agent's classical key used directly (EVM transactions) | its account's EVM window: ≤3 txs, ≤0.4 QOR, 300 blocks, target InvoiceDeskV2 only; no window, no transaction. Only the human's hybrid ML-DSA-87 signature opens one | `runs/probes/window.json`, verify §9 |
 | "Approved by the CFO" in an email | instructions count only as QoreSign messages verified against the company's registered ML-DSA-87 key (MCP `verify_message`); a Q-Day forgery (the company's classical key + another ML-DSA-87 key) is refused | `runs/messages.json`, verify §9 |
+| Reading invoices in transit, now or after Q-Day ("harvest now, decrypt later") | sealed invoices: ML-KEM-1024 to the agent account's key in the chain's KEM registry; only the agent's KEM key opens them, and it gives no spending power | `runs/sealed.json`, verify §9 |
+| A forged invoice sent sealed, to look trustworthy | sealing is not authenticity: once opened it is `BadSignature` | `runs/sealed.json` |
 | An account the company never named calls `pay` for it | `NotPayersAgent` | verify §9, tests |
 | Attacker's own, correctly signed invoice | `UnknownVendor` | inbox #3 |
 | Invoice signed by the wrong key | `BadSignature` (ML-DSA-87 via `0x…0a01`) | inbox #4 |

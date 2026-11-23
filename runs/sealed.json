@@ -1,0 +1,40 @@
+{
+  "account": "qor1llw052ph5xqwm2cv2ene8mtqv4lt2epfl5tr3f",
+  "steps": [
+    {
+      "email": 0,
+      "envelope": {
+        "mode": "mlkem",
+        "recipients": 1,
+        "bytes": 11232,
+        "ciphertextBytes": 9560
+      },
+      "opened": {
+        "ref": "TOKENWELL-INV-8810-SEALED",
+        "fusd": "20",
+        "vendor": "0xbba367e951c9ca4f0ca3792469762278d4663920",
+        "id": "0x5cd002f4fc8769009471ddf98898198275d688b192ecf597b724c6abff261719"
+      },
+      "asAgent": "OverDailyLimit",
+      "asCompany": "WOULD PAY"
+    },
+    {
+      "email": 1,
+      "envelope": {
+        "mode": "mlkem",
+        "recipients": 1,
+        "bytes": 11235,
+        "ciphertextBytes": 9563
+      },
+      "opened": {
+        "ref": "HOSTLINE-2026-12-0110-SEALED",
+        "fusd": "45",
+        "vendor": "0x8da72244334d681e3e8a75377b2faf5913756f69",
+        "id": "0x051ce776c84e80de65b2ddae9bf9566f9d93118f948a65eb5f5bdd7fbc31854d"
+      },
+      "asAgent": "BadSignature",
+      "asCompany": "BadSignature"
+    }
+  ],
+  "registerTx": "5AB689523EDF4F47374A35BED6FFAB3913369CC6CAA32579A16651F238BAA80B"
+}

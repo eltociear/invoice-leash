@@ -16,7 +16,7 @@
 > npm install && npm run verify
 > ```
 >
-> 80 checks against the live testnet: both deployed contracts are byte-for-byte this source, the
+> 82 checks against the live testnet: both deployed contracts are byte-for-byte this source, the
 > agent's rule is what the chain stores, every attack replayed against the real contracts, where
 > every QOR and fUSD went, every recorded transaction re-read (runs, MCP sessions, the probes below).
 > Last run: [`runs/verify-latest.txt`](runs/verify-latest.txt). CI runs it daily, with 59 Foundry tests.
@@ -31,6 +31,7 @@
 | **Transaction, value, duration and target limits** | window: tx count, value, blocks, target. Spending rule: one call (`InvoiceDeskV2.pay`), no QOR or fUSD, expiry. Desk: 100 fUSD a payment, 250 a UTC day, approved payees only | link [BC8E105E…](https://explore.qore.network/tx/BC8E105E6C6840E8AB4608CC58B6E5C112BF86D6748FA3E873B4274C0DA221FE); every refusal in [the demo inbox](#the-demo-inbox-v2-fusd) |
 | **Smart-account spending rules** | the agent's ed25519 key is linked to its own account with permission `evm` and a rule; the chain refused `MsgSend`, an EVM value transfer, `fUSD.transfer`/`transferFrom`, `approveVendor`, `setLimit` | [the demo inbox](#the-demo-inbox-v2-fusd), [probes](#what-we-found-a-spending-rule-bounds-amounts-not-destinations) |
 | **Authenticated messaging** | (1) every invoice is ML-DSA-87 signed by a vendor and checked **on chain** by the precompiles `0x…0a02`/`0x…0a01`; (2) the company's instructions to the agent are QoreSign messages (QoreX `signArbitrary` format), checked against the company's registered key; a **Q-Day forgery** (the company's classical key, as if broken, plus another ML-DSA-87 key) is refused | [`runs/messages.json`](runs/messages.json), MCP tool `verify_message`, the [attack lab](https://eltociear.github.io/invoice-leash/lab.html) |
+| Confidential invoices (ML-KEM-1024) | vendors seal invoices to the agent account's ML-KEM-1024 key, published in the chain's KEM key registry (QoreSeal); email on the path, stored today and attacked after Q-Day, shows nothing. Sealing hides; the ML-DSA-87 signature still decides (a sealed forgery is `BadSignature`) | register [5AB68952…](https://explore.qore.network/tx/5AB689523EDF4F47374A35BED6FFAB3913369CC6CAA32579A16651F238BAA80B) · [`inbox/inbox-v2-SEALED.json`](inbox/inbox-v2-SEALED.json) · [`runs/sealed.json`](runs/sealed.json) |
 | A kill switch | `setAgent(agent, false)` → the agent's real payment refused `NotPayersAgent` → `true` → paid | [kill switch](#the-demo-inbox-v2-fusd) |
 
 **Live through judging:** the agent's key is linked until **2026-12-20** (re-linked on 2026-11-23,
@@ -169,7 +170,7 @@ transaction stops the agent, without touching the chain link or the money.
 | Contracts | **59 Foundry tests** (6 fuzzed, 512 runs each). v2: the agent/payer split (unnamed account, kill switch, the agent configuring only its own entry, no limits = pays nothing, per-payment and daily limits with the UTC day reset, refused payments not counted, no native QOR for agents, the company in person not bound by agent limits), the currency in the signature, allowance as a cap, no-code and false-returning tokens. v1: every revert path in `pay` and its order, per-payer state, live key reads (unregistered, unproven, other algorithm, rotated), another chain / desk / payer, reverting and re-entrant vendors. **Mutation-checked** ([`scripts/mutate.mjs`](scripts/mutate.mjs), output in [`runs/mutation.txt`](runs/mutation.txt)): each of 14 bugs injected into InvoiceDeskV2 fails the suite (signature check removed, replay check moved before it, proof of possession or the algorithm not checked, currency unsigned, ERC-20 return value ignored, a token without code accepted, QOR accepted with an fUSD invoice, any account paying for any payer, daily spend not recorded or counted on a shifted day, per-payment limit ignored, agents paying native, invoice not marked paid). | `forge test` |
 | PQC stand-in | Local EVMs have no QoreChain precompile, so `0x…0a01` is a stand-in that answers from [`test/fixtures/`](test/fixtures/): 27 (key, signature, message) tuples checked with **real ML-DSA-87** by `test/fixtures.mjs`; unknown tuples fail closed. Keys come from fixed seeds and signing is deterministic, so CI regenerates the files and requires them byte-identical. | `npm run fixtures` |
 | Off chain | the v1 demo inbox and six tamperings, with real ML-DSA-87 and throwaway keys | `npm test` |
-| On chain | 80 read-only checks against the live testnet | `npm run verify` |
+| On chain | 82 read-only checks against the live testnet | `npm run verify` |
 
 ### Cryptography inventory (QoreScan)
 
@@ -289,6 +290,7 @@ node leash.mjs kill-switch-v2       # setAgent(false) stops the agent; setAgent(
 node scripts/probe-window.mjs       # the agent account's own scoped EVM window (target: the desk)
 node scripts/messages-demo.mjs      # QoreSign company instructions, incl. a Q-Day forgery
 node leash.mjs buy-fusd 5           # the company buys fUSD with QOR in AMM pool 2, then converts it
+node scripts/sealed-demo.mjs        # the agent's ML-KEM-1024 key on chain; a genuine and a forged invoice sealed to it
 node leash.mjs balance-v2           # QOR and fUSD of every account, and the allowance
 ```
 
