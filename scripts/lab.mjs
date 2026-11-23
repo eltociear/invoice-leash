@@ -114,6 +114,11 @@ ol.log{font-size:13px;color:var(--dim);padding-left:20px;margin:0}ol.log li{marg
 <label for="msgtext">Message text</label><input id="msgtext">
 <div class="btns"><button type="button" class="main" id="msgcheck">Check the ML-DSA-87 signature</button></div>
 <div class="local" id="msgout">Pick a message.</div>
+<div style="border-top:1px solid var(--line);margin-top:14px;padding-top:12px">
+<p style="margin:0 0 6px"><b>Sign one yourself with QoreX.</b> If you have the QoreX wallet (testnet, with your ML-DSA-87 key registered), sign the text above with <code>signArbitrary</code>. Your browser then reads <i>your</i> key from the chain and checks the ML-DSA-87 half. Edit one character and check again: it fails.</p>
+<div class="btns"><button type="button" class="main" id="qxsign">Sign the text with QoreX</button><button type="button" id="qxcheck" disabled>Check my signature against the text</button></div>
+<div class="local" id="qxout">QoreX: not connected.</div>
+</div>
 <p class="dim" style="font-size:14px;margin-bottom:0">The classical half is checked too, by <code>npm run verify</code> and the MCP tool <code>verify_message</code> (QoreSign's <code>verifyMessageWithChain</code>). After Q-Day only the ML-DSA-87 half means anything, and that is the half shown here.</p>
 </div>
 
@@ -245,6 +250,39 @@ $("go").onclick = ask;
 let msg = null;
 $("msgs").innerHTML = D.messages.map((m, i) => '<button type="button" data-i="' + i + '">' + h(m.name) + "</button>").join("");
 document.querySelectorAll("#msgs button").forEach((b) => b.onclick = () => { msg = D.messages[Number(b.dataset.i)]; $("msgtext").value = msg.text; document.querySelectorAll("#msgs button").forEach((x) => x.setAttribute("aria-pressed", x === b)); $("msgout").textContent = "Ready: check it."; });
+// QoreX (FAQ: window.qorex.native, signArbitrary in QoreSign message-signing-v1 format). bech32 -> 0x for the precompile.
+const B32 = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+const qorToHex = (a) => { const d = a.slice(a.lastIndexOf("1") + 1, -6).split("").map((c) => B32.indexOf(c)); let acc = 0, bits = 0; const out = []; for (const v of d) { acc = (acc << 5) | v; bits += 5; while (bits >= 8) { bits -= 8; out.push((acc >> bits) & 255); } } return E.getAddress(E.hexlify(Uint8Array.from(out.slice(0, 20)))); };
+let qx = null;
+$("qxsign").onclick = async () => {
+  const q = window.qorex?.native;
+  if (!q) { $("qxout").textContent = "QoreX was not found in this browser. Install the QoreX extension (or open this page in the QoreX app's browser) and switch it to testnet."; return; }
+  try {
+    if (Array.isArray(q.capabilities) && !q.capabilities.includes("signArbitrary")) throw new Error("this QoreX version has no signArbitrary");
+    await q.enable("qorechain-diana");
+    const { bech32Address } = await q.getKey("qorechain-diana");
+    const text = $("msgtext").value || "Invoice Leash: a message signed with my QoreX ML-DSA-87 key.";
+    if (!$("msgtext").value) $("msgtext").value = text;
+    const sig = await q.signArbitrary("qorechain-diana", bech32Address, text);
+    qx = { signer: bech32Address, text, sig };
+    $("qxcheck").disabled = false;
+    $("qxout").textContent = "Signed by " + bech32Address + ". Now check it (and try again after editing the text).";
+  } catch (e) { $("qxout").textContent = "QoreX: " + (e?.message ?? e); }
+};
+$("qxcheck").onclick = async () => {
+  try {
+    await noPQ();
+    const pqB64 = qx.sig?.pq?.signature ?? qx.sig?.pqSignature;
+    if (!pqB64) throw new Error("the signature has no ML-DSA-87 part (is your ML-DSA-87 key registered?)");
+    const [reg, alg, pk, proven] = await pqcKey(qorToHex(qx.signer));
+    const text = $("msgtext").value, bytes = E.toUtf8Bytes("qorechain-msg-v1|qorechain-diana|" + text);
+    const ok = reg && Number(alg) === 1 && vfy(pk, bytes, Uint8Array.from(atob(pqB64), (c) => c.charCodeAt(0)));
+    let wallet = "";
+    try { if (window.qorex?.native?.verifyArbitrary) wallet = " QoreX's own verifyArbitrary says: " + ((await window.qorex.native.verifyArbitrary("qorechain-diana", qx.signer, text, qx.sig)) ? "valid" : "not valid") + "."; } catch { /* optional */ }
+    $("qxout").innerHTML = "Your key on chain: " + (reg ? (pk.length - 2) / 2 + " bytes" + (proven ? ", possession proven" : "") : "none registered") + ". The ML-DSA-87 half over the text " + (text === qx.text ? "you signed" : "<b>as edited</b>") + ": " +
+      (ok ? '<b class="ok">AUTHENTIC</b>' : '<b class="no">NOT AUTHENTIC</b>') + "." + h(wallet);
+  } catch (e) { $("qxout").textContent = "Could not check: " + e.message; }
+};
 $("msgcheck").onclick = async () => {
   if (!msg) return;
   try {

@@ -23,6 +23,19 @@
 
 **Category:** Post-Quantum AI Agents · **Network:** QoreChain testnet `qorechain-diana` only (test tokens have no value)
 
+**In one minute:** the agent's code checks nothing; QoreChain checks everything. A fully compromised
+agent tried 16 ways to move money and got only the 3 genuine invoices paid
+([the inbox, email by email](#the-demo-inbox-v2-fusd)). On the way we found that a spending rule bounds
+amounts, not destinations, and redesigned around it ([the finding](#what-we-found-a-spending-rule-bounds-amounts-not-destinations)).
+Claude Code runs the same agent through [our MCP server](#use-it-from-any-agent-the-mcp-server), and you can
+[attack it in your browser](https://eltociear.github.io/invoice-leash/lab.html).
+
+**Contents:** [requirements → evidence](#the-tracks-requirements-and-where-each-one-is-shown-on-chain) ·
+[how it works](#how-it-works) · [the finding](#what-we-found-a-spending-rule-bounds-amounts-not-destinations) ·
+[demo inbox](#the-demo-inbox-v2-fusd) · [tests](#tests) · [attack lab](#attack-lab-try-it-in-your-browser) ·
+[MCP](#use-it-from-any-agent-the-mcp-server) · [run it](#run-it) · [v1](#v1-the-first-design-qor-the-agent-acting-as-the-company) ·
+[addresses](#testnet-addresses) · [threat model](THREAT_MODEL.md) · [AI usage](AI_USAGE.md)
+
 ### The track's requirements, and where each one is shown on chain
 
 | Post-Quantum AI Agents requires | Invoice Leash | Evidence (re-read by `npm run verify`) |
@@ -197,6 +210,11 @@ valid under your own key, yet the desk refuses it: `BadSignature` with Hostline 
 reads *their* registered key), `UnknownVendor` with Mallory. After every answer, your browser also fetches
 the payee's public key from the chain (precompile `0x…0a02`) and verifies the signature itself over the
 same 288 bytes, so you can see the precompile and an independent ML-DSA-87 implementation agree.
+**Check an instruction, or sign one with QoreX.** The lab verifies the company's QoreSign instructions
+in your browser against the company's ML-DSA-87 key read from the chain, including a Q-Day forgery
+(the company's classical key plus another ML-DSA-87 key: refused). With the QoreX wallet you can sign a
+message yourself (`signArbitrary`) and watch your own registered key verify it, then fail after a
+one-character edit.
 `npm test` checks that every page script parses and that the browser bundle signs what `@qorechain/sdk` verifies.
 
 ## Use it from any agent: the MCP server
