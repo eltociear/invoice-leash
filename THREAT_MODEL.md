@@ -61,6 +61,12 @@ tests (`test/InvoiceDeskV2.t.sol`).
 | The agent keeps going after it is caught | revoke the key on chain, or `setAgent(agent, false)` in the desk: one company tx either way | v1 run (revoke); v2 live: `kill-switch-v2` (`NotPayersAgent`), verify §9; tests |
 | A forgotten agent | the link expires (72 h in the v2 demo) | verify §9 reads it |
 
+## After Q-Day
+
+[QUANTUM_READINESS.md](QUANTUM_READINESS.md) lists every algorithm in the system and what a quantum
+computer does to it. It also has our own drill: with every account's classical key and no ML-DSA-87
+key, 14 attacks on the live testnet, all refused.
+
 ## What Invoice Leash does not stop
 
 Said plainly, because a judge, an auditor or a customer will ask.

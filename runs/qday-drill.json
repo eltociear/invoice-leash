@@ -1,0 +1,123 @@
+{
+  "what": "Q-Day drill: every account's classical (secp256k1) key, used alone",
+  "at": "2026-11-23T09:18:54.970Z",
+  "attempts": [
+    {
+      "role": "owner",
+      "address": "qor16fluqkmkgaqq98hkgdyccny93gwsm32c4awtmg",
+      "lane": "cosmos, classical signature only",
+      "label": "send 1 QOR to the attacker (MsgSend)",
+      "refused": true,
+      "why": "Broadcasting transaction failed with code 20 (codespace: pqc). Log: account qor16fluqkmkgaqq98hkgdyccny93gwsm32c4awtmg has a registered PQC key and must include the hybrid signature extension (hybrid mode: required): hybrid PQC signature required"
+    },
+    {
+      "role": "owner",
+      "address": "qor16fluqkmkgaqq98hkgdyccny93gwsm32c4awtmg",
+      "lane": "EVM, secp256k1 signature",
+      "label": "send 1 QOR to the attacker (EVM)",
+      "refused": true,
+      "why": "failed to broadcast transaction: account qor16fluqkmkgaqq98hkgdyccny93gwsm32c4awtmg has no open EVM authorisation window; open one with MsgOpenEVMWindow, signed on the Cosmos lane with the account's post-quantum key: no open EVM authorisation window: no open EVM authorisation window [cosmossdk.io/er"
+    },
+    {
+      "role": "owner",
+      "address": "qor16fluqkmkgaqq98hkgdyccny93gwsm32c4awtmg",
+      "lane": "EVM, secp256k1 signature",
+      "label": "fUSD.transfer(attacker, 100)",
+      "refused": true,
+      "why": "failed to broadcast transaction: account qor16fluqkmkgaqq98hkgdyccny93gwsm32c4awtmg has no open EVM authorisation window; open one with MsgOpenEVMWindow, signed on the Cosmos lane with the account's post-quantum key: no open EVM authorisation window: no open EVM authorisation window [cosmossdk.io/er"
+    },
+    {
+      "role": "owner",
+      "address": "qor16fluqkmkgaqq98hkgdyccny93gwsm32c4awtmg",
+      "lane": "EVM, secp256k1 signature",
+      "label": "fUSD.approve(attacker, max): pull it later",
+      "refused": true,
+      "why": "failed to broadcast transaction: account qor16fluqkmkgaqq98hkgdyccny93gwsm32c4awtmg has no open EVM authorisation window; open one with MsgOpenEVMWindow, signed on the Cosmos lane with the account's post-quantum key: no open EVM authorisation window: no open EVM authorisation window [cosmossdk.io/er"
+    },
+    {
+      "role": "owner",
+      "address": "qor16fluqkmkgaqq98hkgdyccny93gwsm32c4awtmg",
+      "lane": "EVM, secp256k1 signature",
+      "label": "desk.approveVendor(attacker)",
+      "refused": true,
+      "why": "failed to broadcast transaction: account qor16fluqkmkgaqq98hkgdyccny93gwsm32c4awtmg has no open EVM authorisation window; open one with MsgOpenEVMWindow, signed on the Cosmos lane with the account's post-quantum key: no open EVM authorisation window: no open EVM authorisation window [cosmossdk.io/er"
+    },
+    {
+      "role": "owner",
+      "address": "qor16fluqkmkgaqq98hkgdyccny93gwsm32c4awtmg",
+      "lane": "EVM, secp256k1 signature",
+      "label": "desk.setLimit(fUSD, 10^12, 10^12)",
+      "refused": true,
+      "why": "failed to broadcast transaction: account qor16fluqkmkgaqq98hkgdyccny93gwsm32c4awtmg has no open EVM authorisation window; open one with MsgOpenEVMWindow, signed on the Cosmos lane with the account's post-quantum key: no open EVM authorisation window: no open EVM authorisation window [cosmossdk.io/er"
+    },
+    {
+      "role": "owner",
+      "address": "qor16fluqkmkgaqq98hkgdyccny93gwsm32c4awtmg",
+      "lane": "EVM, secp256k1 signature",
+      "label": "desk.setAgent(attacker, true)",
+      "refused": true,
+      "why": "failed to broadcast transaction: account qor16fluqkmkgaqq98hkgdyccny93gwsm32c4awtmg has no open EVM authorisation window; open one with MsgOpenEVMWindow, signed on the Cosmos lane with the account's post-quantum key: no open EVM authorisation window: no open EVM authorisation window [cosmossdk.io/er"
+    },
+    {
+      "role": "owner",
+      "address": "qor16fluqkmkgaqq98hkgdyccny93gwsm32c4awtmg",
+      "lane": "cosmos, classical signature only",
+      "label": "open an EVM window (MsgOpenEVMWindow), to then use the classical key",
+      "refused": true,
+      "why": "Broadcasting transaction failed with code 20 (codespace: pqc). Log: account qor16fluqkmkgaqq98hkgdyccny93gwsm32c4awtmg has a registered PQC key and must include the hybrid signature extension (hybrid mode: required): hybrid PQC signature required"
+    },
+    {
+      "role": "agentacct",
+      "address": "qor1llw052ph5xqwm2cv2ene8mtqv4lt2epfl5tr3f",
+      "lane": "cosmos, classical signature only",
+      "label": "open an EVM window on the agent account",
+      "refused": true,
+      "why": "Broadcasting transaction failed with code 20 (codespace: pqc). Log: account qor1llw052ph5xqwm2cv2ene8mtqv4lt2epfl5tr3f has a registered PQC key and must include the hybrid signature extension (hybrid mode: required): hybrid PQC signature required"
+    },
+    {
+      "role": "agentacct",
+      "address": "qor1llw052ph5xqwm2cv2ene8mtqv4lt2epfl5tr3f",
+      "lane": "cosmos, classical signature only",
+      "label": "link the attacker's ed25519 key to the agent account, no limits",
+      "refused": true,
+      "why": "Broadcasting transaction failed with code 20 (codespace: pqc). Log: account qor1llw052ph5xqwm2cv2ene8mtqv4lt2epfl5tr3f has a registered PQC key and must include the hybrid signature extension (hybrid mode: required): hybrid PQC signature required"
+    },
+    {
+      "role": "agentacct",
+      "address": "qor1llw052ph5xqwm2cv2ene8mtqv4lt2epfl5tr3f",
+      "lane": "cosmos, classical signature only",
+      "label": "replace the agent's ML-KEM-1024 key with the attacker's (read future sealed invoices)",
+      "refused": true,
+      "why": "Broadcasting transaction failed with code 234 (codespace: pqc). Log: account qor1llw052ph5xqwm2cv2ene8mtqv4lt2epfl5tr3f has a registered PQC key; KEM key messages need its hybrid signature: PQC key maintenance from a keyed account needs the hybrid signature"
+    },
+    {
+      "role": "agentacct",
+      "address": "qor1llw052ph5xqwm2cv2ene8mtqv4lt2epfl5tr3f",
+      "lane": "EVM, secp256k1 signature",
+      "label": "send the agent account's QOR to the attacker (EVM)",
+      "refused": true,
+      "why": "failed to broadcast transaction: account qor1llw052ph5xqwm2cv2ene8mtqv4lt2epfl5tr3f has no open EVM authorisation window; open one with MsgOpenEVMWindow, signed on the Cosmos lane with the account's post-quantum key: no open EVM authorisation window: no open EVM authorisation window [cosmossdk.io/er"
+    },
+    {
+      "role": "gas",
+      "address": "qor1gxx85vm6zws5uja9rlynrczc29tmqzcym6t9aa",
+      "lane": "cosmos, classical signature only",
+      "label": "send the relayer's QOR to the attacker",
+      "refused": true,
+      "why": "Broadcasting transaction failed with code 20 (codespace: pqc). Log: account qor1gxx85vm6zws5uja9rlynrczc29tmqzcym6t9aa has a registered PQC key and must include the hybrid signature extension (hybrid mode: required): hybrid PQC signature required"
+    },
+    {
+      "role": "vendorA",
+      "address": "qor13knjy3pnf45pu052w5mhkta0tyfh2mmf33fjah",
+      "lane": "EVM, secp256k1 signature",
+      "label": "Hostline's fUSD to the attacker",
+      "refused": true,
+      "why": "failed to broadcast transaction: account qor13knjy3pnf45pu052w5mhkta0tyfh2mmf33fjah has no open EVM authorisation window; open one with MsgOpenEVMWindow, signed on the Cosmos lane with the account's post-quantum key: no open EVM authorisation window: no open EVM authorisation window [cosmossdk.io/er"
+    }
+  ],
+  "control": {
+    "label": "the company sends 1 uqor to itself, hybrid-signed",
+    "code": 0,
+    "tx": "C88161D652DBF86E118BC7B999B7CA24FF7AD8A987333857CB2E93943F9C2AA5"
+  }
+}

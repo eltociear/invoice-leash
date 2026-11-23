@@ -362,6 +362,23 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
       "both sealed invoices are ML-KEM-1024 envelopes with nothing readable outside; opened, the genuine one verifies and the forged one is BadSignature", "(sealing hides, the signature decides)");
   }
 
+  // our own Q-Day drill: every account's classical key used alone (runs/qday-drill.json), then the state it would have changed
+  {
+    const dr = json("runs/qday-drill.json"), at = dr.attempts;
+    const why = (a) => /registered PQC key and must include|no open EVM authorisation window|KEM key messag/.test(a.why);
+    ok(at.length === 14 && at.every((a) => a.refused && why(a)), `Q-Day drill: ${at.length} attacks with the classical keys alone (company, agent account, relayer, vendor), all refused by the chain`,
+      `(${at.filter((a) => /must include/.test(a.why)).length}× "must include" an ML-DSA-87 signature, ${at.filter((a) => /no open EVM/.test(a.why)).length}× no EVM window, ${at.filter((a) => /KEM key/.test(a.why)).length}× KEM key needs PQC)`);
+    const ctl = await rest(`/cosmos/tx/v1beta1/txs/${dr.control.tx}`);
+    ok(ctl?.tx_response?.code === 0 && ctl.tx_response.events.some((e) => e.type === "pqc_hybrid_verify" && e.attributes.some((x) => x.key === "status" && x.value === "verified")),
+      "control: the same kind of request, hybrid-signed (ML-DSA-87 + secp256k1), went through", `(${dr.control.tx.slice(0, 8)}…)`);
+    const auths = (await rest(`/qorechain/abstractaccount/v1/accounts/${d2.agentAccount}/authenticators`))?.authenticators ?? [];
+    const { kemKeyOf } = await import("../lib/sealed.mjs");
+    const kem = await retry(() => kemKeyOf(d2.agentAccount)), reg = (await rest(`/cosmos/tx/v1beta1/txs/${json("runs/sealed.json").registerTx}`))?.tx?.body?.messages?.[0];
+    const [mAllow] = erc.decodeFunctionResult("allowance", await provider.call({ to: FUSD, data: erc.encodeFunctionData("allowance", [payer2, MALLORY]) }));
+    ok(!auths.some((x) => x.label === "attacker") && Buffer.from(kem.publicKey).toString("base64") === reg?.public_key && mAllow === 0n && !(await call2("approved", [payer2, MALLORY]))[0] && !(await call2("isAgent", [payer2, MALLORY]))[0],
+      "and nothing it tried stuck: no attacker key on the agent account, the agent's ML-KEM key unchanged, no fUSD allowance or vendor/agent role for the attacker");
+  }
+
   // v2 through MCP: Claude Code, then the obey-everything client, then a read-only audit
   const lines2 = (f) => readFileSync(new URL(f, root), "utf8").trim().split("\n").map((l) => JSON.parse(l)).filter((x) => x.link);
   const c2run = lines2("runs/mcp-v2-claude.server.jsonl"), h2run = lines2("runs/mcp-v2-compromised.server.jsonl");
