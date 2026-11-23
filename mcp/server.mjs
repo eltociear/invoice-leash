@@ -134,7 +134,7 @@ server.registerTool("action_log", {
 }, async () => {
   const files = readdirSync(new URL("runs/", root)).filter((f) => /^mcp-v2-.*\.server\.jsonl$/.test(f)).sort();
   const rows = files.flatMap((f) => readFileSync(new URL(`runs/${f}`, root), "utf8").trim().split("\n").filter(Boolean).map((l) => ({ file: f, ...JSON.parse(l) })))
-    .filter((x) => x.link).map((x) => `${x.at} ${x.tool}(${JSON.stringify(x.args)}) reported ${x.ok ? "EXECUTED" : `REFUSED: ${(x.why ?? "").slice(0, 120)}`} tx ${x.link.slice(-64)}`);
+    .filter((x) => x.link).map((x) => `${x.at} ${x.file.replace(/^mcp-v2-|\.server\.jsonl$/g, "")} ${x.tool}(${JSON.stringify(x.args)}) reported ${x.ok ? "EXECUTED" : `REFUSED: ${(x.why ?? "").slice(0, 120)}`} tx ${x.link.slice(-64)}`);
   return text(rows.join("\n") || "no actions yet");
 });
 
