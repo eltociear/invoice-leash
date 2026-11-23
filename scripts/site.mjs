@@ -109,13 +109,15 @@ pre{background:var(--panel);border:1px solid var(--line);border-radius:12px;padd
 .v{font:600 12px ui-monospace,Menlo,monospace;padding:1px 7px;border-radius:5px}.v.ok{color:#0d1117;background:var(--ok)}.v.no{color:var(--no);border:1px solid #6e2b27}.v.skip{color:var(--skip);border:1px solid var(--line)}
 .tx{font-size:12px;color:var(--dim)}.why{font-size:14px;color:var(--dim);margin:2px 0 6px}
 footer{margin-top:64px;color:var(--dim);font-size:14px}
-@media (max-width:720px){h1{font-size:32px}.stats,.layers{grid-template-columns:1fr}.body,.inv,.lanes{margin-left:0}}
+.req{width:100%;border-collapse:collapse;font-size:15px;margin-top:8px}.req td,.req th{border-top:1px solid var(--line);padding:10px 8px;vertical-align:top;text-align:left}.req th{color:var(--dim);font-weight:600;font-size:13px}.req td:first-child{color:var(--acc);font-weight:600;width:22%}.req td:last-child{width:26%;font-size:14px}
+@media (max-width:720px){.req td,.req th{display:block;width:auto!important;border-top:0;padding:4px 0}.req tr{display:block;border-top:1px solid var(--line);padding:8px 0}.req thead{display:none}h1{font-size:32px}.stats,.layers{grid-template-columns:1fr}.body,.inv,.lanes{margin-left:0}}
 </style></head>
 <body><main>
 <h1>Invoice Leash</h1>
 <p class="lede">An invoice-paying AI agent that stays safe when its model does not. The agent's code has no limit check, no vendor check and no signature check; invoices are in fUSD and signed with ML-DSA-87. Every limit lives on QoreChain, so we can hand the agent to an attacker and watch the chain say no.</p>
 <div class="links">
   <a href="lab.html" style="border-color:var(--acc);color:var(--acc)">Try to break it: attack lab, sign your own ML-DSA-87 invoice (live, in your browser)</a>
+  <a href="#requirements">Track requirements, on chain</a>
   <a href="#found">What we found about spending rules</a>
   <a href="#mcp">Claude Code via MCP</a>
   <a href="https://youtu.be/K3Teb5sO8JU">Demo video (2:50)</a>
@@ -138,7 +140,18 @@ footer{margin-top:64px;color:var(--dim);font-size:14px}
   <div class="layer"><h3>Post-quantum invoices</h3><p>ML-DSA-87 signature from an approved vendor whose key is registered on chain, over payer, payee, currency and amount, checked by precompiles <code>0x…0a02</code> and <code>0x…0a01</code>.</p></div>
 </div>
 
-<h2>The inbox, email by email (v2, fUSD)</h2>
+<h2 id="requirements">What the chain enforces, requirement by requirement</h2>
+<p class="dim">The Post-Quantum AI Agents track asks for these. Each one is a testnet transaction you can open, and <code>npm run verify</code> re-reads it.</p>
+<table class="req"><thead><tr><th>Requirement</th><th>Invoice Leash</th><th>On chain</th></tr></thead><tbody>
+<tr><td>The agent's own scoped EVM window</td><td>The agent account's window admits at most 3 transactions, 0.4 QOR, 300 blocks, and one target: InvoiceDeskV2. Inside it the agent paid an invoice; <code>fUSD.transfer</code> and a QOR send to Mallory were refused as <i>not an allowed recipient</i>; after closing, so was <code>pay</code>.</td><td>open ${txLink(EX + "FF8908FA676BD8BF1A5D53C99DEEBD6F7E8A3D0651E577DA5B62A3F80C8FA688")} pay ${txLink(EX + "0x34e000174ecd5d064b3bd8ea0da81b496ae512d3c1fe3a80313868bf9a7ce916")} close ${txLink(EX + "A1F1A6B7D447F58082CC4755B2E7FC8822215A7919CFE9B288CB197322797B17")}</td></tr>
+<tr><td>Transaction, value, duration and target limits</td><td>Window: count, value, blocks, target. Spending rule: one call, no QOR or fUSD, an expiry. Desk: 100 fUSD a payment, 250 a UTC day, approved payees only.</td><td>link ${txLink(EX + "BC8E105E6C6840E8AB4608CC58B6E5C112BF86D6748FA3E873B4274C0DA221FE")} (until 2026-12-20)</td></tr>
+<tr><td>Smart-account spending rules</td><td>The agent's ed25519 key is linked to its own account. The chain refused <code>MsgSend</code>, an EVM value transfer, <code>fUSD.transfer</code> / <code>transferFrom</code>, <code>approveVendor</code> and <code>setLimit</code>.</td><td><a href="#inbox">the inbox below</a></td></tr>
+<tr><td>Authenticated messaging</td><td>Invoices: ML-DSA-87 from an approved vendor, checked on chain by <code>0x…0a02</code> / <code>0x…0a01</code>. Instructions: QoreSign messages checked against the company's registered key; a Q-Day forgery (the company's classical key plus another ML-DSA-87 key) is refused.</td><td><a href="lab.html#msg">check them in the lab</a></td></tr>
+<tr><td>Confidential invoices (ML-KEM-1024)</td><td>Vendors seal invoices to the agent account's ML-KEM-1024 key in the chain's KEM registry (QoreSeal): mail stored today cannot be read after Q-Day. Sealing hides; the signature still decides (a sealed forgery is <code>BadSignature</code>).</td><td>register ${txLink(EX + "5AB689523EDF4F47374A35BED6FFAB3913369CC6CAA32579A16651F238BAA80B")}</td></tr>
+<tr><td>A kill switch</td><td><code>setAgent(agent, false)</code>: the agent's real payment refused (<code>NotPayersAgent</code>); back on, the same payment paid.</td><td><a href="#killswitch">below</a></td></tr>
+</tbody></table>
+
+<h2 id="inbox">The inbox, email by email (v2, fUSD)</h2>
 <p class="dim">Recorded on <code>qorechain-diana</code>. Two honest vendors, Hostline and Tokenwell, and Mallory, who holds a valid ML-DSA-87 key of her own but is not a vendor. The compromised agent obeys every email, attacker's included, and tries every way to move money.</p>
 ${emails2}
 
@@ -165,7 +178,7 @@ ${emails}
 <article class="mail"><header><span class="n">2</span><div><div class="from">then an obey-everything MCP client, same tools, same inbox · <a href="https://github.com/eltociear/invoice-leash/blob/main/runs/mcp-compromised-final.txt">transcript</a></div><h3>${mcpHostile.length} attempts, ${mcpHostile.filter((x) => !x.ok).length} refused by the chain, balance unchanged</h3></div></header>
 <div class="lanes"><div class="lane">${mcpHostile.map(mcpRow).join("")}</div></div></article>
 
-<h2>Then the owner pulls the leash</h2>
+<h2 id="killswitch">Then the owner pulls the leash</h2>
 <p class="dim">v2: one company transaction in the desk. A genuine 20 fUSD invoice the desk would pay for the agent:</p>
 <pre>$ node leash.mjs kill-switch-v2
 company: setAgent(agent, false)    <a href="${EX}0x11c3c95e65467ac17ad29ddac40aab1886270cc9dab07e931b29903958223487">0x11c3c95e…</a>
