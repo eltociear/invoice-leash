@@ -12,7 +12,7 @@ replaced are at the end.
 | Key / account | Scheme | Can | Cannot |
 |---|---|---|---|
 | **Company** (payer) | hybrid secp256k1 + **ML-DSA-87** (every tx carries both; key registered with proof of possession) | hold the fUSD; approve/remove vendors, name/remove agents, set per-token limits, set the desk's allowance; pay any invoice in person | — |
-| **Agent account** | its own key (kept by the human, hybrid ML-DSA-87) only links/revokes the agent key | — (holds no fUSD; 0.64 QOR from its own setup, which the agent's key cannot move) | — |
+| **Agent account** | its own key (kept by the human, hybrid ML-DSA-87) only links/revokes the agent key | — (holds no fUSD; about 1 QOR for its own fees, which the agent's linked key cannot move; its classical key only inside a scoped window) | — |
 | **Agent key** | ed25519, linked to the agent account with permission `evm`, an expiry, and a rule listing one denom it does not hold (fBTC, 1 satoshi) and one call: `InvoiceDeskV2.pay` | ask the chain to run `pay` as the agent account | send QOR (no `send` permission, `uqor` not allowed); move fUSD directly (`transfer`/`approve`/`transferFrom` are not allowed calls); call any setting in the desk; call any other contract |
 | **Gas wallet** | hybrid | relay the agent's requests and pay their fees | move the company's money (it never holds any) |
 | **Vendor** | hybrid, **ML-DSA-87** key registered on chain | sign invoices for a specific payer, currency, amount, desk and chain | get paid unless the payer approved it |
@@ -42,6 +42,8 @@ tests (`test/InvoiceDeskV2.t.sol`).
 | …as `fUSD.transfer(attacker)` from the agent's account | chain: not an allowed call (and the account holds no fUSD) | inbox #2 |
 | …as `fUSD.transferFrom(company, attacker)` | chain: not an allowed call (and only the desk has an allowance) | inbox #2 |
 | Agent reconfigures its leash (`approveVendor`, `setLimit`, `setAgent`) | chain: only `pay` (`0xf19ff4ff`) is allowed; and in the desk, settings are per `msg.sender`, so the agent would only configure its own empty entry | inbox #3, test `test_agent_limits_are_the_payers_alone` |
+| The agent's classical key used directly (EVM transactions) | its account's EVM window: ≤3 txs, ≤0.4 QOR, 300 blocks, target InvoiceDeskV2 only; no window, no transaction. Only the human's hybrid ML-DSA-87 signature opens one | `runs/probes/window.json`, verify §9 |
+| "Approved by the CFO" in an email | instructions count only as QoreSign messages verified against the company's registered ML-DSA-87 key (MCP `verify_message`); a Q-Day forgery (the company's classical key + another ML-DSA-87 key) is refused | `runs/messages.json`, verify §9 |
 | An account the company never named calls `pay` for it | `NotPayersAgent` | verify §9, tests |
 | Attacker's own, correctly signed invoice | `UnknownVendor` | inbox #3 |
 | Invoice signed by the wrong key | `BadSignature` (ML-DSA-87 via `0x…0a01`) | inbox #4 |

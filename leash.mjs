@@ -280,6 +280,20 @@ const cmds = {
   },
 
   /** Convert the owner's fUSD bank coin (faucet form) into its ERC-20 balance, which contracts can spend. */
+  /** The company buys fUSD with QOR in the AMM (pool 2, fUSD/QOR), then converts it to its ERC-20 balance. */
+  async "buy-fusd"(qor = "5", slippagePct = "3") {
+    const o = await account("owner"), POOL = "2", denomOut = `erc20:${FUSD}`;
+    const p = (await (await fetch(`${REST}/qorechain/amm/v1/pools/${POOL}`)).json()).pool;
+    const inU = BigInt(toUqor(qor)), ra = BigInt(p.reserve_a), rb = BigInt(p.reserve_b); // a = fUSD, b = uqor
+    const quote = (ra * inU) / (rb + inU), minOut = (quote * BigInt(100 - Number(slippagePct))) / 100n;
+    console.log(`pool ${POOL}: ${qor} QOR -> about ${fusd(quote)} (min ${fusd(minOut)})`);
+    const res = await broadcast(o, [{ typeUrl: "/qorechain.amm.v1.MsgSwapExactIn", value: { sender: o.cosmos, poolId: POOL, tokenIn: { denom: "uqor", amount: String(inU) }, denomOut, minOut: String(minOut) } }], "leash: company buys fUSD");
+    if (res.code) throw new Error(`swap REFUSED code ${res.code}: ${res.rawLog}`);
+    console.log(`swapped  ${EXPLORER}${res.transactionHash}`);
+    await new Promise((r) => setTimeout(r, 6000));
+    await cmds["convert-fusd"]();
+  },
+
   async "convert-fusd"(amount) {
     const o = await account("owner");
     const fb = (await (await fetch(`${REST}/cosmos/bank/v1beta1/balances/${o.cosmos}`)).json()).balances.find((b) => b.denom.toLowerCase() === `erc20:${FUSD}`.toLowerCase());

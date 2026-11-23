@@ -262,7 +262,7 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
 
   // the agent account's rule, as the chain stores it
   const [auth2, rules2] = await Promise.all([rest(`/qorechain/abstractaccount/v1/accounts/${d2.agentAccount}/authenticators`), rest(`/qorechain/abstractaccount/v1/accounts/${d2.agentAccount}/spending_rules`)]);
-  const r2 = rules2?.rules?.[0], a2 = (auth2?.authenticators ?? []).find((x) => x.label === "leash invoice agent v2");
+  const r2 = rules2?.rules?.[0], a2 = (auth2?.authenticators ?? []).filter((x) => x.label === "leash invoice agent v2").sort((x, y) => Number(y.created_at_unix) - Number(x.created_at_unix))[0]; // the newest link (re-linked for judging)
   const exp2 = new Date(Number(a2?.expiry_unix) * 1000).toISOString().slice(0, 16) + "Z";
   ok(a2 && a2.permissions.join() === "evm", `agent key linked to the agent account ${d2.agentAccount} with "evm" only`, Number(a2?.expiry_unix) * 1000 < Date.now() ? `(expired ${exp2}, as designed: a forgotten agent stops)` : `(expires ${exp2})`);
   ok(r2 && r2.allowed_denoms.length === 1 && !/uqor|0x97143b77/i.test(r2.allowed_denoms.join()) && r2.denom_limits.every((x) => x.per_tx_limit === "1"),
@@ -323,6 +323,30 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
     const kinv = json("inbox/inbox-v2-KILL.json")[0].invoice;
     ok(rOff && rOn && await reread(agentTxs) === 2 && !agentTxs[0].ok && /NotPayersAgent/.test(agentTxs[0].why) && agentTxs[1].ok && (await call2("paid", [payer2, kinv.id]))[0],
       `kill switch, live: the company's setAgent(false) -> the agent's payment refused (NotPayersAgent); setAgent(true) -> the same payment paid`, `(${kinv.ref}, ${kinv.fusd} fUSD)`);
+  }
+
+  // the agent account's own scoped EVM window (runs/probes/window.json): tx, value, duration and target limits
+  {
+    const pw = json("runs/probes/window.json"), st = pw.steps;
+    const openTx = (await rest(`/cosmos/tx/v1beta1/txs/${st[0].tx}`));
+    const m = openTx?.tx?.body?.messages?.[0];
+    ok(openTx?.tx_response?.code === 0 && m?.["@type"] === "/qorechain.pqc.v1.MsgOpenEVMWindow" && m.sender === d2.agentAccount && m.allowed_targets.length === 1 && getAddress(m.allowed_targets[0]) === DESK2 && m.max_txs === "3" && m.max_value === "400000" && m.blocks === "300",
+      "the agent account's EVM window, as written on chain: target InvoiceDeskV2 only, ≤3 txs, ≤0.4 QOR value+fees, 300 blocks", `(${st[0].tx.slice(0, 8)}…, hybrid ML-DSA-87 signed)`);
+    const [ptx, prc] = await Promise.all([provider.getTransaction(st[1].tx), provider.getTransactionReceipt(st[1].tx)]);
+    ok(prc?.status === 1 && getAddress(ptx.from) === agent2 && getAddress(ptx.to) === DESK2 && prc.blockNumber > Number(openTx.tx_response.height) && (await call2("paid", [payer2, pw.invoice.id]))[0],
+      "inside it, the account's classical key paid a genuine invoice through the desk (an ordinary EVM tx)", `(${pw.invoice.ref}, ${pw.invoice.fusd} fUSD)`);
+    const closeTx = await rest(`/cosmos/tx/v1beta1/txs/${st[4].tx}`);
+    ok(closeTx?.tx_response?.code === 0 && closeTx.tx.body.messages[0]["@type"] === "/qorechain.pqc.v1.MsgCloseEVMWindow" && st[2].result.includes("does not list 0x97143B771D34ddb9130b807b135Ae675A5a963CA") && st[3].result.includes(`does not list ${MALLORY}`) && /no open EVM authorisation window/.test(st[5].result),
+      "fUSD.transfer and a QOR send to Mallory were refused at broadcast (not an allowed recipient); after the close, so was pay", "(refused before inclusion: recorded messages, no tx)");
+  }
+
+  // authenticated messaging: company instructions in QoreSign message-signing-v1, checked against the chain
+  {
+    const { verifyCompanyMessage } = await import("../lib/messages.mjs");
+    for (const m of json("runs/messages.json")) {
+      const r = await retry(() => verifyCompanyMessage(m));
+      ok(r.ok === m.expect, `company message, ${m.name} -> ${r.ok ? "AUTHENTIC" : "REFUSED"}`, r.ok ? "(secp256k1 + ML-DSA-87, key read from chain)" : `(${r.why.slice(0, 80)})`);
+    }
   }
 
   // v2 through MCP: Claude Code, then the obey-everything client, then a read-only audit
