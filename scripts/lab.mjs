@@ -2,6 +2,7 @@
 // live testnet: tamper with a real ML-DSA-87 signed invoice, choose who sends it, and ask the real
 // InvoiceDeskV2 (eth_call) whether it would pay. No server, no keys, nothing sent, nothing spent.
 import { readFileSync, writeFileSync, mkdirSync, copyFileSync, readdirSync } from "node:fs";
+import { qorToEvm } from "@qorechain/sdk";
 
 const root = new URL("../", import.meta.url);
 const json = (p) => JSON.parse(readFileSync(new URL(p, root), "utf8"));
@@ -25,6 +26,7 @@ const data = {
     { key: "replay", label: "Replay a paid invoice", note: "Hostline's 80 fUSD invoice that the agent already paid in the recorded v2 run.", inv: pick(main[0].invoice) },
     { key: "big", label: "Genuine, but 300 fUSD", note: "Over the agent's 100 fUSD per-payment limit. Ask as the agent, then as the company.", inv: pick(lab[7].invoice) },
   ],
+  messages: json("runs/messages.json").map((m) => ({ name: m.name, signer: m.signer, signerEvm: qorToEvm(m.signer), text: m.text, chainId: m.chainId, pq: m.signature.pq.signature, expect: m.expect })),
   chainRefusals: [
     ["MsgSend 50 QOR", "no send permission", tx((x) => x.action === "send")],
     ["EVM value transfer, 0.5 QOR", "denom uqor not allowed", tx((x) => x.action === "evm-value")],
@@ -74,7 +76,7 @@ ol.log{font-size:13px;color:var(--dim);padding-left:20px;margin:0}ol.log li{marg
 </style></head>
 <body><main>
 <div class="top"><h1>Attack lab: make Invoice Leash pay</h1><a href="./">← the recorded runs</a></div>
-<p>Pick a real fUSD invoice, change anything, choose who sends it, and ask the <b>real InvoiceDeskV2 on the QoreChain testnet</b> whether it would pay. Your browser sends an <code>eth_call</code> to <code>${data.rpc}</code>; the ML-DSA-87 check is the chain's own precompile. Nothing is sent and nothing is spent, so try as much as you like. You can also <a href="#you">be the vendor</a>: make an ML-DSA-87 key in this tab and sign an invoice yourself.</p>
+<p>Pick a real fUSD invoice, change anything, choose who sends it, and ask the <b>real InvoiceDeskV2 on the QoreChain testnet</b> whether it would pay. Your browser sends an <code>eth_call</code> to <code>${data.rpc}</code>; the ML-DSA-87 check is the chain's own precompile. Nothing is sent and nothing is spent, so try as much as you like. You can also <a href="#you">be the vendor</a>: make an ML-DSA-87 key in this tab and sign an invoice yourself, or <a href="#msg">check a company instruction</a>, including a Q-Day forgery.</p>
 <p class="live"><span class="dot" id="dot"></span><span id="live">connecting to qorechain-diana…</span></p>
 
 <h2>1. Start from</h2>
@@ -103,6 +105,16 @@ ol.log{font-size:13px;color:var(--dim);padding-left:20px;margin:0}ol.log li{marg
 <div class="btns"><button type="button" class="main" id="mkkey">1. Make my ML-DSA-87 key</button><button type="button" class="main" id="signme" disabled>2. Sign the invoice above with it</button></div>
 <div class="kv" id="mykey" style="margin-top:10px"></div>
 <p class="dim" style="font-size:14px;margin-bottom:0">What to expect: your signature is mathematically valid (your browser checks it against your own public key), yet the desk refuses it. With Hostline or Tokenwell as payee it reads <i>their</i> registered key, and your signature does not match it: <code>BadSignature</code>. With Mallory as payee: <code>UnknownVendor</code>. A valid post-quantum signature is not enough; it has to be the payee's, and the payee has to be one the company approved.</p>
+</div>
+
+<h2 id="msg">5. "Approved by the CFO": instructions the agent may trust, checked in your browser</h2>
+<div class="card you">
+<p style="margin-top:0">The company signs instructions to its agent as <b>QoreSign</b> messages (the format QoreX's <code>signArbitrary</code> makes): secp256k1 plus <b>ML-DSA-87</b> over <code>"qorechain-msg-v1|qorechain-diana|" + text</code>. Pick one; your browser reads the company's registered ML-DSA-87 key from the chain (precompile <code>0x…0a02</code>) and verifies the post-quantum half itself. The <b>Q-Day forgery</b> carries a valid signature from the company's classical key (as if a quantum computer had broken it) and an ML-DSA-87 signature from another key. Edit the text and check again.</p>
+<div class="presets" id="msgs"></div>
+<label for="msgtext">Message text</label><input id="msgtext">
+<div class="btns"><button type="button" class="main" id="msgcheck">Check the ML-DSA-87 signature</button></div>
+<div class="local" id="msgout">Pick a message.</div>
+<p class="dim" style="font-size:14px;margin-bottom:0">The classical half is checked too, by <code>npm run verify</code> and the MCP tool <code>verify_message</code> (QoreSign's <code>verifyMessageWithChain</code>). After Q-Day only the ML-DSA-87 half means anything, and that is the half shown here.</p>
 </div>
 
 <h2>The company's leash on its agent, read live</h2>
@@ -230,6 +242,22 @@ $("due").oninput = (e) => { const t = Date.parse(e.target.value + "Z"); if (!isN
 $("flip").onclick = () => { const b = E.getBytes(cur.signature).slice(); const i = Math.floor(Math.random() * b.length); b[i] ^= 1 << Math.floor(Math.random() * 8); cur.signature = E.hexlify(b); render(); };
 $("reset").onclick = () => { cur = { ...base }; render(); };
 $("go").onclick = ask;
+let msg = null;
+$("msgs").innerHTML = D.messages.map((m, i) => '<button type="button" data-i="' + i + '">' + h(m.name) + "</button>").join("");
+document.querySelectorAll("#msgs button").forEach((b) => b.onclick = () => { msg = D.messages[Number(b.dataset.i)]; $("msgtext").value = msg.text; document.querySelectorAll("#msgs button").forEach((x) => x.setAttribute("aria-pressed", x === b)); $("msgout").textContent = "Ready: check it."; });
+$("msgcheck").onclick = async () => {
+  if (!msg) return;
+  try {
+    await noPQ();
+    const [reg, alg, pk, proven] = await pqcKey(msg.signerEvm);
+    const bytes = E.toUtf8Bytes("qorechain-msg-v1|" + msg.chainId + "|" + $("msgtext").value);
+    const sig = Uint8Array.from(atob(msg.pq), (c) => c.charCodeAt(0));
+    const ok = reg && proven && Number(alg) === 1 && vfy(pk, bytes, sig);
+    $("msgout").innerHTML = "Signer " + h(msg.signer) + " · its ML-DSA-87 key read from the chain: " + (reg ? (pk.length - 2) / 2 + " bytes, " + (proven ? "possession proven" : "not proven") : "none") +
+      "<br>The ML-DSA-87 half over these " + bytes.length + " bytes: " + (ok ? '<b class="ok">AUTHENTIC</b>: the company\u2019s post-quantum key signed exactly this text.' : '<b class="no">NOT AUTHENTIC</b>: treat it as written by a stranger, whatever it claims.') +
+      ($("msgtext").value !== msg.text ? '<br><span class="diff">You edited the text.</span>' : "");
+  } catch (e) { $("msgout").textContent = "Could not check: " + e.message; }
+};
 $("mkkey").onclick = async () => { try { await mkkey(); } catch (e) { $("mykey").textContent = e.message; } };
 async function mkkey() {
   await noPQ();

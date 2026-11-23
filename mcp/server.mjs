@@ -19,7 +19,7 @@ import { z } from "zod";
 import { appendFileSync, mkdirSync, readFileSync, readdirSync } from "node:fs";
 import { Interface, JsonRpcProvider, formatUnits } from "ethers";
 import { fetchAuthenticators, fetchSpendingRules } from "@qorechain/sdk";
-import { EVM_CHAIN_ID, EVM_RPC, REST, account, agentKey, balance, fmt, hex, readDeployment } from "../lib/chain.mjs";
+import { EVM_CHAIN_ID, EVM_RPC, REST, account, agentKey, balance, fmt, hasKeys, hex, readDeployment } from "../lib/chain.mjs";
 import { deskV2, describeV2, executeV2 } from "../lib/agent.mjs";
 import { FUSD } from "../lib/invoices.mjs";
 import { verifyCompanyMessage } from "../lib/messages.mjs";
@@ -28,21 +28,27 @@ import { openInvoice } from "../lib/sealed.mjs";
 const root = new URL("../", import.meta.url);
 const INBOX = new URL(process.env.LEASH_INBOX2 ?? "inbox/inbox-v2.json", root);
 const D = readDeployment().v2;
+// Read-only mode (no keys file, or LEASH_READONLY=1): everything that reads the chain works, nothing can be sent.
+// This is how a judge plugs the server into their own Claude Code without our keys.
+const RO = process.env.LEASH_READONLY === "1" || !hasKeys();
+const me = async () => (RO ? { cosmos: D.agentAccount, evmAddr: D.agentAccountEvm } : account("agentacct"));
 const LOG = new URL(`runs/mcp-v2-${new Date().toISOString().replace(/[:.]/g, "-")}.server.jsonl`, root);
 // A sealed email (ML-KEM-1024, to the agent account's registered key) is opened with the agent's KEM key.
 const inbox = () => JSON.parse(readFileSync(INBOX, "utf8")).map((m) => {
   if (!m.sealed || m.invoice) return m;
+  if (RO) return { ...m, sealedNote: "sealed to the agent account's ML-KEM-1024 key; this read-only server holds no KEM key, so it stays closed" };
   try { return { ...m, invoice: openInvoice(m.sealed), sealedNote: "sealed to your account's ML-KEM-1024 key; opened" }; }
   catch (e) { return { ...m, sealedNote: `sealed, but not to your key: ${e.message}` }; }
 });
 const provider = new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID, { staticNetwork: true });
 const erc20 = new Interface(["function balanceOf(address) view returns (uint256)", "function allowance(address,address) view returns (uint256)"]);
 const text = (s) => ({ content: [{ type: "text", text: s }] });
-const log = (entry) => { mkdirSync(new URL("runs/", root), { recursive: true }); appendFileSync(LOG, JSON.stringify({ at: new Date().toISOString(), ...entry }) + "\n"); };
+const log = (entry) => { if (RO) return; mkdirSync(new URL("runs/", root), { recursive: true }); appendFileSync(LOG, JSON.stringify({ at: new Date().toISOString(), ...entry }) + "\n"); };
 const fusd = (u) => `${formatUnits(u, 6).replace(/\.0$/, "")} fUSD`;
 const view = async (to, i, fn, args) => i.decodeFunctionResult(fn, await provider.call({ to, data: i.encodeFunctionData(fn, args) }));
 
 async function act(tool, args, step) {
+  if (RO) return text(`READ-ONLY: this server runs without the agent's key, so ${tool} cannot send anything. With the key, the chain decides; see runs/mcp-v2-*-final.txt for recorded sessions and check_invoice for a dry run.`);
   const items = inbox();
   let r;
   try { r = await executeV2(step, items, D); } catch (e) { r = { ok: false, infra: true, why: String(e?.message ?? e) }; }
@@ -65,16 +71,16 @@ server.registerTool("leash_status", {
   description: "The company account you pay for, its fUSD, your own (empty) account, and the limits enforced on you (all read from the chain).",
   inputSchema: {},
 }, async () => {
-  const acct = await account("agentacct"), k = agentKey(), g = await account("gas");
+  const acct = await me(), g = RO ? { cosmos: D.gas } : await account("gas");
   const [rules, auths, gbal] = await Promise.all([fetchSpendingRules({ rest: REST, address: acct.cosmos }), fetchAuthenticators({ rest: REST, address: acct.cosmos }), balance(g.cosmos)]);
-  const me = auths.find((a) => a.pubkeyHex.toLowerCase() === hex(k.pk)), r = rules.rules[0];
+  const mine = RO ? auths.filter((a) => a.label === "leash invoice agent v2").sort((a, b) => Number(b.createdAtUnix - a.createdAtUnix))[0] : auths.find((a) => a.pubkeyHex.toLowerCase() === hex(agentKey().pk)), r = rules.rules[0];
   const [bal] = await view(FUSD, erc20, "balanceOf", [D.payerEvm]), [allow] = await view(FUSD, erc20, "allowance", [D.payerEvm, D.invoiceDesk]);
   const lim = await view(D.invoiceDesk, deskV2, "limits", [D.payerEvm, FUSD]), [left] = await view(D.invoiceDesk, deskV2, "remainingToday", [D.payerEvm, FUSD]);
-  const [mine] = await view(FUSD, erc20, "balanceOf", [acct.evmAddr]);
+  const [held] = await view(FUSD, erc20, "balanceOf", [acct.evmAddr]);
   return text([
     `company (payer) ${D.payer} (EVM ${D.payerEvm}): ${fusd(bal)}; the desk may pull up to ${fusd(allow)} (allowance)`,
-    `your own account ${acct.cosmos} (EVM ${acct.evmAddr}): ${fusd(mine)}, ${fmt(await balance(acct.cosmos))} (you cannot move QOR or fUSD from it)`,
-    `your key: ${me ? (me.revoked ? "REVOKED" : Number(me.expiryUnix) * 1000 < Date.now() ? `EXPIRED ${new Date(Number(me.expiryUnix) * 1000).toISOString()} (the chain refuses it now)` : `linked, permissions ${me.permissions.join(",")}, expires ${new Date(Number(me.expiryUnix) * 1000).toISOString()}`) : "not linked"}`,
+    `your own account ${acct.cosmos} (EVM ${acct.evmAddr}): ${fusd(held)}, ${fmt(await balance(acct.cosmos))} (you cannot move QOR or fUSD from it)`,
+    `${RO ? "the agent's key (newest link; this server is READ-ONLY and holds no key)" : "your key"}: ${mine ? (mine.revoked ? "REVOKED" : Number(mine.expiryUnix) * 1000 < Date.now() ? `EXPIRED ${new Date(Number(mine.expiryUnix) * 1000).toISOString()} (the chain refuses it now)` : `linked, permissions ${mine.permissions.join(",")}, expires ${new Date(Number(mine.expiryUnix) * 1000).toISOString()}`) : "not linked"}`,
     r ? `your chain rule: denoms ${r.allowedDenoms.join(",")} (no QOR, no fUSD); calls ${(r.allowedEvmCalls ?? []).join(", ")} (InvoiceDeskV2.pay only)` : "no spending rule",
     `your limits in the desk, set by the company: ${fusd(lim[0])} per payment, ${fusd(lim[1])} per day; ${fusd(left)} left today (UTC)`,
     `invoice desk: ${D.invoiceDesk}; fee wallet (pays for your requests): ${fmt(gbal)}`,
@@ -99,7 +105,7 @@ server.registerTool("check_invoice", {
 }, async ({ email }) => {
   const v = inbox()[email]?.invoice;
   if (!v) return text(`email ${email} has no invoice`);
-  const acct = await account("agentacct");
+  const acct = await me();
   let verdict = "WOULD PAY (vendor approved, ML-DSA-87 signature valid, unpaid, not past due, within your limits)";
   for (let i = 0; ; i++) {
     try { await provider.call({ from: acct.evmAddr, to: D.invoiceDesk, data: deskV2.encodeFunctionData("pay", [D.payerEvm, v.token, v.vendor, v.amount, v.id, v.dueBy, v.signature]) }); break; }
@@ -110,9 +116,9 @@ server.registerTool("check_invoice", {
       verdict = `COULD NOT ASK (a network problem, not a decision by the desk): ${e.shortMessage ?? e.message}`; break;
     }
   }
-  const k = agentKey(), auths = await fetchAuthenticators({ rest: REST, address: acct.cosmos }).catch(() => []);
-  const me = auths.find((a) => a.pubkeyHex.toLowerCase() === hex(k.pk));
-  if (verdict.startsWith("WOULD PAY") && (!me || me.revoked || Number(me.expiryUnix) * 1000 < Date.now())) verdict += ". But your key is " + (!me ? "not linked" : me.revoked ? "revoked" : "expired") + ", so the chain will refuse to run pay for you.";
+  const auths = await fetchAuthenticators({ rest: REST, address: acct.cosmos }).catch(() => []);
+  const k2 = RO ? auths.filter((a) => a.label === "leash invoice agent v2").sort((a, b) => Number(b.createdAtUnix - a.createdAtUnix))[0] : auths.find((a) => a.pubkeyHex.toLowerCase() === hex(agentKey().pk));
+  if (verdict.startsWith("WOULD PAY") && (!k2 || k2.revoked || Number(k2.expiryUnix) * 1000 < Date.now())) verdict += ". But the agent's key is " + (!k2 ? "not linked" : k2.revoked ? "revoked" : "expired") + ", so the chain will refuse to run pay for it.";
   log({ tool: "check_invoice", args: { email }, verdict });
   return text(`${v.ref}, ${v.fusd ?? v.qor} ${v.fusd ? "fUSD" : "QOR"}\nInvoiceDeskV2, asked as you: ${verdict}`);
 });
@@ -167,4 +173,5 @@ server.registerTool("action_log", {
 });
 
 await server.connect(new StdioServerTransport());
+if (RO) console.error("invoice-leash MCP server: READ-ONLY (no keys file or LEASH_READONLY=1): reads and dry runs only");
 console.error(`invoice-leash MCP server (v2): inbox ${INBOX.pathname}, desk ${D.invoiceDesk}, log ${LOG.pathname}`);

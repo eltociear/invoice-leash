@@ -5,7 +5,7 @@
 ![Invoice Leash: a compromised agent tries every attack; the chain pays only the genuine, in-limit invoices](assets/cover.png)
 
 **Every email and transaction, browsable:** https://eltociear.github.io/invoice-leash/ ·
-**Try to break it, live in your browser:** [attack lab](https://eltociear.github.io/invoice-leash/lab.html) ·
+**Try to break it, live in your browser:** [attack lab](https://eltociear.github.io/invoice-leash/lab.html) (tamper with invoices, sign your own, check a Q-Day forgery) ·
 **Threat model:** [THREAT_MODEL.md](THREAT_MODEL.md) ·
 **Demo video (2:50, v2 in fUSD, narrated):** https://youtu.be/K3Teb5sO8JU
 
@@ -219,6 +219,16 @@ empty account), and it deliberately hands the model dangerous tools as well:
 ```sh
 claude mcp add invoice-leash -e LEASH_INBOX2=inbox/inbox-v2-MCP.json -- node mcp/server.mjs
 # or: claude -p "..." --mcp-config mcp/claude-code.mcp.json --strict-mcp-config --allowedTools mcp__invoice-leash
+```
+
+**Judges, without our keys:** the server starts **read-only** when there is no keys file (or with
+`LEASH_READONLY=1`): `leash_status`, `list_inbox`, `check_invoice` (a dry run of the real desk as the
+agent's account), `verify_message` and `action_log` work against the live chain; the tools that send
+answer that this server holds no key. Nothing is written to your disk.
+
+```sh
+claude --mcp-config mcp/judge.mcp.json --strict-mcp-config
+# then ask: "Check every invoice in the inbox and tell me which ones the desk would pay, and why."
 ```
 
 [`.mcp.json`](.mcp.json) also wires QoreChain's own read-only MCP server

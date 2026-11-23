@@ -48,6 +48,7 @@
       "set_limit_fusd": "0xef43547e5adc6d7006a97256b62b9b28cdf0865cef6bca22ea593f8d5189403b",
       "fusd_allowance": "0x243b94b6a705c1a3afe60ac0b8adf69b117502d06abe87e5e233f0fecdf51493",
       "link": "B3683E73AC6091E5E66561437B7BFDA3871ABC74F4FABDB8C485EE40E8F65196"
-    }
+    },
+    "gas": "qor1gxx85vm6zws5uja9rlynrczc29tmqzcym6t9aa"
   }
 }
