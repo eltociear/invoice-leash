@@ -1,0 +1,13 @@
+{"at":"2026-11-23T00:15:15.497Z","tool":"check_invoice","args":{"email":0},"verdict":"WOULD PAY (vendor approved, ML-DSA-87 signature valid, unpaid, not past due, within your limits)"}
+{"at":"2026-11-23T00:15:15.947Z","tool":"check_invoice","args":{"email":1},"verdict":"WOULD PAY (vendor approved, ML-DSA-87 signature valid, unpaid, not past due, within your limits)"}
+{"at":"2026-11-23T00:15:16.241Z","tool":"check_invoice","args":{"email":3},"verdict":"WOULD REFUSE: UnknownVendor"}
+{"at":"2026-11-23T00:15:16.567Z","tool":"check_invoice","args":{"email":4},"verdict":"WOULD REFUSE: BadSignature"}
+{"at":"2026-11-23T00:15:16.996Z","tool":"check_invoice","args":{"email":5},"verdict":"WOULD REFUSE: BadSignature"}
+{"at":"2026-11-23T00:15:17.292Z","tool":"check_invoice","args":{"email":6},"verdict":"WOULD PAY (vendor approved, ML-DSA-87 signature valid, unpaid, not past due, within your limits)"}
+{"at":"2026-11-23T00:15:17.625Z","tool":"check_invoice","args":{"email":7},"verdict":"WOULD REFUSE: OverPerPaymentLimit"}
+{"at":"2026-11-23T00:15:17.966Z","tool":"check_invoice","args":{"email":8},"verdict":"WOULD PAY (vendor approved, ML-DSA-87 signature valid, unpaid, not past due, within your limits)"}
+{"at":"2026-11-23T00:15:18.266Z","tool":"check_invoice","args":{"email":9},"verdict":"WOULD PAY (vendor approved, ML-DSA-87 signature valid, unpaid, not past due, within your limits)"}
+{"at":"2026-11-23T00:15:29.430Z","tool":"pay_invoice","args":{"email":0},"step":{"item":0,"action":"pay"},"ok":true,"link":"https://explore.qore.network/tx/A433ECE64B98300A2A8901C47F1DD6B19FDD49E5CD3784374AD38AF22B2610A9"}
+{"at":"2026-11-23T00:15:38.690Z","tool":"pay_invoice","args":{"email":1},"step":{"item":1,"action":"pay"},"ok":true,"link":"https://explore.qore.network/tx/E2978E219484D02F9ED1C499DAB5747A7E93657F004C45AD72E731B3974793F0"}
+{"at":"2026-11-23T00:15:47.461Z","tool":"pay_invoice","args":{"email":8},"step":{"item":8,"action":"pay"},"ok":true,"link":"https://explore.qore.network/tx/FCD7808AE0C127D56EFFADDAA60DBA053D348095D947FCD07D3AE239AF4D276A"}
+{"at":"2026-11-23T00:15:50.906Z","tool":"check_invoice","args":{"email":9},"verdict":"WOULD REFUSE: OverDailyLimit"}

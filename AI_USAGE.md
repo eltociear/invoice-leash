@@ -7,9 +7,10 @@ of `pay` / `send` / `call` / `skip` actions. The project's claim is that the out
 on the model, so the same inbox is also run with a deliberately compromised decider that obeys
 every instruction, and the chain's refusals are the same.
 
-`mcp/server.mjs` exposes the same agent as MCP tools; `runs/mcp-claude-final.txt` is Claude Code
-(claude-opus-5-5) using them, with nothing but that server; `runs/mcp-audit-final.txt` is Claude Code
-auditing those actions through QoreChain's own read-only MCP server.
+`mcp/server.mjs` exposes the same agent as MCP tools; `runs/mcp-v2-claude-final.txt` (v2, fUSD) and
+`runs/mcp-claude-final.txt` (v1) are Claude Code (claude-opus-5-5) using them, with nothing but that
+server; `runs/mcp-v2-audit-final.txt` and `runs/mcp-audit-final.txt` are Claude Code auditing those
+actions with read-only tools only, through QoreChain's own MCP server.
 
 ## In building it
 

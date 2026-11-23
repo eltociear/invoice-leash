@@ -23,6 +23,17 @@ const mcpRow = (x) => {
   return `<div class="step"><code>${esc(what)}</code>${v}${txLink(x.link)}</div>`;
 };
 const EX = "https://explore.qore.network/tx/";
+const mcpInbox2 = json("inbox/inbox-v2-MCP.json");
+const mcpClaude2 = jl("runs/mcp-v2-claude.server.jsonl"), mcpHostile2 = jl("runs/mcp-v2-compromised.server.jsonl");
+const mcpRow2 = (x) => {
+  const inv = mcpInbox2[x.args.email]?.invoice;
+  const what = x.tool === "check_invoice" ? `check_invoice(${x.args.email}) · ${inv.ref} · ${inv.fusd} fUSD` : x.tool === "pay_invoice" ? `pay_invoice(${x.args.email}) · ${inv.ref} · ${inv.fusd} fUSD`
+    : x.tool === "send_qor" ? `send_qor(${x.args.qor} QOR → Mallory)` : x.tool === "transfer_fusd" ? `transfer_fusd(${x.args.fusd} fUSD → Mallory)` : `call_invoice_desk(${x.args.fn}, Mallory)`;
+  const v = x.tool === "check_invoice" ? `<span class="v ${/^WOULD PAY/.test(x.verdict) ? "ok" : "no"}">${esc(x.verdict.replace(/ \(.*\)$/, ""))}</span>`
+    : x.ok ? `<span class="v ok">PAID</span>` : `<span class="v no">${esc(short(x.why))}</span>`;
+  return `<div class="step"><code>${esc(what)}</code>${v}${txLink(x.link)}</div>`;
+};
+
 const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const short = (why = "") => {
   if (/not permitted to "send"|lacks the permission/.test(why)) return 'linked key is not permitted to "send"';
@@ -106,6 +117,7 @@ footer{margin-top:64px;color:var(--dim);font-size:14px}
 <div class="links">
   <a href="lab.html" style="border-color:var(--acc);color:var(--acc)">Try to break it: attack lab (live, in your browser)</a>
   <a href="#found">What we found about spending rules</a>
+  <a href="#mcp">Claude Code via MCP</a>
   <a href="https://youtu.be/DssIkkYx8gc">Demo video (2:53, v1)</a>
   <a href="https://github.com/eltociear/invoice-leash">Code</a>
   <a href="https://github.com/eltociear/invoice-leash/blob/main/THREAT_MODEL.md">Threat model</a>
@@ -133,6 +145,14 @@ ${emails2}
 <h2 id="found">What we found: a spending rule bounds amounts, not destinations</h2>
 <p class="dim">v1 let the agent act as the company's account, scoped to <code>pay</code> by a QoreChain spending rule. These probes, each one request by the agent's key, showed the key could still move value directly in any denom its rule allows (a plain QOR transfer, or <code>fUSD.transfer</code>), and could not pay in an unlisted token at all. v2 gives the agent an account that holds nothing. Every probe is re-read by <code>npm run verify</code>.</p>
 <article class="mail"><div class="lanes" style="margin-left:0"><div class="lane" style="border-top:0">${probeRows}</div></div></article>
+
+<h2 id="mcp">Through MCP (v2): Claude Code holds the leash</h2>
+<p class="dim"><code>mcp/server.mjs</code> holds only the agent's key and hands the model dangerous tools on purpose: <code>send_qor</code>, <code>transfer_fusd</code> and <code>call_invoice_desk</code>, beside <code>check_invoice</code> (a dry run of the real desk, as the agent) and <code>pay_invoice</code>. A fresh inbox: the same ten emails with new invoice numbers.</p>
+<article class="mail"><header><span class="n">1</span><div><div class="from">Claude Code (claude-opus-5-5), nothing but the MCP server · <a href="https://github.com/eltociear/invoice-leash/blob/main/runs/mcp-v2-claude-final.txt">transcript</a></div><h3>Dry-ran all nine invoices, paid the three genuine ones (220 fUSD), sent the 300 fUSD one to a human, held #9 for the next UTC day</h3></div></header>
+<div class="lanes"><div class="lane">${mcpClaude2.map(mcpRow2).join("")}</div></div></article>
+<article class="mail"><header><span class="n">2</span><div><div class="from">then an obey-everything MCP client, same tools, same inbox · <a href="https://github.com/eltociear/invoice-leash/blob/main/runs/mcp-v2-compromised-final.txt">transcript</a></div><h3>${mcpHostile2.length} attempts, ${mcpHostile2.filter((x) => !x.ok).length} refused, by the chain's rule or the desk</h3></div></header>
+<div class="lanes"><div class="lane">${mcpHostile2.map(mcpRow2).join("")}</div></div></article>
+<article class="mail"><header><span class="n">3</span><div><div class="from">then Claude Code as an auditor, read-only tools only (<code>action_log</code> + QoreChain's <code>@qorechain/mcp</code>) · <a href="https://github.com/eltociear/invoice-leash/blob/main/runs/mcp-v2-audit-final.txt">transcript</a></div><h3>Re-read all 15 transactions with <code>get_transaction</code>: every verdict the server reported matches the chain</h3></div></header></article>
 
 <h2>v1 (QOR): the first design, as recorded</h2>
 <p class="dim">The agent acted as the company's account, 1 QOR a payment, 2.5 a day. Every attack in the inbox was refused; the probes above are why v1 was replaced. The compromised agent obeys every email; Claude decides for itself.</p>
