@@ -27,7 +27,7 @@
     "limits": {
       "perTx": "100",
       "daily": "250",
-      "allowance": "600"
+      "allowance": "1000"
     },
     "agentRule": {
       "allowedDenoms": [

@@ -133,7 +133,7 @@ footer{margin-top:64px;color:var(--dim);font-size:14px}
 </div>
 
 <div class="layers">
-  <div class="layer"><h3>An agent that holds nothing</h3><p>The agent acts as its own account. Its QoreChain rule lists no QOR and no fUSD, and allows one call: <code>InvoiceDeskV2.pay</code>. It cannot send, transfer, approve or reconfigure.</p></div>
+  <div class="layer"><h3>An agent that can move nothing</h3><p>The agent acts as its own account, which holds no fUSD. Its QoreChain rule lists no QOR and no fUSD, and allows one call: <code>InvoiceDeskV2.pay</code>. It cannot send, transfer, approve or reconfigure.</p></div>
   <div class="layer"><h3>The company's money, the company's limits</h3><p>fUSD stays in the company's account (no vault). The desk pulls it per invoice, within 100 fUSD a payment and 250 a day that only the company can set.</p></div>
   <div class="layer"><h3>Post-quantum invoices</h3><p>ML-DSA-87 signature from an approved vendor whose key is registered on chain, over payer, payee, currency and amount, checked by precompiles <code>0x…0a02</code> and <code>0x…0a01</code>.</p></div>
 </div>
@@ -179,12 +179,12 @@ $ node leash.mjs after-revoke     # one more honest, in-limit invoice
 chain: linked key is unbound or revoked   <a href="${EX}08A34CB6CBCC8E795E2FB258E54F1C7E84AE3E2487E9C2C3DD2E7ADAD401B92F">08A34CB6…</a></pre>
 
 <h2 id="verify">Verify it yourself: no keys, no test QOR, about a minute</h2>
-<pre>git clone https://github.com/eltociear/invoice-leash && cd invoice-leash
+<pre>git clone --recurse-submodules https://github.com/eltociear/invoice-leash && cd invoice-leash
 npm install && npm run verify</pre>
-<p class="dim">It recompiles the contract and compares it byte for byte with the deployed one, reads the agent's rule as the chain stores it, replays every attack against the real contract with <code>eth_call</code> (the PQC precompile runs for real), adds six tamperings the demo never sent, reads where the money went, and re-reads every recorded transaction. Last run:</p>
+<p class="dim">It recompiles both contracts (v1 InvoiceDesk, v2 InvoiceDeskV2) and compares them byte for byte with the deployed ones, reads the agents' rules as the chain stores them, replays the attacks against the real contracts with <code>eth_call</code> (the PQC precompile runs for real), adds tamperings the demo never sent, reads where the money went, and re-reads every recorded transaction: runs, MCP sessions, probes and the kill switch. Last run:</p>
 <pre>${esc(verify)}</pre>
 
-<footer>InvoiceDesk <a href="https://explore.qore.network/address/${dep.invoiceDesk}">${dep.invoiceDesk}</a> · qorechain-diana (EVM 9800) · Apache-2.0 · built for QoreChain “Build Before Q-Day”, Post-Quantum AI Agents</footer>
+<footer>InvoiceDeskV2 <a href="https://explore.qore.network/address/${dep.v2.invoiceDesk}">${dep.v2.invoiceDesk}</a> · v1 InvoiceDesk <a href="https://explore.qore.network/address/${dep.invoiceDesk}">${dep.invoiceDesk.slice(0, 10)}…</a> · qorechain-diana (EVM 9800) · Apache-2.0 · built for QoreChain “Build Before Q-Day”, Post-Quantum AI Agents</footer>
 </main></body></html>
 `;
 mkdirSync(new URL("docs/", root), { recursive: true });

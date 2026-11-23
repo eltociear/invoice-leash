@@ -446,6 +446,17 @@ const cmds = {
     writeFileSync(new URL(`./runs/v2-kill-switch-${new Date().toISOString().replace(/[:.]/g, "-")}.json`, import.meta.url), JSON.stringify(out, null, 2) + "\n");
   },
 
+  /** Demo upkeep: a test vendor returns fUSD it was paid to the demo company (keeps the lab's in-person path funded). */
+  async "vendor-refund-v2"(role = "vendorB", amount = "150") {
+    const v = await account(role), o = await account("owner");
+    const w = await broadcast(v, [openEvmWindowMsg({ sender: v.cosmos, blocks: 300, maxTxs: 1, maxValue: String(toUqor("0.5")) })], "leash: vendor refund window");
+    if (w.code) throw new Error(`open window REFUSED code ${w.code}: ${w.rawLog}`);
+    const tx = await new Contract(FUSD, ERC20, new Wallet(v.privateKey, new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID))).transfer(o.evmAddr, toFusd(amount));
+    await tx.wait();
+    await broadcast(v, [closeEvmWindowMsg(v.cosmos)], "leash: close window");
+    console.log(`${role} returned ${amount} fUSD to the company  (evm tx ${tx.hash})`);
+  },
+
   async "balance-v2"() {
     const t = new Contract(FUSD, ERC20, new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID)), d = readDeployment().v2;
     for (const r of ROLES) { const a = await account(r); console.log(`${r.padEnd(9)} ${a.cosmos}  ${fmt(await balance(a.cosmos))}  ${fusd(await t.balanceOf(a.evmAddr))}`); }

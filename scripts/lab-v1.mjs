@@ -1,4 +1,4 @@
-// Build docs/lab.html: an attack lab that runs entirely in the visitor's browser against the live
+// Build docs/lab-v1.html: the v1 (QOR) attack lab that runs entirely in the visitor's browser against the live
 // testnet. Tamper with a real ML-DSA-87 signed invoice and ask the real InvoiceDesk (eth_call) whether
 // it would pay. No server, no keys, nothing sent, nothing spent.
 import { readFileSync, writeFileSync, mkdirSync, copyFileSync } from "node:fs";
@@ -110,6 +110,7 @@ const $ = (id) => document.getElementById(id);
 let base, cur;
 async function rpc(method, params) {
   const r = await fetch(D.rpc, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) });
+  if (!r.ok) throw new Error("the testnet RPC answered HTTP " + r.status);
   return r.json();
 }
 const qor = (wei) => E.formatUnits(wei, 18).replace(/\\.0$/, "");
@@ -149,6 +150,9 @@ function changes() {
   return c;
 }
 async function ask() {
+  try { await ask1(); } catch (e) { $("out").innerHTML = '<p class="verdict no">Could not reach the testnet</p>'; $("out").append(String(e.message) + " Try again in a moment."); } finally { $("go").disabled = false; }
+}
+async function ask1() {
   const amount = toWei(cur.amount), value = toWei(cur.value);
   if (amount === null || value === null) { $("out").innerHTML = '<p class="verdict no">Not a number</p>'; return; }
   $("go").disabled = true;
@@ -190,7 +194,7 @@ async function keys() {
 $("presets").innerHTML = D.presets.map((p) => '<button type="button" data-key="' + p.key + '">' + p.label + "</button>").join("");
 document.querySelectorAll("#presets button").forEach((b) => b.onclick = () => load(D.presets.find((p) => p.key === b.dataset.key)));
 fill();
-for (const k of ["payer", "vendor", "amount", "value", "ref"]) $(k).oninput = (e) => { cur[k] = e.target.value; if (k === "amount" && base.value === base.amount && cur.value === base.value) {} render(); };
+for (const k of ["payer", "vendor", "amount", "value", "ref"]) $(k).oninput = (e) => { cur[k] = e.target.value; render(); };
 $("due").oninput = (e) => { const t = Date.parse(e.target.value + "Z"); if (!isNaN(t)) { cur.dueBy = Math.floor(t / 1000); render(); } };
 $("flip").onclick = () => { const b = E.getBytes(cur.signature).slice(); const i = Math.floor(Math.random() * b.length); b[i] ^= 1 << Math.floor(Math.random() * 8); cur.signature = E.hexlify(b); render(); };
 $("reset").onclick = () => { cur = { ...base }; render(); };

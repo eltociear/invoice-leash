@@ -219,6 +219,23 @@ contract InvoiceDeskV2Test is Test {
         _pay(_named("genuine_fusd"), 0);
     }
 
+    function test_vendor_key_of_another_algorithm_or_unregistered_is_refused() public {
+        bytes memory pk = vm.parseJsonBytes(fx, ".keys.hostline");
+        PqcKeyStatusStandIn(STATUS).set(hostline, true, 2, pk, true); // registered and proven, but not ML-DSA-87
+        vm.expectRevert(abi.encodeWithSelector(InvoiceDeskV2.VendorKeyNotProven.selector, hostline));
+        _pay(_named("genuine_fusd"), 0);
+        PqcKeyStatusStandIn(STATUS).set(hostline, false, 1, pk, true); // not registered
+        vm.expectRevert(abi.encodeWithSelector(InvoiceDeskV2.VendorKeyNotProven.selector, hostline));
+        _pay(_named("genuine_fusd"), 0);
+    }
+
+    function test_vendor_key_rotated_old_invoices_no_longer_verify() public {
+        // Hostline's registered key is replaced (here by Tokenwell's): invoices signed with the old key now fail.
+        PqcKeyStatusStandIn(STATUS).set(hostline, true, 1, vm.parseJsonBytes(fx, ".keys.tokenwell"), true);
+        vm.expectRevert(InvoiceDeskV2.BadSignature.selector);
+        _pay(_named("genuine_fusd"), 0);
+    }
+
     function testFuzz_any_other_amount_is_refused(uint256 amount) public {
         Case memory c = _named("genuine_fusd");
         vm.assume(amount != c.amount && amount <= 600e6);

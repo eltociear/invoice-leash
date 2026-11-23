@@ -20,7 +20,7 @@ input,select{width:100%;background:var(--bg);color:var(--fg);border:1px solid va
 .diff{font-size:13px;color:var(--warn)}.kv{font-size:13px}.kv div{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding:6px 0}
 ol.log{font-size:13px;color:var(--dim);padding-left:20px;margin:0}ol.log li{margin:3px 0}
 .you{margin-top:16px}.you .btns button.main{border-color:var(--ok);color:var(--ok)}.local{font-size:14px;border-top:1px solid var(--line);margin-top:12px;padding-top:10px}.local b.ok{color:var(--ok)}.local b.no{color:var(--no)}
-@media (max-width:760px){.grid{grid-template-columns:1fr}h1{font-size:28px}.kv div{flex-direction:column;gap:2px}}
+@media (max-width:760px){input,select{font-size:16px}.grid{grid-template-columns:1fr}h1{font-size:28px}.kv div{flex-direction:column;gap:2px}}
 </style></head>
 <body><main>
 <div class="top"><h1>Attack lab: make Invoice Leash pay</h1><a href="./">← the recorded runs</a></div>
@@ -59,7 +59,7 @@ ol.log{font-size:13px;color:var(--dim);padding-left:20px;margin:0}ol.log li{marg
 <div class="card kv" id="state"><span class="dim">reading…</span></div>
 
 <h2>What the agent's key cannot even send</h2>
-<div class="card"><p class="dim" style="margin-top:0">The agent's own account holds nothing, its QoreChain rule lists no QOR and no fUSD, and it may make one call: <code>InvoiceDeskV2.pay</code>. These need the agent's key, so they are recorded rather than tried here; every one is refused by the chain:</p><ol class="log" id="refusals"></ol></div>
+<div class="card"><p class="dim" style="margin-top:0">The agent's own account holds no fUSD, its QoreChain rule lists no QOR and no fUSD, and it may make one call: <code>InvoiceDeskV2.pay</code>. These need the agent's key, so they are recorded rather than tried here; every one is refused by the chain:</p><ol class="log" id="refusals"></ol></div>
 <p class="dim" style="margin-top:32px;font-size:14px">InvoiceDeskV2 <a href="https://explore.qore.network/address/0xe53Be6C5b96E099Fd9610bBb56BAe564f12dEf98">0xe53Be6C5b96E099Fd9610bBb56BAe564f12dEf98</a> · qorechain-diana · <a href="lab-v1.html">v1 lab (QOR)</a> · <a href="https://github.com/eltociear/invoice-leash">code</a> · ABI encoding by <a href="https://github.com/ethers-io/ethers.js">ethers.js</a> (MIT) and ML-DSA-87 by <a href="https://github.com/paulmillr/noble-post-quantum">noble-post-quantum</a> (MIT), both served from this site.</p>
 </main>
 <script src="vendor/ethers.umd.min.js"></script>
@@ -85,7 +85,9 @@ const message = (c, amount) => E.getBytes(E.AbiCoder.defaultAbiCoder().encode(["
   [DOMAIN, 9800, D.desk, c.payer, c.vendor, c.token, amount, E.keccak256(E.toUtf8Bytes(c.ref)), c.dueBy]));
 const pqcKey = async (a) => { const r = await rpc("eth_call", [{ to: "0x0000000000000000000000000000000000000a02", data: status.encodeFunctionData("pqcKeyStatus", [a]) }, "latest"]); return status.decodeFunctionResult("pqcKeyStatus", r.result); };
 const vfy = (pk, msg, sig) => { try { return window.mldsa.verify(E.getBytes(sig), msg, E.getBytes(pk)); } catch { return false; } };
-async function rpc(method, params) { const r = await fetch(D.rpc, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) }); return r.json(); }
+async function rpc(method, params) { const r = await fetch(D.rpc, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) }); if (!r.ok) throw new Error("the testnet RPC answered HTTP " + r.status); return r.json(); }
+const h = (x) => String(x ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const noPQ = () => new Promise((r, j) => { if (window.mldsa) return r(); document.addEventListener("mldsa", r, { once: true }); setTimeout(() => j(new Error("the ML-DSA-87 module did not load")), 15000); });
 const call = async (to, i, fn, args) => i.decodeFunctionResult(fn, (await rpc("eth_call", [{ to, data: i.encodeFunctionData(fn, args) }, "latest"])).result);
 const dec = (t) => (D.tokens[t.toLowerCase()] ?? D.tokens[t] ?? ["token", 18])[1];
 const unit = (t) => (D.tokens[t.toLowerCase()] ?? D.tokens[t] ?? ["token"])[0];
@@ -115,6 +117,9 @@ function changes() {
   return c;
 }
 async function ask() {
+  try { await ask1(); } catch (e) { $("out").innerHTML = '<h2 style="margin-top:0">3. The chain’s answer</h2><p class="verdict no">Could not reach the testnet</p><p class="why">' + h(e.message) + " Try again in a moment.</p>"; } finally { $("go").disabled = false; }
+}
+async function ask1() {
   const amount = toUnits(cur.amount, cur.token);
   if (amount === null) { $("out").innerHTML = '<p class="verdict no">Not a number</p>'; return; }
   $("go").disabled = true;
@@ -133,18 +138,18 @@ async function ask() {
         ? 'The agent’s account cannot send that QOR: it holds almost none, and its chain rule allows no QOR at all (<a href="' + D.chainRefusals[1][2] + '">denom uqor not allowed</a>). Ask as the company to see the signature check: the currency is signed.'
         : "The sender's balance is lower than the QOR sent with the call.";
     }
-    else { title = "Error"; why = res.error?.message ?? "no answer"; }
+    else { title = "Error"; why = h(res.error?.message ?? "no answer"); }
   }
   const c = changes();
   $("out").innerHTML = '<h2 style="margin-top:0">3. The chain\'s answer</h2><p class="verdict ' + (ok ? "ok" : "no") + '">' + title + '</p><p class="why">' + why + "</p>" +
     (c.length ? '<p class="diff">You changed: ' + c.join(", ") + "</p>" : '<p class="dim" style="font-size:14px">No changes from the preset.</p>') +
-    '<p class="dim" style="font-size:13px;margin-top:12px">eth_call from ' + (D.senders[cur.sender] ?? cur.sender) + " · block " + parseInt(blk.result, 16).toLocaleString() + " · " + ms + " ms · " + cur.amount + " " + unit(cur.token) + " to " + name(cur.vendor) + "</p>" +
+    '<p class="dim" style="font-size:13px;margin-top:12px">eth_call from ' + (D.senders[cur.sender] ?? cur.sender) + " · block " + parseInt(blk.result, 16).toLocaleString() + " · " + ms + " ms · " + cur.amount + " " + unit(cur.token) + " to " + h(name(cur.vendor)) + "</p>" +
     '<div class="local" id="local">Checking the signature in your browser too…</div>';
   local(amount).catch((e) => { $("local").textContent = "Local check unavailable: " + e.message; });
 }
 // Independently of the chain: fetch the payee's registered ML-DSA-87 public key (precompile 0x…0a02) and verify here.
 async function local(amount) {
-  if (!window.mldsa) await new Promise((r) => document.addEventListener("mldsa", r, { once: true }));
+  await noPQ();
   const msg = message(cur, amount), [reg, , pk] = await pqcKey(cur.vendor);
   const t0 = performance.now(), theirs = reg && vfy(pk, msg, cur.signature), ms = Math.round(performance.now() - t0);
   let h = "<b>Your browser</b>, with " + name(cur.vendor) + "'s public key read from the chain (" + (pk.length - 2) / 2 + " bytes): the ML-DSA-87 signature over these " + msg.length + " bytes is " +
@@ -175,8 +180,9 @@ $("due").oninput = (e) => { const t = Date.parse(e.target.value + "Z"); if (!isN
 $("flip").onclick = () => { const b = E.getBytes(cur.signature).slice(); const i = Math.floor(Math.random() * b.length); b[i] ^= 1 << Math.floor(Math.random() * 8); cur.signature = E.hexlify(b); render(); };
 $("reset").onclick = () => { cur = { ...base }; render(); };
 $("go").onclick = ask;
-$("mkkey").onclick = async () => {
-  if (!window.mldsa) await new Promise((r) => document.addEventListener("mldsa", r, { once: true }));
+$("mkkey").onclick = async () => { try { await mkkey(); } catch (e) { $("mykey").textContent = e.message; } };
+async function mkkey() {
+  await noPQ();
   const t0 = performance.now(), k = window.mldsa.keygen(); const ms = Math.round(performance.now() - t0);
   me = { pk: E.hexlify(k.publicKey), sk: k.secretKey, sig: null };
   $("signme").disabled = false;
@@ -186,7 +192,7 @@ $("signme").onclick = () => {
   const amount = toUnits(cur.amount, cur.token); if (amount === null || !me) return;
   const msg = message(cur, amount), t0 = performance.now(), sig = window.mldsa.sign(msg, me.sk), ms = Math.round(performance.now() - t0);
   me.sig = cur.signature = E.hexlify(sig); render();
-  $("mykey").innerHTML += "<div><span>Signed " + cur.ref + " (" + cur.amount + " " + unit(cur.token) + " to " + name(cur.vendor) + ")</span><span class='mono'>" + sig.length + " bytes · " + ms + " ms · self-check " + (vfy(me.pk, msg, me.sig) ? "valid" : "INVALID") + "</span></div>";
+  $("mykey").innerHTML += "<div><span>Signed " + h(cur.ref) + " (" + cur.amount + " " + unit(cur.token) + " to " + name(cur.vendor) + ")</span><span class='mono'>" + sig.length + " bytes · " + ms + " ms · self-check " + (vfy(me.pk, msg, me.sig) ? "valid" : "INVALID") + "</span></div>";
   $("out").innerHTML = '<h2 style="margin-top:0">3. The chain’s answer</h2><p class="dim">Your signature is in step 2. Ask the chain.</p>';
   $("go").scrollIntoView({ behavior: "smooth", block: "center" });
 };

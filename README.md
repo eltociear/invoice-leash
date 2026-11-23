@@ -16,10 +16,10 @@
 > npm install && npm run verify
 > ```
 >
-> 72 checks against the live testnet: both deployed contracts are byte-for-byte this source, the
+> 73 checks against the live testnet: both deployed contracts are byte-for-byte this source, the
 > agent's rule is what the chain stores, every attack replayed against the real contracts, where
 > every QOR and fUSD went, every recorded transaction re-read (runs, MCP sessions, the probes below).
-> Last run: [`runs/verify-latest.txt`](runs/verify-latest.txt). CI runs it daily, with 57 Foundry tests.
+> Last run: [`runs/verify-latest.txt`](runs/verify-latest.txt). CI runs it daily, with 59 Foundry tests.
 
 **Category:** Post-Quantum AI Agents · **Network:** QoreChain testnet `qorechain-diana` only (test tokens have no value)
 
@@ -39,7 +39,7 @@ Three accounts, one contract:
 | | Holds | Can |
 |---|---|---|
 | **The company** (payer) | its fUSD, in its own account: **no vault** | approve vendors, name agents, set limits, give the desk an allowance, revoke. Hybrid secp256k1 + **ML-DSA-87** key |
-| **The agent's account** | **nothing** | exactly one thing, through its QoreChain spending rule: call `InvoiceDeskV2.pay`. Its rule lists no real denom, so it cannot move QOR or fUSD at all |
+| **The agent's account** | **no fUSD**; 0.64 QOR from its own setup, which the agent's key cannot move | exactly one thing, through its QoreChain spending rule: call `InvoiceDeskV2.pay`. Its rule lists only fBTC, capped at 1 satoshi, which it does not hold (a rule must name a token; listing QOR or fUSD would let the key move them), so the agent's key cannot move QOR or fUSD at all |
 | **The agent's key** | nothing | sign requests for the agent's account (ed25519, linked with permission `evm`, expires). A gas wallet relays them |
 | **[`InvoiceDeskV2`](contracts/InvoiceDeskV2.sol)** | nothing (pulls payer → vendor in one call) | pay an invoice for the company only if every check below passes |
 
@@ -86,11 +86,11 @@ is not what it looks like. Every probe below is one request by the agent's key, 
 | Rule on the account the agent acts as | The agent's key tries | Chain |
 |---|---|---|
 | per-tx/daily QOR limits, `allowed_evm_calls = [desk.pay]` | send 0.01 QOR to a fresh address, no call data | **executed** [779FAF6E…](https://explore.qore.network/tx/779FAF6E8871B3FFF1D0D2D129AC904529E78E5198718C1DD630676E05AD4CEC) |
-| `allowed_denoms = [fUSD]` with fUSD limits, same call list | `fUSD.transfer(fresh address, 1)` | **executed** [0A40A451…](https://explore.qore.network/tx/0A40A4513548A433D8B49CF8D32ECEC089AE8F1B7D174AB82B3C67C6D67C91C2) |
+| `allowed_denoms = [fUSD]` with fUSD limits, calls `[InvoiceDeskV2.pay]` | `fUSD.transfer(fresh address, 1)` | **executed** [0A40A451…](https://explore.qore.network/tx/0A40A4513548A433D8B49CF8D32ECEC089AE8F1B7D174AB82B3C67C6D67C91C2) |
 | same | send 0.01 QOR | refused: `denom uqor not allowed` [3B496E0E…](https://explore.qore.network/tx/3B496E0EC4F69DFAB62FA2ABC6E3C0A0AB1812D72DA5254956964F0AE18C5608) |
 | fUSD **not** listed | `fUSD.transfer(fresh address, 1)` | refused [B9C8C49A…](https://explore.qore.network/tx/B9C8C49ADEA2643A03D643A8A20C3F4D2E393D407EFBAD6523C9E7E0604437EB) |
 | fUSD **not** listed | `desk.pay` of a genuine 1 fUSD invoice | refused: *"the call made a token transfer from the account on fUSD, which the rule does not list"* [4F54B0C0…](https://explore.qore.network/tx/4F54B0C09E51590A8761550B807D2E90EE01FB4BB96E3B39C92930DCAA2B6FC9) |
-| **v2**: the agent's own empty account, no real denom listed | `desk.pay` of a genuine 1 fUSD invoice, paid from the *company's* account | **executed** [C4C05CA9…](https://explore.qore.network/tx/C4C05CA9BFBD9F245B22C870BFE7CB577C752EADAF1A650D77358CFEEE000591) |
+| **v2**: the agent's own account (no fUSD), only fBTC listed (1 satoshi, balance 0) | `desk.pay` of a genuine 1 fUSD invoice, paid from the *company's* account | **executed** [C4C05CA9…](https://explore.qore.network/tx/C4C05CA9BFBD9F245B22C870BFE7CB577C752EADAF1A650D77358CFEEE000591) |
 
 So `allowed_evm_calls` scopes calls *with data*; a key can still move every denom its rule allows,
 directly: plain value for QOR, `transfer`/`approve` for a listed ERC-20 (as the SDK's `SpendingRule`
@@ -98,7 +98,7 @@ docs say, read closely). And the chain measures ERC-20 outflow from the account 
 that acts *as* the payer can therefore either pay nothing in fUSD, or send fUSD anywhere within its
 limits, skipping the vendor and signature checks. v1's limits still bounded the damage (1 QOR a
 payment, 2.5 a day), but "the agent can only call `pay`" was not true. v2 is the fix: the agent's own
-account holds nothing and may move nothing; the company's money moves only through the desk.
+account holds no fUSD and its key may move nothing; the company's money moves only through the desk.
 
 **For other builders on QoreChain:** if your agent acts as an account that holds funds, its spending
 rule's limits are what bounds it, not its call list.
@@ -147,10 +147,10 @@ transaction stops the agent, without touching the chain link or the money.
 
 | | What | Run |
 |---|---|---|
-| Contracts | **57 Foundry tests** (6 fuzzed, 512 runs each). v2: the agent/payer split (unnamed account, kill switch, the agent configuring only its own entry, no limits = pays nothing, per-payment and daily limits with the UTC day reset, refused payments not counted, no native QOR for agents, the company in person not bound by agent limits), the currency in the signature, allowance as a cap, no-code and false-returning tokens. v1: every revert path in `pay` and its order, per-payer state, live key reads (unregistered, unproven, other algorithm, rotated), another chain / desk / payer, reverting and re-entrant vendors. **Mutation-checked**: each of 10 injected bugs fails the suite (signature check removed, replay check moved before it, proof of possession dropped, currency unsigned, ERC-20 return value ignored, QOR accepted with an fUSD invoice, any account paying for any payer, daily spend not recorded, per-payment limit ignored, agents paying native). | `forge test` |
+| Contracts | **59 Foundry tests** (6 fuzzed, 512 runs each). v2: the agent/payer split (unnamed account, kill switch, the agent configuring only its own entry, no limits = pays nothing, per-payment and daily limits with the UTC day reset, refused payments not counted, no native QOR for agents, the company in person not bound by agent limits), the currency in the signature, allowance as a cap, no-code and false-returning tokens. v1: every revert path in `pay` and its order, per-payer state, live key reads (unregistered, unproven, other algorithm, rotated), another chain / desk / payer, reverting and re-entrant vendors. **Mutation-checked** ([`scripts/mutate.mjs`](scripts/mutate.mjs), output in [`runs/mutation.txt`](runs/mutation.txt)): each of 14 bugs injected into InvoiceDeskV2 fails the suite (signature check removed, replay check moved before it, proof of possession or the algorithm not checked, currency unsigned, ERC-20 return value ignored, a token without code accepted, QOR accepted with an fUSD invoice, any account paying for any payer, daily spend not recorded or counted on a shifted day, per-payment limit ignored, agents paying native, invoice not marked paid). | `forge test` |
 | PQC stand-in | Local EVMs have no QoreChain precompile, so `0x…0a01` is a stand-in that answers from [`test/fixtures/`](test/fixtures/): 27 (key, signature, message) tuples checked with **real ML-DSA-87** by `test/fixtures.mjs`; unknown tuples fail closed. Keys come from fixed seeds and signing is deterministic, so CI regenerates the files and requires them byte-identical. | `npm run fixtures` |
 | Off chain | the v1 demo inbox and six tamperings, with real ML-DSA-87 and throwaway keys | `npm test` |
-| On chain | 72 read-only checks against the live testnet | `npm run verify` |
+| On chain | 73 read-only checks against the live testnet | `npm run verify` |
 
 ### Cryptography inventory (QoreScan)
 
@@ -166,7 +166,7 @@ endpoints' ECDSA certificates, the latter alongside X25519MLKEM768 key exchange.
 
 [eltociear.github.io/invoice-leash/lab.html](https://eltociear.github.io/invoice-leash/lab.html)
 starts from a real ML-DSA-87 signed invoice and lets you change anything (payer, payee, amount,
-invoice number, due date, a bit of the signature, the value sent) and ask the real desk whether it
+invoice number, due date, currency, who sends it, a bit of the signature) and ask the real desk whether it
 would pay. Your browser calls the testnet's EVM RPC directly (`eth_call`); the signature check is the
 chain's own precompile. No server, no keys, nothing spent.
 
@@ -325,7 +325,7 @@ genuine, in-limit invoices: **2.2 QOR moved, 0 QOR to Mallory.**
 | revoke | agent revoked | [8AAFA929…](https://explore.qore.network/tx/8AAFA92915D6D75B676D65FF2FE34AA084AB61EA92AD14CFD30F4CB0D4237E8C) |
 | after | `linked key is unbound or revoked` | [08A34CB6…](https://explore.qore.network/tx/08A34CB6CBCC8E795E2FB258E54F1C7E84AE3E2487E9C2C3DD2E7ADAD401B92F) |
 
-A refused execution does not count against the daily limit: after five refusals in a row the
+A refused execution does not count against the daily limit: after seven refusals in a row the
 chain still reported `spent 2200000`, exactly the three paid invoices.
 
 ### v1: Claude as the decider ([`runs/llm-final.txt`](runs/llm-final.txt))

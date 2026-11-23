@@ -12,8 +12,8 @@ replaced are at the end.
 | Key / account | Scheme | Can | Cannot |
 |---|---|---|---|
 | **Company** (payer) | hybrid secp256k1 + **ML-DSA-87** (every tx carries both; key registered with proof of possession) | hold the fUSD; approve/remove vendors, name/remove agents, set per-token limits, set the desk's allowance; pay any invoice in person | — |
-| **Agent account** | its own key (kept by the human, hybrid ML-DSA-87) only links/revokes the agent key | — (holds nothing) | — |
-| **Agent key** | ed25519, linked to the agent account with permission `evm`, an expiry, and a rule listing no real denom and one call: `InvoiceDeskV2.pay` | ask the chain to run `pay` as the agent account | send QOR (no `send` permission, `uqor` not allowed); move fUSD directly (`transfer`/`approve`/`transferFrom` are not allowed calls); call any setting in the desk; call any other contract |
+| **Agent account** | its own key (kept by the human, hybrid ML-DSA-87) only links/revokes the agent key | — (holds no fUSD; 0.64 QOR from its own setup, which the agent's key cannot move) | — |
+| **Agent key** | ed25519, linked to the agent account with permission `evm`, an expiry, and a rule listing one denom it does not hold (fBTC, 1 satoshi) and one call: `InvoiceDeskV2.pay` | ask the chain to run `pay` as the agent account | send QOR (no `send` permission, `uqor` not allowed); move fUSD directly (`transfer`/`approve`/`transferFrom` are not allowed calls); call any setting in the desk; call any other contract |
 | **Gas wallet** | hybrid | relay the agent's requests and pay their fees | move the company's money (it never holds any) |
 | **Vendor** | hybrid, **ML-DSA-87** key registered on chain | sign invoices for a specific payer, currency, amount, desk and chain | get paid unless the payer approved it |
 
@@ -39,7 +39,7 @@ tests (`test/InvoiceDeskV2.t.sol`).
 |---|---|---|
 | Prompt injection: "move 50 QOR to custody" (`MsgSend`) | chain: the agent key has `evm` only, no `send` | inbox #2 |
 | …the same as an EVM value transfer | chain: `uqor` is not in the rule's allowed denoms | inbox #2, probe `unlisted-value` |
-| …as `fUSD.transfer(attacker)` from the agent's account | chain: not an allowed call (and the account holds nothing) | inbox #2 |
+| …as `fUSD.transfer(attacker)` from the agent's account | chain: not an allowed call (and the account holds no fUSD) | inbox #2 |
 | …as `fUSD.transferFrom(company, attacker)` | chain: not an allowed call (and only the desk has an allowance) | inbox #2 |
 | Agent reconfigures its leash (`approveVendor`, `setLimit`, `setAgent`) | chain: only `pay` (`0xf19ff4ff`) is allowed; and in the desk, settings are per `msg.sender`, so the agent would only configure its own empty entry | inbox #3, test `test_agent_limits_are_the_payers_alone` |
 | An account the company never named calls `pay` for it | `NotPayersAgent` | verify §9, tests |
@@ -47,12 +47,12 @@ tests (`test/InvoiceDeskV2.t.sol`).
 | Invoice signed by the wrong key | `BadSignature` (ML-DSA-87 via `0x…0a01`) | inbox #4 |
 | Genuine invoice, amount edited | `BadSignature`: the amount is signed | inbox #5 |
 | Genuine invoice "paid in QOR instead" | chain: `uqor` not allowed; and `BadSignature`: the currency is signed | inbox #6, verify §9 |
-| Payee / due date / currency / payer / desk / chain / one signature bit changed | `BadSignature` | tests (fuzzed for amount and token), verify §4 |
+| Payee / due date / currency / payer / desk / chain / one signature bit changed | `BadSignature` | v2: tests (fuzzed for amount and token), verify §9 (currency); v1: verify §4 replays each tampering live |
 | Replay of a paid invoice | `AlreadyPaid` (checked **after** the signature, so an edited copy is reported as a forgery) | inbox #6 |
 | One big genuine invoice | `OverPerPaymentLimit` (100 fUSD) | inbox #7; a human then pays it with `approve-v2 7` |
 | Many small genuine invoices | `OverDailyLimit` (250 fUSD per UTC day); refused payments do not count | inbox #9, tests |
 | Agent pays in native QOR | `AgentCannotPayNative` (and the agent account cannot move QOR anyway) | tests |
-| Vendor key never proven / other algorithm / rotated | `VendorKeyNotProven` / `BadSignature` (the key is read at payment time) | tests (unproven: v2; other algorithm, unregistered, rotated: v1, same code path) |
+| Vendor key never proven / other algorithm / rotated | `VendorKeyNotProven` / `BadSignature` (the key is read at payment time) | tests (v2 and v1) |
 | A token that returns `false`, or an address with no code | `TransferFailed`, all rolled back | tests |
 | The agent keeps going after it is caught | revoke the key on chain, or `setAgent(agent, false)` in the desk: one company tx either way | v1 run (revoke); v2 live: `kill-switch-v2` (`NotPayersAgent`), verify §9; tests |
 | A forgotten agent | the link expires (72 h in the v2 demo) | verify §9 reads it |
@@ -93,4 +93,4 @@ EVM value transfer, to any address (`allowed_evm_calls` scopes calls with data).
 the rule, it could `fUSD.transfer` anywhere; with fUSD not listed, it could not pay through the desk
 at all. Every probe is in [`runs/probes/probes.json`](runs/probes/probes.json) and re-read by
 `npm run verify` §8. v1's limits bounded that exposure; v2 removes it by giving the agent an account
-that holds nothing and may move nothing.
+whose key may move nothing: no fUSD in it, and no QOR or fUSD in its rule.
