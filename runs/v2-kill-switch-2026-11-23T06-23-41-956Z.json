@@ -1,0 +1,38 @@
+{
+  "invoice": "TOKENWELL-INV-8800-KILL",
+  "fusd": "20",
+  "steps": [
+    {
+      "step": "dry run as the agent",
+      "result": "WOULD PAY"
+    },
+    {
+      "step": "company: setAgent(agent, false)",
+      "result": "done",
+      "tx": "0x11c3c95e65467ac17ad29ddac40aab1886270cc9dab07e931b29903958223487"
+    },
+    {
+      "step": "dry run as the agent",
+      "result": "NotPayersAgent"
+    },
+    {
+      "step": "agent sends the payment",
+      "result": "REFUSED: InvoiceDesk: NotPayersAgent",
+      "tx": "7C5A50C895BAC281AAD5FDC36BE2BC335971B38F10CD96E91353ADB2BE408882"
+    },
+    {
+      "step": "company: setAgent(agent, true)",
+      "result": "done",
+      "tx": "0x19b24261fb60511775cf728ed54e3fbf9d61acefc10fea18667b36667f4fa6e5"
+    },
+    {
+      "step": "dry run as the agent",
+      "result": "WOULD PAY"
+    },
+    {
+      "step": "agent sends the same payment",
+      "result": "PAID",
+      "tx": "ABE3152A5D793796ECE0EA13972DBB9A2082A495AEE9F41B39585A06CE42ED18"
+    }
+  ]
+}

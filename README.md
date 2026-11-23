@@ -16,7 +16,7 @@
 > npm install && npm run verify
 > ```
 >
-> 71 checks against the live testnet: both deployed contracts are byte-for-byte this source, the
+> 72 checks against the live testnet: both deployed contracts are byte-for-byte this source, the
 > agent's rule is what the chain stores, every attack replayed against the real contracts, where
 > every QOR and fUSD went, every recorded transaction re-read (runs, MCP sessions, the probes below).
 > Last run: [`runs/verify-latest.txt`](runs/verify-latest.txt). CI runs it daily, with 57 Foundry tests.
@@ -137,6 +137,12 @@ company pays the 300 fUSD itself through a capped EVM window
 ([0x47dac41e…](https://explore.qore.network/tx/0x47dac41e4a714693409a6068475a2ebea3e0c4906e8658ce0b61efd236e26101)).
 The agent's limits bind agents, not the company; the vendor, signature and replay checks bind both.
 
+**The kill switch, live** (`node leash.mjs kill-switch-v2`, [`runs/v2-kill-switch-…json`](runs/)): a genuine,
+in-limit 20 fUSD Tokenwell invoice that the desk would pay. The company sends `setAgent(agent, false)`
+([0x11c3c95e…](https://explore.qore.network/tx/0x11c3c95e65467ac17ad29ddac40aab1886270cc9dab07e931b29903958223487)); the agent's real payment is refused, `NotPayersAgent` ([7C5A50C8…](https://explore.qore.network/tx/7C5A50C895BAC281AAD5FDC36BE2BC335971B38F10CD96E91353ADB2BE408882)); the company sends
+`setAgent(agent, true)` ([0x19b24261…](https://explore.qore.network/tx/0x19b24261fb60511775cf728ed54e3fbf9d61acefc10fea18667b36667f4fa6e5)); the same payment goes through ([ABE3152A…](https://explore.qore.network/tx/ABE3152A5D793796ECE0EA13972DBB9A2082A495AEE9F41B39585A06CE42ED18)). One company
+transaction stops the agent, without touching the chain link or the money.
+
 ## Tests
 
 | | What | Run |
@@ -144,7 +150,7 @@ The agent's limits bind agents, not the company; the vendor, signature and repla
 | Contracts | **57 Foundry tests** (6 fuzzed, 512 runs each). v2: the agent/payer split (unnamed account, kill switch, the agent configuring only its own entry, no limits = pays nothing, per-payment and daily limits with the UTC day reset, refused payments not counted, no native QOR for agents, the company in person not bound by agent limits), the currency in the signature, allowance as a cap, no-code and false-returning tokens. v1: every revert path in `pay` and its order, per-payer state, live key reads (unregistered, unproven, other algorithm, rotated), another chain / desk / payer, reverting and re-entrant vendors. **Mutation-checked**: each of 10 injected bugs fails the suite (signature check removed, replay check moved before it, proof of possession dropped, currency unsigned, ERC-20 return value ignored, QOR accepted with an fUSD invoice, any account paying for any payer, daily spend not recorded, per-payment limit ignored, agents paying native). | `forge test` |
 | PQC stand-in | Local EVMs have no QoreChain precompile, so `0x…0a01` is a stand-in that answers from [`test/fixtures/`](test/fixtures/): 27 (key, signature, message) tuples checked with **real ML-DSA-87** by `test/fixtures.mjs`; unknown tuples fail closed. Keys come from fixed seeds and signing is deterministic, so CI regenerates the files and requires them byte-identical. | `npm run fixtures` |
 | Off chain | the v1 demo inbox and six tamperings, with real ML-DSA-87 and throwaway keys | `npm test` |
-| On chain | 71 read-only checks against the live testnet | `npm run verify` |
+| On chain | 72 read-only checks against the live testnet | `npm run verify` |
 
 ### Cryptography inventory (QoreScan)
 
@@ -250,6 +256,7 @@ node leash.mjs deploy-v2 100 250 600 72
 node leash.mjs inbox-v2             # vendors and Mallory write inbox/inbox-v2.json
 node leash.mjs run-v2 --compromised # worst case: the agent obeys everything
 node leash.mjs approve-v2 7         # a human pays the over-limit invoice the agent could not
+node leash.mjs kill-switch-v2       # setAgent(false) stops the agent; setAgent(true) restores it
 node leash.mjs balance-v2           # QOR and fUSD of every account, and the allowance
 ```
 

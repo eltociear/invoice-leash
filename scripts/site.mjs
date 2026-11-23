@@ -166,6 +166,13 @@ ${emails}
 <div class="lanes"><div class="lane">${mcpHostile.map(mcpRow).join("")}</div></div></article>
 
 <h2>Then the owner pulls the leash</h2>
+<p class="dim">v2: one company transaction in the desk. A genuine 20 fUSD invoice the desk would pay for the agent:</p>
+<pre>$ node leash.mjs kill-switch-v2
+company: setAgent(agent, false)    <a href="${EX}0x11c3c95e65467ac17ad29ddac40aab1886270cc9dab07e931b29903958223487">0x11c3c95e…</a>
+agent sends the payment            REFUSED: NotPayersAgent   <a href="${EX}7C5A50C895BAC281AAD5FDC36BE2BC335971B38F10CD96E91353ADB2BE408882">7C5A50C8…</a>
+company: setAgent(agent, true)     <a href="${EX}0x19b24261fb60511775cf728ed54e3fbf9d61acefc10fea18667b36667f4fa6e5">0x19b24261…</a>
+agent sends the same payment       PAID   <a href="${EX}ABE3152A5D793796ECE0EA13972DBB9A2082A495AEE9F41B39585A06CE42ED18">ABE3152A…</a></pre>
+<p class="dim">v1: the owner revokes the agent's key on chain.</p>
 <pre>$ node leash.mjs revoke
 agent revoked                    <a href="${EX}8AAFA92915D6D75B676D65FF2FE34AA084AB61EA92AD14CFD30F4CB0D4237E8C">8AAFA929…</a>
 $ node leash.mjs after-revoke     # one more honest, in-limit invoice

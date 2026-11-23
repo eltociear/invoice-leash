@@ -67,7 +67,7 @@ server.registerTool("leash_status", {
   return text([
     `company (payer) ${D.payer} (EVM ${D.payerEvm}): ${fusd(bal)}; the desk may pull up to ${fusd(allow)} (allowance)`,
     `your own account ${acct.cosmos} (EVM ${acct.evmAddr}): ${fusd(mine)}, ${fmt(await balance(acct.cosmos))} (you cannot move QOR or fUSD from it)`,
-    `your key: ${me ? (me.revoked ? "REVOKED" : `linked, permissions ${me.permissions.join(",")}, expires ${new Date(Number(me.expiryUnix) * 1000).toISOString()}`) : "not linked"}`,
+    `your key: ${me ? (me.revoked ? "REVOKED" : Number(me.expiryUnix) * 1000 < Date.now() ? `EXPIRED ${new Date(Number(me.expiryUnix) * 1000).toISOString()} (the chain refuses it now)` : `linked, permissions ${me.permissions.join(",")}, expires ${new Date(Number(me.expiryUnix) * 1000).toISOString()}`) : "not linked"}`,
     r ? `your chain rule: denoms ${r.allowedDenoms.join(",")} (no QOR, no fUSD); calls ${(r.allowedEvmCalls ?? []).join(", ")} (InvoiceDeskV2.pay only)` : "no spending rule",
     `your limits in the desk, set by the company: ${fusd(lim[0])} per payment, ${fusd(lim[1])} per day; ${fusd(left)} left today (UTC)`,
     `invoice desk: ${D.invoiceDesk}; fee wallet (pays for your requests): ${fmt(gbal)}`,

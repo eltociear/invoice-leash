@@ -409,6 +409,43 @@ const cmds = {
     console.log(`desk allowance set to ${amount} fUSD  (evm tx ${tx.hash})`);
   },
 
+  /**
+   * The kill switch, live: one genuine, in-limit invoice. The desk would pay it for the agent; the company
+   * sends setAgent(agent, false); the agent's real payment is refused (NotPayersAgent); setAgent(true);
+   * the same payment goes through. Saved to runs/v2-kill-switch-<ts>.json.
+   */
+  async "kill-switch-v2"(fusdAmount = "20") {
+    const { executeV2 } = await import("./lib/agent.mjs");
+    const { signInvoiceV2 } = await import("./lib/invoices.mjs");
+    const d = v2(), o = await account("owner"), aa = await account("agentacct"), b = await account("vendorB");
+    const inv = signInvoiceV2(b, { desk: d.invoiceDesk, payer: o.evmAddr, vendor: b.evmAddr, fusd: fusdAmount, ref: "TOKENWELL-INV-8800-KILL", dueBy: Math.floor(Date.parse("2027-06-30T23:59:59Z") / 1000) });
+    const inbox = [{ from: "accounts@tokenwell.example", subject: `Invoice ${inv.ref}: support hours`, body: "Genuine invoice, properly signed.", invoice: inv }];
+    writeFileSync(new URL("./inbox/inbox-v2-KILL.json", import.meta.url), JSON.stringify(inbox, null, 2) + "\n");
+    const provider = new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID), wallet = new Wallet(o.privateKey, provider);
+    const c = new Contract(d.invoiceDesk, ART2.abi, wallet), args = [o.evmAddr, inv.token, inv.vendor, inv.amount, inv.id, inv.dueBy, inv.signature];
+    const dry = async () => { try { await provider.call({ from: aa.evmAddr, to: d.invoiceDesk, data: c.interface.encodeFunctionData("pay", args) }); return "WOULD PAY"; } catch (e) { const dd = e.data ?? e.info?.error?.data; try { return c.interface.parseError(dd).name; } catch { return e.shortMessage; } } };
+    const out = { invoice: inv.ref, fusd: fusdAmount, steps: [] };
+    const note = (s) => { out.steps.push(s); console.log(`  ${s.step.padEnd(34)} ${s.result}${s.tx ? `  ${s.tx}` : ""}`); };
+    console.log(`kill switch on ${inv.ref}, ${fusdAmount} fUSD, agent account ${aa.evmAddr}`);
+    note({ step: "dry run as the agent", result: await dry() });
+    const w = await broadcast(o, [openEvmWindowMsg({ sender: o.cosmos, blocks: 600, maxTxs: 2, maxValue: String(toUqor("0.5")) })], "leash: owner window (kill switch)");
+    if (w.code) throw new Error(`open window REFUSED code ${w.code}: ${w.rawLog}`);
+    let tx = await c.setAgent(aa.evmAddr, false); await tx.wait();
+    note({ step: "company: setAgent(agent, false)", result: "done", tx: tx.hash });
+    note({ step: "dry run as the agent", result: await dry() });
+    let r = await executeV2({ item: 0, action: "pay" }, inbox, d);
+    note({ step: "agent sends the payment", result: r.ok ? "PAID" : `REFUSED: ${r.why}`, tx: r.link?.slice(-64) });
+    await new Promise((res) => setTimeout(res, 4000));
+    tx = await c.setAgent(aa.evmAddr, true); await tx.wait();
+    note({ step: "company: setAgent(agent, true)", result: "done", tx: tx.hash });
+    const close = await broadcast(o, [closeEvmWindowMsg(o.cosmos)], "leash: close window");
+    console.log(close.code === 0 ? "  EVM window closed" : `  close window: code ${close.code}`);
+    note({ step: "dry run as the agent", result: await dry() });
+    r = await executeV2({ item: 0, action: "pay" }, inbox, d);
+    note({ step: "agent sends the same payment", result: r.ok ? "PAID" : `REFUSED: ${r.why}`, tx: r.link?.slice(-64) });
+    writeFileSync(new URL(`./runs/v2-kill-switch-${new Date().toISOString().replace(/[:.]/g, "-")}.json`, import.meta.url), JSON.stringify(out, null, 2) + "\n");
+  },
+
   async "balance-v2"() {
     const t = new Contract(FUSD, ERC20, new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID)), d = readDeployment().v2;
     for (const r of ROLES) { const a = await account(r); console.log(`${r.padEnd(9)} ${a.cosmos}  ${fmt(await balance(a.cosmos))}  ${fusd(await t.balanceOf(a.evmAddr))}`); }

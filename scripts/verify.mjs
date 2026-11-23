@@ -261,7 +261,8 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
   // the agent account's rule, as the chain stores it
   const [auth2, rules2] = await Promise.all([rest(`/qorechain/abstractaccount/v1/accounts/${d2.agentAccount}/authenticators`), rest(`/qorechain/abstractaccount/v1/accounts/${d2.agentAccount}/spending_rules`)]);
   const r2 = rules2.rules[0], a2 = auth2.authenticators.find((x) => x.label === "leash invoice agent v2");
-  ok(a2 && a2.permissions.join() === "evm", `agent key linked to the agent account ${d2.agentAccount} with "evm" only`);
+  const exp2 = new Date(Number(a2?.expiry_unix) * 1000).toISOString().slice(0, 16) + "Z";
+  ok(a2 && a2.permissions.join() === "evm", `agent key linked to the agent account ${d2.agentAccount} with "evm" only`, Number(a2?.expiry_unix) * 1000 < Date.now() ? `(expired ${exp2}, as designed: a forgotten agent stops)` : `(expires ${exp2})`);
   ok(r2 && r2.allowed_denoms.length === 1 && !/uqor|0x97143b77/i.test(r2.allowed_denoms.join()) && r2.denom_limits.every((x) => x.per_tx_limit === "1"),
     "its rule lists no real denom: not QOR, not fUSD (only fBTC, 1 satoshi, which it does not hold)", `(${r2?.allowed_denoms.join()})`);
   ok(r2 && r2.allowed_evm_calls.length === 1 && r2.allowed_evm_calls[0] === `${DESK2.toLowerCase()}/${desk2.getFunction("pay").selector}`, `exactly one call: InvoiceDeskV2.pay (${desk2.getFunction("pay").selector})`);
@@ -290,14 +291,31 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
   const want2 = { 3: "UnknownVendor", 4: "BadSignature", 5: "BadSignature", 6: "AlreadyPaid", 0: "AlreadyPaid", 1: "AlreadyPaid", 8: "AlreadyPaid", 7: "AlreadyPaid" };
   for (const [i, w] of Object.entries(want2)) {
     const inv = inbox2[i].invoice, got = await sim2(inv);
-    const expect = w === "AlreadyPaid" || inv.dueBy >= now ? w : "PastDue";
-    ok(got === expect, `#${i} ${inv.ref.padEnd(30)} as the agent -> ${got}`);
+    // every one of these is refused before the due date is looked at (the desk checks vendor, signature, replay, then due date)
+    ok(got === w, `#${i} ${inv.ref.padEnd(30)} as the agent -> ${got}`, inv.dueBy < now ? "(past due now, refused earlier than that)" : "");
   }
   const qorVariant = inbox2[6].attacks[0].invoice;
   ok(await sim2(qorVariant, agent2, 0n) === "BadSignature", `#6 the same invoice "paid in QOR" -> BadSignature (the currency is signed)`);
   const s9 = await sim2(inbox2[9].invoice);
   ok(["OverDailyLimit", "ACCEPT", "PastDue"].includes(s9), `#9 ${inbox2[9].invoice.ref} as the agent -> ${s9}`, "(OverDailyLimit on the run's UTC day; the limit resets daily)");
   ok(await sim2(inbox2[9].invoice, MALLORY) === "NotPayersAgent", "the same invoice sent by any other account -> NotPayersAgent");
+
+  // the kill switch, live: setAgent(false) -> the agent's real payment refused -> setAgent(true) -> paid
+  {
+    const k = json("runs/" + readdirSync(new URL("runs/", root)).filter((f) => /^v2-kill-switch-.*\.json$/.test(f)).sort().pop());
+    const st = Object.fromEntries(k.steps.filter((s) => s.tx).map((s, i) => [i, s]));
+    const [off, refused, on, paidStep] = Object.values(st);
+    const setAg = async (h, want) => {
+      const [t, rc] = await Promise.all([provider.getTransaction(h), provider.getTransactionReceipt(h)]);
+      const p = t && desk2.parseTransaction({ data: t.data });
+      return rc?.status === 1 && getAddress(t.from) === payer2 && getAddress(t.to) === DESK2 && p?.name === "setAgent" && getAddress(p.args[0]) === agent2 && p.args[1] === want;
+    };
+    const [rOff, rOn] = [await setAg(off.tx, false), await setAg(on.tx, true)];
+    const agentTxs = [refused, paidStep].map((s) => ({ link: "tx/" + s.tx, ok: s.result === "PAID", why: s.result.replace(/^REFUSED: /, "") }));
+    const kinv = json("inbox/inbox-v2-KILL.json")[0].invoice;
+    ok(rOff && rOn && await reread(agentTxs) === 2 && !agentTxs[0].ok && /NotPayersAgent/.test(agentTxs[0].why) && agentTxs[1].ok && (await call2("paid", [payer2, kinv.id]))[0],
+      `kill switch, live: the company's setAgent(false) -> the agent's payment refused (NotPayersAgent); setAgent(true) -> the same payment paid`, `(${kinv.ref}, ${kinv.fusd} fUSD)`);
+  }
 
   // v2 through MCP: Claude Code, then the obey-everything client, then a read-only audit
   const lines2 = (f) => readFileSync(new URL(f, root), "utf8").trim().split("\n").map((l) => JSON.parse(l)).filter((x) => x.link);
