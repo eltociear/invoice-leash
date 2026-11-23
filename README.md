@@ -7,7 +7,7 @@
 **Every email and transaction, browsable:** https://eltociear.github.io/invoice-leash/ ·
 **Try to break it, live in your browser:** [attack lab](https://eltociear.github.io/invoice-leash/lab.html) ·
 **Threat model:** [THREAT_MODEL.md](THREAT_MODEL.md) ·
-**Demo video (2:53, the v1 run in QOR):** https://youtu.be/DssIkkYx8gc
+**Demo video (2:50, v2 in fUSD, narrated):** https://youtu.be/K3Teb5sO8JU
 
 > **For judges: check every claim here in about a minute, with no keys and no test QOR.**
 >

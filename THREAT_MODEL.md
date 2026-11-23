@@ -52,7 +52,7 @@ tests (`test/InvoiceDeskV2.t.sol`).
 | One big genuine invoice | `OverPerPaymentLimit` (100 fUSD) | inbox #7; a human then pays it with `approve-v2 7` |
 | Many small genuine invoices | `OverDailyLimit` (250 fUSD per UTC day); refused payments do not count | inbox #9, tests |
 | Agent pays in native QOR | `AgentCannotPayNative` (and the agent account cannot move QOR anyway) | tests |
-| Vendor key never proven / other algorithm / rotated | `VendorKeyNotProven` / `BadSignature` (the key is read at payment time) | tests |
+| Vendor key never proven / other algorithm / rotated | `VendorKeyNotProven` / `BadSignature` (the key is read at payment time) | tests (unproven: v2; other algorithm, unregistered, rotated: v1, same code path) |
 | A token that returns `false`, or an address with no code | `TransferFailed`, all rolled back | tests |
 | The agent keeps going after it is caught | revoke the key on chain, or `setAgent(agent, false)` in the desk: one company tx either way | v1 run (revoke); v2 live: `kill-switch-v2` (`NotPayersAgent`), verify §9; tests |
 | A forgotten agent | the link expires (72 h in the v2 demo) | verify §9 reads it |
@@ -64,6 +64,14 @@ Said plainly, because a judge, an auditor or a customer will ask.
 - **A compromised approved vendor.** With Hostline's ML-DSA-87 key, a thief can issue
   genuine-looking Hostline invoices up to the agent's limits, paid only to Hostline's own address
   (the payee is signed). Remedy: `removeVendor`, which only the company can call.
+- **One approved vendor blocking another's invoice number.** The desk records `paid[payer][id]`, where
+  `id` is the hash of the vendor's invoice number, without the vendor in the key. An approved vendor (or
+  a thief with its key) could sign a small invoice that reuses another vendor's next number; once the
+  agent pays it, the real invoice with that number is refused as `AlreadyPaid`. Nobody is paid wrongly
+  and the payer can still pay the blocked vendor in person, but it is a nuisance an approved vendor can
+  cause. Remedy today: `removeVendor`, and vendor-prefixed numbers (every invoice in this repo has one).
+  Next version: key by `keccak256(vendor, id)`. (Changing the deployed desk would invalidate the
+  recorded runs, so we document it rather than redeploy during judging.)
 - **A compromised company key.** The company can do anything; that is what an owner is. It is a
   hybrid ML-DSA-87 key, so a quantum computer alone does not get it.
 - **Paying a genuine invoice the company did not want.** Within the limits, the agent decides. The

@@ -311,21 +311,40 @@ contract InvoiceDeskV2Test is Test {
         desk.setAgent(agent, true);
         desk.setLimit(address(fusd), 100e6, 100e6);
         vm.stopPrank();
-        vm.warp(1795046400 + 3600); // 01:00 UTC
+        uint256 midnight = 1795046400 + 86400; // 00:00:00 UTC
+        vm.warp(midnight - 60); // 23:59:00 UTC
         _agentPays(_named("genuine_fusd")); // 80 of 100
         Case memory second = _named("tokenwell_genuine_fusd"); // 60 more: 140 > 100
+        vm.warp(midnight - 1); // 23:59:59, same UTC day
         vm.expectRevert(abi.encodeWithSelector(InvoiceDeskV2.OverDailyLimit.selector, 80e6, 60e6, 100e6));
         _agentPays(second);
-        vm.warp(1795046400 + 86400 + 60); // next UTC day
+        vm.warp(midnight); // one second later: a new UTC calendar day, not a rolling 24 h window
+        assertEq(desk.remainingToday(payer, address(fusd)), 100e6);
         _agentPays(second);
         assertEq(fusd.balanceOf(tokenwell), 60e6);
     }
 
     function test_refused_agent_payments_do_not_count() public {
-        _asAgent();
+        _asAgent(); // 100 per payment, 250 per day
+        // refused before the limits are looked at
         vm.expectRevert(InvoiceDeskV2.BadSignature.selector);
         _agentPays(_named("amount_edited"));
         assertEq(desk.remainingToday(payer, address(fusd)), 250e6);
+        // refused AFTER the spend was recorded (the transfer fails): the record is rolled back with it
+        vm.prank(payer);
+        fusd.approve(address(desk), 79e6); // one short of the 80 fUSD invoice
+        vm.expectRevert(InvoiceDeskV2.TransferFailed.selector);
+        _agentPays(_named("genuine_fusd"));
+        assertEq(desk.remainingToday(payer, address(fusd)), 250e6);
+        // refused by the daily limit itself: nothing recorded either
+        vm.prank(payer);
+        fusd.approve(address(desk), type(uint256).max);
+        vm.prank(payer);
+        desk.setLimit(address(fusd), 100e6, 100e6);
+        _agentPays(_named("genuine_fusd")); // 80 of 100
+        vm.expectRevert(abi.encodeWithSelector(InvoiceDeskV2.OverDailyLimit.selector, 80e6, 60e6, 100e6));
+        _agentPays(_named("tokenwell_genuine_fusd"));
+        assertEq(desk.remainingToday(payer, address(fusd)), 20e6);
     }
 
     function test_agent_cannot_pay_native_qor() public {
