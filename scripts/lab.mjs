@@ -69,11 +69,12 @@ input,select{width:100%;background:var(--bg);color:var(--fg);border:1px solid va
 .verdict{font-size:24px;font-weight:700;margin:0 0 6px}.verdict.ok{color:var(--ok)}.verdict.no{color:var(--no)}.why{margin:0 0 12px}
 .diff{font-size:13px;color:var(--warn)}.kv{font-size:13px}.kv div{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding:6px 0}
 ol.log{font-size:13px;color:var(--dim);padding-left:20px;margin:0}ol.log li{margin:3px 0}
+.you{margin-top:16px}.you .btns button.main{border-color:var(--ok);color:var(--ok)}.local{font-size:14px;border-top:1px solid var(--line);margin-top:12px;padding-top:10px}.local b.ok{color:var(--ok)}.local b.no{color:var(--no)}
 @media (max-width:760px){.grid{grid-template-columns:1fr}h1{font-size:28px}.kv div{flex-direction:column;gap:2px}}
 </style></head>
 <body><main>
 <div class="top"><h1>Attack lab: make Invoice Leash pay</h1><a href="./">← the recorded runs</a></div>
-<p>Pick a real fUSD invoice, change anything, choose who sends it, and ask the <b>real InvoiceDeskV2 on the QoreChain testnet</b> whether it would pay. Your browser sends an <code>eth_call</code> to <code>${data.rpc}</code>; the ML-DSA-87 check is the chain's own precompile. Nothing is sent and nothing is spent, so try as much as you like.</p>
+<p>Pick a real fUSD invoice, change anything, choose who sends it, and ask the <b>real InvoiceDeskV2 on the QoreChain testnet</b> whether it would pay. Your browser sends an <code>eth_call</code> to <code>${data.rpc}</code>; the ML-DSA-87 check is the chain's own precompile. Nothing is sent and nothing is spent, so try as much as you like. You can also <a href="#you">be the vendor</a>: make an ML-DSA-87 key in this tab and sign an invoice yourself.</p>
 <p class="live"><span class="dot" id="dot"></span><span id="live">connecting to qorechain-diana…</span></p>
 
 <h2>1. Start from</h2>
@@ -96,14 +97,23 @@ ol.log{font-size:13px;color:var(--dim);padding-left:20px;margin:0}ol.log li{marg
 <div class="card" id="out"><h2 style="margin-top:0">3. The chain's answer</h2><p class="dim">Change something, then ask.</p></div>
 </div>
 
+<h2 id="you">4. Be the vendor: sign it yourself, with a post-quantum key made in this tab</h2>
+<div class="card you">
+<p style="margin-top:0">Your browser makes a fresh <b>ML-DSA-87</b> key (FIPS 204, the scheme QoreChain's precompile checks) and signs the invoice in step 2, field for field. The key lives only in this tab: it is not saved, not sent, and not registered on chain. Then ask the chain as before.</p>
+<div class="btns"><button type="button" class="main" id="mkkey">1. Make my ML-DSA-87 key</button><button type="button" class="main" id="signme" disabled>2. Sign the invoice above with it</button></div>
+<div class="kv" id="mykey" style="margin-top:10px"></div>
+<p class="dim" style="font-size:14px;margin-bottom:0">What to expect: your signature is mathematically valid (your browser checks it against your own public key), yet the desk refuses it. With Hostline or Tokenwell as payee it reads <i>their</i> registered key, and your signature does not match it: <code>BadSignature</code>. With Mallory as payee: <code>UnknownVendor</code>. A valid post-quantum signature is not enough; it has to be the payee's, and the payee has to be one the company approved.</p>
+</div>
+
 <h2>The company's leash on its agent, read live</h2>
 <div class="card kv" id="state"><span class="dim">reading…</span></div>
 
 <h2>What the agent's key cannot even send</h2>
 <div class="card"><p class="dim" style="margin-top:0">The agent's own account holds nothing, its QoreChain rule lists no QOR and no fUSD, and it may make one call: <code>InvoiceDeskV2.pay</code>. These need the agent's key, so they are recorded rather than tried here; every one is refused by the chain:</p><ol class="log" id="refusals"></ol></div>
-<p class="dim" style="margin-top:32px;font-size:14px">InvoiceDeskV2 <a href="https://explore.qore.network/address/${data.desk}">${data.desk}</a> · qorechain-diana · <a href="lab-v1.html">v1 lab (QOR)</a> · <a href="https://github.com/eltociear/invoice-leash">code</a> · ABI encoding by <a href="https://github.com/ethers-io/ethers.js">ethers.js</a> (MIT), served from this site.</p>
+<p class="dim" style="margin-top:32px;font-size:14px">InvoiceDeskV2 <a href="https://explore.qore.network/address/${data.desk}">${data.desk}</a> · qorechain-diana · <a href="lab-v1.html">v1 lab (QOR)</a> · <a href="https://github.com/eltociear/invoice-leash">code</a> · ABI encoding by <a href="https://github.com/ethers-io/ethers.js">ethers.js</a> (MIT) and ML-DSA-87 by <a href="https://github.com/paulmillr/noble-post-quantum">noble-post-quantum</a> (MIT), both served from this site.</p>
 </main>
 <script src="vendor/ethers.umd.min.js"></script>
+<script type="module">import { ml_dsa87 } from "./vendor/mldsa87.min.js"; window.mldsa = ml_dsa87; document.dispatchEvent(new Event("mldsa"));</script>
 <script>
 const D = ${JSON.stringify(data)};
 const ERR = ${JSON.stringify(ERR)};
@@ -118,7 +128,13 @@ const desk = new E.Interface([
 const erc20 = new E.Interface(["function balanceOf(address) view returns (uint256)", "function allowance(address,address) view returns (uint256)"]);
 const status = new E.Interface(["function pqcKeyStatus(address) view returns (bool registered,uint8 algorithmId,bytes pubkey,bool possessionProven)"]);
 const $ = (id) => document.getElementById(id);
-let base, cur;
+let base, cur, me = null;
+const DOMAIN = E.keccak256(E.toUtf8Bytes("LEASH-INVOICE-v2"));
+// The exact bytes the vendor signs and InvoiceDeskV2 verifies (contracts/InvoiceDeskV2.sol, lib/invoices.mjs invoiceMessageV2).
+const message = (c, amount) => E.getBytes(E.AbiCoder.defaultAbiCoder().encode(["bytes32","uint256","address","address","address","address","uint256","bytes32","uint64"],
+  [DOMAIN, 9800, D.desk, c.payer, c.vendor, c.token, amount, E.keccak256(E.toUtf8Bytes(c.ref)), c.dueBy]));
+const pqcKey = async (a) => { const r = await rpc("eth_call", [{ to: "0x0000000000000000000000000000000000000a02", data: status.encodeFunctionData("pqcKeyStatus", [a]) }, "latest"]); return status.decodeFunctionResult("pqcKeyStatus", r.result); };
+const vfy = (pk, msg, sig) => { try { return window.mldsa.verify(E.getBytes(sig), msg, E.getBytes(pk)); } catch { return false; } };
 async function rpc(method, params) { const r = await fetch(D.rpc, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) }); return r.json(); }
 const call = async (to, i, fn, args) => i.decodeFunctionResult(fn, (await rpc("eth_call", [{ to, data: i.encodeFunctionData(fn, args) }, "latest"])).result);
 const dec = (t) => (D.tokens[t.toLowerCase()] ?? D.tokens[t] ?? ["token", 18])[1];
@@ -140,7 +156,7 @@ function load(p) {
 function render() {
   for (const k of ["sender", "payer", "vendor", "token", "amount", "ref"]) { $(k).value = cur[k]; $(k).classList.toggle("changed", String(cur[k]) !== String(base[k])); }
   $("due").value = isoLocal(cur.dueBy); $("due").classList.toggle("changed", cur.dueBy !== base.dueBy);
-  const s = cur.signature; $("sig").textContent = (s.length - 2) / 2 + " bytes · " + s.slice(0, 26) + "…" + s.slice(-16) + (s !== base.signature ? "  (tampered)" : "");
+  const s = cur.signature; $("sig").textContent = (s.length - 2) / 2 + " bytes · " + s.slice(0, 26) + "…" + s.slice(-16) + (me && s === me.sig ? "  (signed by your key)" : s !== base.signature ? "  (tampered)" : "");
 }
 function changes() {
   const c = []; const L = { payer: "payer", vendor: "payee", token: "currency", amount: "amount", ref: "invoice number" };
@@ -164,7 +180,7 @@ async function ask() {
     else if (/insufficient/i.test(res.error?.message ?? "")) {
       title = "Refused before the contract ran";
       why = cur.sender.toLowerCase() === D.agent.toLowerCase() && native
-        ? 'The agent\'s account cannot send that QOR: it holds almost none, and its chain rule allows no QOR at all (<a href="' + D.chainRefusals[1][2] + '">denom uqor not allowed</a>). Ask as the company to see the signature check: the currency is signed.'
+        ? 'The agent’s account cannot send that QOR: it holds almost none, and its chain rule allows no QOR at all (<a href="' + D.chainRefusals[1][2] + '">denom uqor not allowed</a>). Ask as the company to see the signature check: the currency is signed.'
         : "The sender's balance is lower than the QOR sent with the call.";
     }
     else { title = "Error"; why = res.error?.message ?? "no answer"; }
@@ -172,7 +188,19 @@ async function ask() {
   const c = changes();
   $("out").innerHTML = '<h2 style="margin-top:0">3. The chain\\'s answer</h2><p class="verdict ' + (ok ? "ok" : "no") + '">' + title + '</p><p class="why">' + why + "</p>" +
     (c.length ? '<p class="diff">You changed: ' + c.join(", ") + "</p>" : '<p class="dim" style="font-size:14px">No changes from the preset.</p>') +
-    '<p class="dim" style="font-size:13px;margin-top:12px">eth_call from ' + (D.senders[cur.sender] ?? cur.sender) + " · block " + parseInt(blk.result, 16).toLocaleString() + " · " + ms + " ms · " + cur.amount + " " + unit(cur.token) + " to " + name(cur.vendor) + "</p>";
+    '<p class="dim" style="font-size:13px;margin-top:12px">eth_call from ' + (D.senders[cur.sender] ?? cur.sender) + " · block " + parseInt(blk.result, 16).toLocaleString() + " · " + ms + " ms · " + cur.amount + " " + unit(cur.token) + " to " + name(cur.vendor) + "</p>" +
+    '<div class="local" id="local">Checking the signature in your browser too…</div>';
+  local(amount).catch((e) => { $("local").textContent = "Local check unavailable: " + e.message; });
+}
+// Independently of the chain: fetch the payee's registered ML-DSA-87 public key (precompile 0x…0a02) and verify here.
+async function local(amount) {
+  if (!window.mldsa) await new Promise((r) => document.addEventListener("mldsa", r, { once: true }));
+  const msg = message(cur, amount), [reg, , pk] = await pqcKey(cur.vendor);
+  const t0 = performance.now(), theirs = reg && vfy(pk, msg, cur.signature), ms = Math.round(performance.now() - t0);
+  let h = "<b>Your browser</b>, with " + name(cur.vendor) + "'s public key read from the chain (" + (pk.length - 2) / 2 + " bytes): the ML-DSA-87 signature over these " + msg.length + " bytes is " +
+    (theirs ? '<b class="ok">valid</b>' : '<b class="no">not valid</b>') + " (" + ms + " ms, noble-post-quantum).";
+  if (me && cur.signature === me.sig) h += "<br>With <b>your</b> key from step 4 the same signature is " + (vfy(me.pk, msg, cur.signature) ? '<b class="ok">valid</b>' : '<b class="no">not valid</b>') + ". Valid, but not the payee's.";
+  $("local").innerHTML = h;
 }
 async function state() {
   const [bal] = await call(D.fusd, erc20, "balanceOf", [D.payer]), [allow] = await call(D.fusd, erc20, "allowance", [D.payer, D.desk]);
@@ -197,6 +225,21 @@ $("due").oninput = (e) => { const t = Date.parse(e.target.value + "Z"); if (!isN
 $("flip").onclick = () => { const b = E.getBytes(cur.signature).slice(); const i = Math.floor(Math.random() * b.length); b[i] ^= 1 << Math.floor(Math.random() * 8); cur.signature = E.hexlify(b); render(); };
 $("reset").onclick = () => { cur = { ...base }; render(); };
 $("go").onclick = ask;
+$("mkkey").onclick = async () => {
+  if (!window.mldsa) await new Promise((r) => document.addEventListener("mldsa", r, { once: true }));
+  const t0 = performance.now(), k = window.mldsa.keygen(); const ms = Math.round(performance.now() - t0);
+  me = { pk: E.hexlify(k.publicKey), sk: k.secretKey, sig: null };
+  $("signme").disabled = false;
+  $("mykey").innerHTML = "<div><span>Your public key</span><span class='mono'>" + k.publicKey.length + " bytes · " + me.pk.slice(0, 18) + "…</span></div><div><span>Your secret key (stays in this tab)</span><span class='mono'>" + k.secretKey.length + " bytes</span></div><div><span>Made in</span><span class='mono'>" + ms + " ms</span></div>";
+};
+$("signme").onclick = () => {
+  const amount = toUnits(cur.amount, cur.token); if (amount === null || !me) return;
+  const msg = message(cur, amount), t0 = performance.now(), sig = window.mldsa.sign(msg, me.sk), ms = Math.round(performance.now() - t0);
+  me.sig = cur.signature = E.hexlify(sig); render();
+  $("mykey").innerHTML += "<div><span>Signed " + cur.ref + " (" + cur.amount + " " + unit(cur.token) + " to " + name(cur.vendor) + ")</span><span class='mono'>" + sig.length + " bytes · " + ms + " ms · self-check " + (vfy(me.pk, msg, me.sig) ? "valid" : "INVALID") + "</span></div>";
+  $("out").innerHTML = '<h2 style="margin-top:0">3. The chain’s answer</h2><p class="dim">Your signature is in step 2. Ask the chain.</p>';
+  $("go").scrollIntoView({ behavior: "smooth", block: "center" });
+};
 load(D.presets[0]);
 rpc("eth_blockNumber", []).then((r) => { $("dot").classList.add("on"); $("live").textContent = "live: qorechain-diana, block " + parseInt(r.result, 16).toLocaleString(); }).catch(() => { $("live").textContent = "could not reach the testnet RPC"; });
 state().catch((e) => { $("state").textContent = "could not read the chain: " + e.message; });
@@ -206,5 +249,7 @@ state().catch((e) => { $("state").textContent = "could not read the chain: " + e
 mkdirSync(new URL("docs/vendor/", root), { recursive: true });
 copyFileSync(new URL("node_modules/ethers/dist/ethers.umd.min.js", root), new URL("docs/vendor/ethers.umd.min.js", root));
 copyFileSync(new URL("node_modules/ethers/LICENSE.md", root), new URL("docs/vendor/ethers-LICENSE.md", root));
+// docs/vendor/mldsa87.min.js: npx esbuild@0.24.0 scripts/vendor-src/mldsa.mjs --bundle --format=esm --minify (noble-post-quantum, pinned in package-lock)
+copyFileSync(new URL("node_modules/@noble/post-quantum/LICENSE", root), new URL("docs/vendor/noble-post-quantum-LICENSE", root));
 writeFileSync(new URL("docs/lab.html", root), html);
 console.log(`docs/lab.html: ${data.presets.length} presets (v2, fUSD), ${(html.length / 1024).toFixed(0)} KB`);

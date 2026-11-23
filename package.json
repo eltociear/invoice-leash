@@ -16,7 +16,7 @@
   },
   "scripts": {
     "compile": "node scripts/compile.mjs",
-    "test": "node test/invoice.test.mjs",
+    "test": "node test/invoice.test.mjs && node test/pages.test.mjs",
     "test:contract": "forge test",
     "fixtures": "node test/fixtures.mjs",
     "verify": "node scripts/verify.mjs",

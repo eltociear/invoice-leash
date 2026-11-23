@@ -170,6 +170,15 @@ invoice number, due date, a bit of the signature, the value sent) and ask the re
 would pay. Your browser calls the testnet's EVM RPC directly (`eth_call`); the signature check is the
 chain's own precompile. No server, no keys, nothing spent.
 
+**Be the vendor.** The lab makes an ML-DSA-87 key in your browser (FIPS 204, via
+[noble-post-quantum](https://github.com/paulmillr/noble-post-quantum), served from the site) and signs the
+invoice with it, field for field. The key never leaves the tab and is not registered. Your signature is
+valid under your own key, yet the desk refuses it: `BadSignature` with Hostline or Tokenwell as payee (it
+reads *their* registered key), `UnknownVendor` with Mallory. After every answer, your browser also fetches
+the payee's public key from the chain (precompile `0x…0a02`) and verifies the signature itself over the
+same 288 bytes, so you can see the precompile and an independent ML-DSA-87 implementation agree.
+`npm test` checks that every page script parses and that the browser bundle signs what `@qorechain/sdk` verifies.
+
 ## Use it from any agent: the MCP server
 
 [`mcp/server.mjs`](mcp/server.mjs) turns Invoice Leash into tools for any MCP client (Claude Code,
