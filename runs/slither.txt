@@ -1,0 +1,32 @@
+Slither 0.11.4 on contracts/, 2026-11-23. Re-run: slither contracts/<file>.sol
+
+===== contracts/InvoiceDeskV2.sol
+INFO:Detectors:
+Detector: timestamp
+InvoiceDeskV2.pay(address,address,address,uint256,bytes32,uint64,bytes) (contracts/InvoiceDeskV2.sol#103-130) uses timestamp for comparisons
+	Dangerous comparisons:
+	- block.timestamp > dueBy (contracts/InvoiceDeskV2.sol#113)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#block-timestamp
+INFO:Detectors:
+Detector: cyclomatic-complexity
+InvoiceDeskV2.pay(address,address,address,uint256,bytes32,uint64,bytes) (contracts/InvoiceDeskV2.sol#103-130) has a high cyclomatic complexity (13).
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#cyclomatic-complexity
+INFO:Detectors:
+Detector: low-level-calls
+Low level call in InvoiceDeskV2.pay(address,address,address,uint256,bytes32,uint64,bytes) (contracts/InvoiceDeskV2.sol#103-130):
+	- (ok,None) = vendor.call{value: amount}() (contracts/InvoiceDeskV2.sol#121)
+	- (ok_scope_0,ret) = token.call(abi.encodeWithSelector(0x23b872dd,payer,vendor,amount)) (contracts/InvoiceDeskV2.sol#127)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#low-level-calls
+
+===== contracts/InvoiceDesk.sol
+INFO:Detectors:
+Detector: timestamp
+InvoiceDesk.pay(address,uint256,bytes32,uint64,bytes) (contracts/InvoiceDesk.sol#67-83) uses timestamp for comparisons
+	Dangerous comparisons:
+	- block.timestamp > dueBy (contracts/InvoiceDesk.sol#76)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#block-timestamp
+INFO:Detectors:
+Detector: low-level-calls
+Low level call in InvoiceDesk.pay(address,uint256,bytes32,uint64,bytes) (contracts/InvoiceDesk.sol#67-83):
+	- (ok,None) = vendor.call{value: amount}() (contracts/InvoiceDesk.sol#81)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#low-level-calls
