@@ -1,0 +1,73 @@
+{
+  "what": "the EVM window's transaction cap, against the account's classical key",
+  "account": "qor1llw052ph5xqwm2cv2ene8mtqv4lt2epfl5tr3f",
+  "steps": [
+    {
+      "step": "open window: 1 tx, 0.1 QOR, 100 blocks, InvoiceDeskV2 (hybrid)",
+      "result": "opened",
+      "tx": "6DD4CBF5925E22C3553260644C77B7A0C96BCF87100AB5B6FCD2036F31F3962E"
+    },
+    {
+      "step": "1st classical tx to the desk (a read, no value)",
+      "result": "EXECUTED",
+      "tx": "0x319a41d070add74cb0e92ad9c86add77b3979635e46d8b7374e370fbf3b296f9"
+    },
+    {
+      "step": "2nd classical tx, same target, same kind",
+      "result": "REFUSED: failed to broadcast transaction: the EVM authorisation window for qor1llw052ph5xqwm2cv2ene8mtqv4lt2epfl5tr3f does not admit this transaction (remaining: 89 blocks, 0 transactions, 87250 uqor; this transaction needs 12750 uqor): EVM authorisation window exhausted: EVM authorisation window exhausted ["
+    },
+    {
+      "step": "close window",
+      "result": "closed",
+      "tx": "38E778F6EAD59F4556049293FA9038AC52ADAAA1704AF9D740BEEAA72E9AB78D"
+    },
+    {
+      "step": "open window: 2 txs, 0.02 QOR, 100 blocks, InvoiceDeskV2 (hybrid)",
+      "result": "opened",
+      "tx": "0FE92D2F2E01B454176C7C5764754C6EED5B6E3C9F92F1DFBCF0CA68EF57262A"
+    },
+    {
+      "step": "classical tx carrying 0.05 QOR (cap 0.02)",
+      "result": "REFUSED: failed to broadcast transaction: the EVM authorisation window for qor1llw052ph5xqwm2cv2ene8mtqv4lt2epfl5tr3f does not admit this transaction (remaining: 96 blocks, 2 transactions, 20000 uqor; this transaction needs 62750 uqor): EVM authorisation window exhausted: EVM authorisation window exhausted ["
+    },
+    {
+      "step": "close window",
+      "result": "closed",
+      "tx": "90D975E80E8DA2CAFF6CB899EB3D38A6FB7A37F95F9EE77C7657317B4B1B46B5"
+    }
+  ],
+  "windowAtOpen": {
+    "found": true,
+    "live": true,
+    "openedHeight": "10610800",
+    "expiryHeight": "10610900",
+    "maxTxs": "1",
+    "usedTxs": "0",
+    "maxValue": "100000",
+    "usedValue": "0",
+    "remainingBlocks": "96",
+    "remainingTxs": "1",
+    "remainingValue": "100000",
+    "nativeOnly": false,
+    "allowedTargets": [
+      "0xe53be6c5b96e099fd9610bbb56bae564f12def98"
+    ]
+  },
+  "windowAfterFirst": {
+    "found": true,
+    "live": false,
+    "openedHeight": "10610800",
+    "expiryHeight": "10610900",
+    "maxTxs": "1",
+    "usedTxs": "1",
+    "maxValue": "100000",
+    "usedValue": "12750",
+    "remainingBlocks": "90",
+    "remainingTxs": "0",
+    "remainingValue": "87250",
+    "nativeOnly": false,
+    "allowedTargets": [
+      "0xe53be6c5b96e099fd9610bbb56bae564f12def98"
+    ]
+  }
+}

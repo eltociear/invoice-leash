@@ -8,9 +8,9 @@
 // The ed25519 agent key is classical too; what it can do is already the compromised-agent run (16
 // attempts, 3 genuine invoices paid). It is not repeated here.
 import { writeFileSync } from "node:fs";
-import { Interface, JsonRpcProvider, Wallet, parseEther, randomBytes } from "ethers";
-import { closeEvmWindowMsg, linkAuthenticatorMsgs, openEvmWindowMsg, signAuthenticatorLinkEd25519 } from "@qorechain/sdk";
-import { CHAIN_ID, EVM_CHAIN_ID, EVM_RPC, account, bankSend, broadcast, readDeployment, toUqor } from "../lib/chain.mjs";
+import { Interface, JsonRpcProvider, Wallet, keccak256, parseEther, randomBytes } from "ethers";
+import { buildRegisterPqcKeyMsg, generatePqcKeypair, linkAuthenticatorMsgs, openEvmWindowMsg, pqcSign, rotatePqcKeyMsg, rotationSignBytes, signAuthenticatorLinkEd25519, signProofOfPossession } from "@qorechain/sdk";
+import { CHAIN_ID, EVM_CHAIN_ID, EVM_RPC, account, bankSend, broadcast, ensureHexKey, readDeployment, toUqor } from "../lib/chain.mjs";
 import { FUSD } from "../lib/invoices.mjs";
 import { registerKemMsg } from "../lib/sealed.mjs";
 import { sealKeysFromSeed } from "@qorechain/qoreseal";
@@ -75,6 +75,16 @@ await evm("agentacct", "send the agent account's QOR to the attacker (EVM)", { t
 // 5. the relayer and a vendor
 await cosmos("gas", "send the relayer's QOR to the attacker", [bankSend((await account("gas")).cosmos, MALLORY_COSMOS(), toUqor("1"))]);
 await evm("vendorA", "Hostline's fUSD to the attacker", { to: FUSD, data: erc20.encodeFunctionData("transfer", [MALLORY, 1n]) });
+// 6. the attack that would forge invoices: put the attacker's own ML-DSA-87 key on a vendor's account.
+// The attacker can make a fresh ML-DSA-87 key and every signature *it* needs, but not one by the vendor's
+// registered ML-DSA-87 key, so the envelope carries the vendor's classical signature only.
+const va = await account("vendorA"), evil = generatePqcKeypair(ensureHexKey("qdayevil")); // kept, so a surprise could be undone
+out.attackerPqcKeyHash = keccak256(evil.publicKey); // verify: Hostline's key on chain is not this one
+const rot = new TextEncoder().encode(rotationSignBytes(CHAIN_ID, 1, va.cosmos, va.pqc.publicKey, evil.publicKey));
+await cosmos("vendorA", "rotate Hostline's ML-DSA-87 key to the attacker's (MsgRotatePQCKey), then sign invoices as Hostline",
+  [rotatePqcKeyMsg({ sender: va.cosmos, oldPublicKey: va.pqc.publicKey, newPublicKey: evil.publicKey, oldSignature: randomBytes(4627), newSignature: pqcSign(evil.secretKey, rot) })]);
+await cosmos("vendorA", "re-register Hostline with the attacker's ML-DSA-87 key (MsgRegisterPQCKey, valid proof of possession)",
+  [buildRegisterPqcKeyMsg(va.cosmos, { pqcKeypair: evil, proofOfPossession: signProofOfPossession({ chainId: CHAIN_ID, account: va.cosmos, keypair: evil }) })]);
 // control: the same kind of request, signed hybrid (ML-DSA-87 + secp256k1) by the real company, goes through
 const c = await broadcast(company, [bankSend(company.cosmos, company.cosmos, "1")], "leash: Q-Day drill control (hybrid)");
 out.control = { label: "the company sends 1 uqor to itself, hybrid-signed", code: c.code, tx: c.transactionHash };

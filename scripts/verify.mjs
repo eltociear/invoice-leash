@@ -14,7 +14,7 @@
 //   9. v2 (fUSD): bytecode, the agent account's rule, the payer's settings, the run, attacks as the agent
 import solc from "solc";
 import { readFileSync, readdirSync } from "node:fs";
-import { AbiCoder, Interface, JsonRpcProvider, getAddress, formatUnits } from "ethers";
+import { AbiCoder, Interface, JsonRpcProvider, getAddress, formatUnits, keccak256 } from "ethers";
 import { qorToEvm } from "@qorechain/sdk";
 import net from "node:net";
 
@@ -338,6 +338,13 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
     const closeTx = await rest(`/cosmos/tx/v1beta1/txs/${st[4].tx}`);
     ok(closeTx?.tx_response?.code === 0 && closeTx.tx.body.messages[0]["@type"] === "/qorechain.pqc.v1.MsgCloseEVMWindow" && st[2].result.includes("does not list 0x97143B771D34ddb9130b807b135Ae675A5a963CA") && st[3].result.includes(`does not list ${MALLORY}`) && /no open EVM authorisation window/.test(st[5].result),
       "fUSD.transfer and a QOR send to Mallory were refused at broadcast (not an allowed recipient); after the close, so was pay", "(refused before inclusion: recorded messages, no tx)");
+    // its other caps (runs/probes/window-caps.json): what a quantum attacker holding the classical key gets inside a window
+    const cs = json("runs/probes/window-caps.json").steps;
+    const [w1, w2] = await Promise.all([rest(`/cosmos/tx/v1beta1/txs/${cs[0].tx}`), rest(`/cosmos/tx/v1beta1/txs/${cs[4].tx}`)]);
+    const m1 = w1?.tx?.body?.messages?.[0], m2 = w2?.tx?.body?.messages?.[0], rc1 = await provider.getTransactionReceipt(cs[1].tx);
+    ok(w1?.tx_response?.code === 0 && m1?.max_txs === "1" && w2?.tx_response?.code === 0 && m2?.max_txs === "2" && m2.max_value === "20000" && rc1?.status === 1 && getAddress(rc1.from) === agent2
+      && /exhausted/.test(cs[2].result) && /remaining: \d+ blocks, 0 transactions/.test(cs[2].result) && /remaining: \d+ blocks, 2 transactions, 20000 uqor; this transaction needs 62750 uqor/.test(cs[5].result),
+      "the window's count and value caps hold against the classical key: a 1-tx window refuses the 2nd tx; a 0.02 QOR window refuses a 0.05 QOR call", `(${cs[0].tx.slice(0, 8)}…, ${cs[4].tx.slice(0, 8)}…)`);
   }
 
   // authenticated messaging: company instructions in QoreSign message-signing-v1, checked against the chain
@@ -365,9 +372,9 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
   // our own Q-Day drill: every account's classical key used alone (runs/qday-drill.json), then the state it would have changed
   {
     const dr = json("runs/qday-drill.json"), at = dr.attempts;
-    const why = (a) => /registered PQC key and must include|no open EVM authorisation window|KEM key messag/.test(a.why);
-    ok(at.length === 14 && at.every((a) => a.refused && why(a)), `Q-Day drill: ${at.length} attacks with the classical keys alone (company, agent account, relayer, vendor), all refused by the chain`,
-      `(${at.filter((a) => /must include/.test(a.why)).length}× "must include" an ML-DSA-87 signature, ${at.filter((a) => /no open EVM/.test(a.why)).length}× no EVM window, ${at.filter((a) => /KEM key/.test(a.why)).length}× KEM key needs PQC)`);
+    const why = (a) => /registered PQC key and must include|no open EVM authorisation window|KEM key messag|register and migrate need its hybrid/.test(a.why);
+    ok(at.length === 16 && at.every((a) => a.refused && why(a)), `Q-Day drill: ${at.length} attacks with the classical keys alone (company, agent account, relayer, vendor), all refused by the chain`,
+      `(${at.filter((a) => /must include/.test(a.why)).length}× "must include" an ML-DSA-87 signature, ${at.filter((a) => /no open EVM/.test(a.why)).length}× no EVM window, ${at.filter((a) => /code 234/.test(a.why)).length}× key maintenance needs the PQC key)`);
     const ctl = await rest(`/cosmos/tx/v1beta1/txs/${dr.control.tx}`);
     ok(ctl?.tx_response?.code === 0 && ctl.tx_response.events.some((e) => e.type === "pqc_hybrid_verify" && e.attributes.some((x) => x.key === "status" && x.value === "verified")),
       "control: the same kind of request, hybrid-signed (ML-DSA-87 + secp256k1), went through", `(${dr.control.tx.slice(0, 8)}…)`);
@@ -377,6 +384,9 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
     const [mAllow] = erc.decodeFunctionResult("allowance", await provider.call({ to: FUSD, data: erc.encodeFunctionData("allowance", [payer2, MALLORY]) }));
     ok(!auths.some((x) => x.label === "attacker") && Buffer.from(kem.publicKey).toString("base64") === reg?.public_key && mAllow === 0n && !(await call2("approved", [payer2, MALLORY]))[0] && !(await call2("isAgent", [payer2, MALLORY]))[0],
       "and nothing it tried stuck: no attacker key on the agent account, the agent's ML-KEM key unchanged, no fUSD allowance or vendor/agent role for the attacker");
+    const hostPk = status.decodeFunctionResult("pqcKeyStatus", await provider.call({ to: "0x0000000000000000000000000000000000000a02", data: status.encodeFunctionData("pqcKeyStatus", [dep.vendors.Hostline]) }))[2];
+    ok(dr.attackerPqcKeyHash && keccak256(hostPk) !== dr.attackerPqcKeyHash && (await call2("approved", [payer2, dep.vendors.Hostline]))[0],
+      "Hostline's ML-DSA-87 key on chain is still its own, not the attacker's: invoices in Hostline's name still need Hostline's key", "(rotate and re-register, classical-only, both refused)");
   }
 
   // v2 through MCP: Claude Code, then the obey-everything client, then a read-only audit
@@ -398,3 +408,6 @@ console.log(`\n${fail ? "✗" : "✓"} ${pass} checks passed, ${fail} failed  (q
 console.log("  The agent's linked key is ed25519: QoreChain links only ed25519/secp256k1 keys today. Leash assumes it can be stolen;");
 console.log("  the rule above is what a thief, or a fooled model, gets. The owner's key, which writes and revokes that rule, is hybrid ML-DSA-87.");
 process.exitCode = fail ? 1 : 0;
+// the documents' "N checks" come from runs/verify-latest.txt (test/docs.test.mjs): a run with a different count means they are stale
+const stated = Number(readFileSync(new URL("runs/verify-latest.txt", root), "utf8").match(/✓ (\d+) checks passed/)?.[1]);
+if (stated !== pass + fail) { console.log(`✗ the documents state ${stated} checks (runs/verify-latest.txt), this run has ${pass + fail}: save this run there and update them`); process.exitCode = 1; }

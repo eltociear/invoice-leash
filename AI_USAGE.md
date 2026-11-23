@@ -11,7 +11,7 @@ the AI's work was checked, and the mistakes the AI made that those checks caught
 | **AI** | Claude Code (Anthropic), model `claude-opus-5-5`: one main session that writes code, runs the testnet steps and reports, plus sub-agents started for independent reviews and research |
 | **Human** | the team (one person, [@eltociear](https://github.com/eltociear)): goals, product decisions, accounts and wallets, everything that needs a human identity, and the final call on what ships |
 | **Written by the AI** | nearly all code, tests, scripts, documentation, the demo video (slides, narration script, music) and the cover image |
-| **How the AI's work is checked** | not by trusting it: `npm run verify` (82 read-only checks against the live testnet), 59 Foundry tests and 5 invariants, a 14-mutant check, Slither, QoreScan, browser tests, CI daily, and AI reviewers that did not write the code |
+| **How the AI's work is checked** | not by trusting it: `npm run verify` (87 read-only checks against the live testnet), 59 Foundry tests and 5 invariants, a 14-mutant check, Slither, QoreScan, browser tests, CI daily, and AI reviewers that did not write the code |
 
 ## The workflow
 
@@ -72,6 +72,7 @@ the AI's work was checked, and the mistakes the AI made that those checks caught
 | "the contract enforces X" | 59 Foundry tests, 5 invariants (256,000 random calls), 14 of 14 mutants caught |
 | "the only signature scheme is ML-DSA-87" | QoreScan CBOM, re-run by `verify` |
 | "the page works" | `npm test` parses every page script; Playwright runs the lab in a real browser |
+| "the docs say N" | `npm test` checks every stated count against its source; `verify` fails when its own count drifts |
 | "the MCP agent did X" | the server's log is audited independently against the chain with `@qorechain/mcp` |
 
 ## Mistakes the AI made, and what caught them
@@ -99,6 +100,8 @@ Listed because they show why the checks exist.
   14 of 14 mutants are now caught.
 - **A misread fuzzer failure.** The first invariant run failed. The AI traced it to the test harness (the
   fuzzer could call a setup function, and one fixture is genuine on the desk under test), not the contract.
+- **A stale number in a document.** After `verify` grew, this file still gave its old count (82). Fix:
+  `test/docs.test.mjs` checks every count the documents state against its source (and catches this one).
 - **Numbers stated wrong in conversation** (17 attempts for 16, 11 mutants for 10). The human was given
   the corrected numbers; the README's numbers come from `verify`.
 - **Local metadata in a published log.** An early Claude Code stream log included local paths; it was

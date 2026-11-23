@@ -65,7 +65,8 @@ tests (`test/InvoiceDeskV2.t.sol`).
 
 [QUANTUM_READINESS.md](QUANTUM_READINESS.md) lists every algorithm in the system and what a quantum
 computer does to it. It also has our own drill: with every account's classical key and no ML-DSA-87
-key, 14 attacks on the live testnet, all refused.
+key, 16 attacks on the live testnet, all refused, including replacing a vendor's ML-DSA-87 key
+with the attacker's (which would let it forge that vendor's invoices).
 
 ## What Invoice Leash does not stop
 

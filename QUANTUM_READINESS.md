@@ -17,7 +17,7 @@ assumption.
 
 [`scripts/qday-drill.mjs`](scripts/qday-drill.mjs) plays the attacker after Q-Day. It holds the
 **secp256k1 key of every account** (company, agent account, relayer, a vendor) and signs with those
-keys alone (`signMode: "classical"`), with no ML-DSA-87 key. It sent 14 attacks to `qorechain-diana`:
+keys alone (`signMode: "classical"`), with no ML-DSA-87 key. It sent 16 attacks to `qorechain-diana`:
 
 | Account | Attack, classical key only | The chain's answer |
 |---|---|---|
@@ -31,9 +31,11 @@ keys alone (`signMode: "classical"`), with no ML-DSA-87 key. It sent 14 attacks 
 | agent account | EVM: send its QOR to the attacker | *no open EVM authorisation window* |
 | relayer | `MsgSend` to the attacker | code 20 |
 | vendor (Hostline) | EVM: its fUSD to the attacker | *no open EVM authorisation window* |
+| vendor (Hostline) | rotate its ML-DSA-87 key to the attacker's (`MsgRotatePQCKey`, the new key's signature valid), to then sign invoices as Hostline | code 20: must include an ML-DSA-87 signature |
+| vendor (Hostline) | re-register Hostline with the attacker's ML-DSA-87 key (`MsgRegisterPQCKey`, valid proof of possession) | code 234: *register and migrate need its hybrid signature* |
 
-**14 of 14 refused.** The control, the same kind of request signed hybrid (ML-DSA-87 + secp256k1) by
-the real company, went through ([C88161D6…](https://explore.qore.network/tx/C88161D652DBF86E118BC7B999B7CA24FF7AD8A987333857CB2E93943F9C2AA5)).
+**16 of 16 refused.** The control, the same kind of request signed hybrid (ML-DSA-87 + secp256k1) by
+the real company, went through ([90677647…](https://explore.qore.network/tx/90677647014606987D75A155D03B255D4BA2D57C7762A4F69E39DEB27C643477)).
 
 The refusals happen before a block includes the transaction, so there is no transaction hash to open.
 Instead, [`runs/qday-drill.json`](runs/qday-drill.json) records the chain's messages, and
@@ -41,14 +43,31 @@ Instead, [`runs/qday-drill.json`](runs/qday-drill.json) records the chain's mess
 - no attacker key is linked to the agent account;
 - the agent's ML-KEM key is still the one it registered;
 - the attacker has no fUSD allowance from the company;
-- the attacker is not an approved vendor and not an agent.
+- the attacker is not an approved vendor and not an agent;
+- Hostline's ML-DSA-87 key on chain is not the attacker's, and Hostline is still an approved vendor.
+
+The last two attacks matter most. Invoices are only as strong as the vendor's registered ML-DSA-87
+key. If a broken classical key could replace that key, a quantum attacker could sign invoices as any
+vendor. The chain refuses both ways of replacing it without the current ML-DSA-87 key.
+
+### Inside an open window
+
+An open EVM window is the one place a classical key acts alone.
+[`scripts/probe-window-caps.mjs`](scripts/probe-window-caps.mjs) checks its caps against the agent
+account's classical key ([`runs/probes/window-caps.json`](runs/probes/window-caps.json)):
+- a window for 1 transaction: the first call executed, the second was refused (*window exhausted*,
+  0 transactions left);
+- a window for 0.02 QOR: a call carrying 0.05 QOR was refused (*needs 62750 uqor*, 20000 left).
+
+Together with the target list ([`runs/probes/window.json`](runs/probes/window.json): fUSD and
+Mallory refused), the window's count, value, target and expiry all hold.
 
 ## Every piece of cryptography, and what a quantum computer does to it
 
 | Where | Algorithm | Quantum status | If broken, the attacker gets | Evidence |
 |---|---|---|---|---|
 | Company, agent-account, relayer and vendor **transactions** | hybrid: secp256k1 + **ML-DSA-87** (FIPS 204, level 5); the chain requires the ML-DSA-87 layer once a PQC key is registered | ML-DSA-87: safe. secp256k1: broken, but **alone it is refused** | nothing | drill (code 20); every recorded tx shows `pqc_hybrid_verify: verified` |
-| **EVM transactions** (secp256k1 only) | accepted only inside an EVM window, which only an ML-DSA-87-signed transaction can open | breakable | only what an *open* window admits: its tx count, value cap, expiry and (for the agent account) its one target, InvoiceDeskV2 | drill ("no open EVM authorisation window"); [`runs/probes/window.json`](runs/probes/window.json) |
+| **EVM transactions** (secp256k1 only) | accepted only inside an EVM window, which only an ML-DSA-87-signed transaction can open | breakable | only what an *open* window admits: its tx count, value cap, expiry and (for the agent account) its one target, InvoiceDeskV2 | drill ("no open EVM authorisation window"); [`runs/probes/window.json`](runs/probes/window.json) (target), [`runs/probes/window-caps.json`](runs/probes/window-caps.json) (count, value) |
 | **Vendor invoices** | **ML-DSA-87**, verified on chain by `pqcVerify` (`0x…0a01`) against the key in `pqcKeyStatus` (`0x…0a02`), proof of possession required | safe | — | demo inbox, verify §4/§9, 59 tests, 5 invariants |
 | **Company instructions** to the agent | QoreSign message-signing-v1: secp256k1 (ADR-36) + **ML-DSA-87** over `qorechain-msg-v1\|chain\|text` | ML-DSA-87 half: safe | a valid classical half is not enough: the Q-Day forgery is refused | [`runs/messages.json`](runs/messages.json), the lab |
 | **Sealed invoices** | **ML-KEM-1024** (FIPS 203, level 5), `mlkem` mode (no X25519), HKDF with SHA3-256, AES-256-GCM | safe against "harvest now, decrypt later"; AES-256 keeps about 128-bit strength under Grover | — | [`runs/sealed.json`](runs/sealed.json) |
@@ -76,7 +95,7 @@ Instead, [`runs/qday-drill.json`](runs/qday-drill.json) records the chain's mess
 
 | Event | What to do | Already tested |
 |---|---|---|
-| A vendor's ML-DSA-87 key is rotated or lost | the desk reads the key at payment time, so invoices signed with the old key stop verifying | Foundry: rotated key refused (v1 and v2) |
+| A vendor's ML-DSA-87 key is rotated or lost (a classical-only rotation is refused: drill) | the desk reads the key at payment time, so invoices signed with the old key stop verifying | Foundry: rotated key refused (v1 and v2) |
 | The agent's key leaks | `setAgent(agent, false)` (one company tx), or revoke on chain | kill switch, live; v1 revoke, live |
 | QoreChain accepts post-quantum authenticators | link an ML-DSA-87 agent key instead of ed25519 | — (the chain does not support it yet) |
 | The agent's KEM key must change | register a new one (needs the account's ML-DSA-87 signature, as the drill shows) | drill: the classical-only replacement refused |
