@@ -248,8 +248,8 @@ QOR's price.
 
 | What | Gas asked / used | Fee | Example |
 |---|---|---|---|
-| The agent pays an invoice, InvoiceDeskV3 (one ML-DSA-87 check: the vendor's) | 1,000,000 / 831,998 | 0.15 QOR | [A6E95B76…](https://explore.qore.network/tx/A6E95B76D03AE359E1C8B5438C1AB6D6F0C68C95F500C9D9857AA10B8E18FAA4) |
-| The agent pays an invoice, InvoiceDeskV4 (two ML-DSA-87 checks: the vendor's and the agent's) | 1,600,000 / 1,103,208 | 0.24 QOR | [2ED77180…](https://explore.qore.network/tx/2ED771805A73B521EA2248A694723710EDA7072F21E9AC58C0103F672B3F3004) |
+| The agent pays an invoice, InvoiceDeskV3 (one ML-DSA-87 verification: the vendor's) | 1,000,000 / 831,998 | 0.15 QOR | [A6E95B76…](https://explore.qore.network/tx/A6E95B76D03AE359E1C8B5438C1AB6D6F0C68C95F500C9D9857AA10B8E18FAA4) |
+| The agent pays an invoice, InvoiceDeskV4 (two ML-DSA-87 verifications: the vendor's and the agent's) | 1,600,000 / 1,103,208 | 0.24 QOR | [2ED77180…](https://explore.qore.network/tx/2ED771805A73B521EA2248A694723710EDA7072F21E9AC58C0103F672B3F3004) |
 | A refused agent request, V4 (the classical key alone) | 1,600,000 / 525,697 | 0.24 QOR | [7858502E…](https://explore.qore.network/tx/7858502E11C279445A416F82FBACB8F675C62AA34B638066B461096613A5240E) |
 
 The relayer, a separate wallet the company funds, pays these fees, never the agent. A refused request
