@@ -80,7 +80,7 @@ async function rest(path) {
 }
 
 // ---------------------------------------------------------------- 1. source = chain
-section("1. The deployed contract is this repo's source");
+section("1. v1 (legacy, the first design): the deployed InvoiceDesk is this repo's source");
 const src = readFileSync(new URL("contracts/InvoiceDesk.sol", root), "utf8");
 const out = JSON.parse(solc.compile(JSON.stringify({
   language: "Solidity", sources: { "InvoiceDesk.sol": { content: src } },
@@ -112,7 +112,7 @@ ok(code.slice(2) === compiled.evm.deployedBytecode.object, `bytecode at ${DESK} 
 }
 
 // ---------------------------------------------------------------- 2. vendor keys
-section("2. ML-DSA-87 keys on chain (precompile 0x…0a02, pqcKeyStatus)");
+section("2. v1 vendors' ML-DSA-87 keys on chain (precompile 0x…0a02, pqcKeyStatus)");
 const status = new Interface(["function pqcKeyStatus(address) view returns (bool registered, uint8 algorithmId, bytes pubkey, bool possessionProven)"]);
 for (const a of [...Object.keys(VENDORS), MALLORY]) {
   const [reg, alg, pk, proven] = status.decodeFunctionResult("pqcKeyStatus",
@@ -122,7 +122,7 @@ for (const a of [...Object.keys(VENDORS), MALLORY]) {
 }
 
 // ---------------------------------------------------------------- 3. agent rules
-section("3. The agent's leash, as the chain stores it (abstractaccount module)");
+section("3. v1: the agent's leash, as the chain stores it (abstractaccount module)");
 const paySel = desk.getFunction("pay").selector;
 const owners = RUNS.map((r) => ({ ...r, ...json(r.file) }));
 for (const o of owners) {
@@ -137,7 +137,7 @@ for (const o of owners) {
 }
 
 // ---------------------------------------------------------------- 4. attacks against the real contract
-section("4. The attacks, replayed against the real InvoiceDesk with eth_call (the PQC precompile runs for real)");
+section("4. v1: the attacks, replayed against the real InvoiceDesk with eth_call (the PQC precompile runs for real)");
 const payer = qorToEvm(dep.owner);
 // Phantom EVM executions (the agent's calls) do not surface in eth_getLogs on diana, so read the
 // desk's own state instead: paid(payer, id) is what the contract will enforce next time.
@@ -192,7 +192,7 @@ if (fresh) {
 }
 
 // ---------------------------------------------------------------- 5. ledger
-section("5. Where the money went");
+section("5. v1: where the money went");
 // Every invoice id in the inbox, forged and edited ones included: none of those may ever read paid.
 const refs = [...new Map(inbox.filter((m) => m.invoice).map((m) => [m.invoice.id, m.invoice])).values()];
 for (const o of owners) {
@@ -219,7 +219,7 @@ for (const o of owners) if ((await provider.call({ to: DESK, data: desk.encodeFu
 ok(approvedBy.length === 0, `no v1 payer has Mallory on its approved-vendor list (read from InvoiceDesk.approved)`);
 
 // ---------------------------------------------------------------- 6. recorded runs
-section("6. Every transaction in runs/, re-read from the chain");
+section("6. v1: every transaction in runs/, re-read from the chain");
 async function reread(entries) {
   let agree = 0;
   for (const x of entries) {
@@ -239,7 +239,7 @@ for (const o of owners) {
 }
 
 // ---------------------------------------------------------------- 7. MCP
-section("7. Through MCP (mcp/server.mjs): Claude Code, then an obey-everything client, on a fresh inbox");
+section("7. v1 through MCP (mcp/server.mjs): Claude Code, then an obey-everything client, on a fresh inbox");
 {
   const mcpInbox = json("inbox/inbox-MCP.json");
   const lines = (f) => readFileSync(new URL(f, root), "utf8").trim().split("\n").map((l) => JSON.parse(l)).filter((x) => x.link);
@@ -252,7 +252,7 @@ section("7. Through MCP (mcp/server.mjs): Claude Code, then an obey-everything c
 }
 
 // ---------------------------------------------------------------- 8. what a rule-bound key can move
-section("8. Probes: what a spending-rule-bound key can move (runs/probes/probes.json)");
+section("8. The finding: what a spending-rule-bound key can move (runs/probes/probes.json)");
 for (const p of json("runs/probes/probes.json").probes) {
   const t = (await rest(`/cosmos/tx/v1beta1/txs/${p.tx}`))?.tx_response;
   const ev = t?.events.find((e) => e.type === "abstractaccount_execution_failed");
@@ -396,6 +396,8 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
       settings: { optimizer: { enabled: true, runs: 200 }, evmVersion: "paris", outputSelection: { "*": { InvoiceDeskV3: ["abi", "evm.deployedBytecode.object"] } } } })));
     const c3 = out3.contracts["InvoiceDeskV3.sol"].InvoiceDeskV3, desk3 = new Interface(c3.abi);
     ok((await provider.getCode(D3)).slice(2) === c3.evm.deployedBytecode.object, `InvoiceDeskV3: bytecode at ${D3} == contracts/InvoiceDeskV3.sol`);
+    const DL = getAddress(json("runs/live/desk.json").v2.invoiceDesk);
+    ok((await provider.getCode(DL)).slice(2) === c3.evm.deployedBytecode.object, `InvoiceDeskV3, the live agent's desk: bytecode at ${DL} == contracts/InvoiceDeskV3.sol`);
     const call3 = async (fn, args) => desk3.decodeFunctionResult(fn, await provider.call({ to: D3, data: desk3.encodeFunctionData(fn, args) }));
     const ask3 = async (from, v) => { try { await provider.call({ from, to: D3, data: desk3.encodeFunctionData("pay", [P3, v.token, v.vendor, v.amount, v.id, v.dueBy, v.signature]) }); return "WOULD PAY"; } catch (e) { return desk3.parseError(e.data ?? e.info?.error?.data)?.name ?? "?"; } };
     const inv = (f) => json(`runs/own-company-v3/invoices/${f}.json`).invoice;

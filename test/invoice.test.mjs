@@ -4,6 +4,7 @@
 import { deriveUnifiedAccount, generateMnemonic, pqcVerify, qorToEvm } from "@qorechain/sdk";
 import { buildInbox, invoiceMessage } from "../lib/invoices.mjs";
 
+console.log("v1 (legacy) invoice format: the first design's inbox, still checked");
 const fresh = async () => { const a = await deriveUnifiedAccount(generateMnemonic(256), 0); a.evmAddr = qorToEvm(a.cosmos); return a; };
 const [owner, vendorA, vendorB, attacker, otherPayer] = await Promise.all([1, 2, 3, 4, 5].map(fresh));
 const desk = "0x000000000000000000000000000000000000dEaD";

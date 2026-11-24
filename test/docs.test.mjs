@@ -18,11 +18,11 @@ const truth = {
   mutants: Number(read("runs/mutation.txt").match(/(\d+) of \1 mutants caught/)[1]),
   mutantsV3: Number(read("runs/mutation-v3.txt").match(/(\d+) of \1 mutants caught/)[1]),
 };
-const docs = ["README.md", "JUDGES.md", "DECISIONS.md", "GETTING_STARTED.md", "V1.md", "THREAT_MODEL.md", "AI_USAGE.md", "QUANTUM_READINESS.md", "scripts/site.mjs", "scripts/lab.mjs"];
+const docs = ["README.md", "EVIDENCE.md", "JUDGES.md", "DECISIONS.md", "GETTING_STARTED.md", "V1.md", "THREAT_MODEL.md", "AI_USAGE.md", "QUANTUM_READINESS.md", "scripts/site.mjs", "scripts/lab.mjs"];
 const rules = [
   ["checks", /(\d+) (?:read-only )?checks\b/g],
   ["attacks", /(?<![\d,])(\d+) attacks\b/g],
-  ["campaign", /(\d[\d,]*) random attacks\b/g],
+  ["campaign", /(\d[\d,]*) (?:random attacks|dry-run tamperings)\b/g],
   ["attacks", /(\d+) of \1 refused/g],
   ["attacks", /attacks with every classical key, (\d+) refused/g],
   ["tests", /(\d+) Foundry tests/g],

@@ -11,7 +11,7 @@ check. Every limit lives on QoreChain or in the contract.
 and its key lives on a server. A design that is safe only while the model behaves is not safe.
 
 **Evidence.** A decider that obeys every email made 16 payment attempts and got only the 3 genuine
-invoices paid ([README](README.md#the-demo-inbox-v2-fusd)). The live agent runs that decider every day
+invoices paid ([EVIDENCE.md](EVIDENCE.md#the-demo-inbox-v2-fusd)). The live agent runs that decider on a daily schedule
 ([`runs/live/`](runs/live/)).
 
 ## 2. The agent gets its own empty account (v1 → v2)
@@ -102,12 +102,14 @@ runs daily. A test fails `npm test` if a document states a count its source no l
 
 ## 10. The live agent's key in GitHub Secrets, on purpose
 
-**Decision.** The agent runs every day in GitHub Actions, with its key and the relayer's key as
-repository secrets, and a decider that obeys every email.
+**Decision.** The agent runs on a daily schedule in GitHub Actions, with its key, the relayer's key and
+the test vendor's key as repository secrets, and a decider that obeys every email.
 
 **Why.** It is the design's claim, made live: where the key could leak, the worst case is still bounded.
 The agent account's own key, which links and revokes the agent's key, is not in CI. The agent
-acts with only its account's address.
+acts with only its account's address. The vendor's key is there too, so the job can send itself an
+invoice each day: a leak of the secrets is therefore also a stolen approved-vendor key, bounded the same
+way (genuine-looking invoices to that vendor's own address, within 10 fUSD a payment and 25 a day).
 
 ## 11. No MetaMask in the Desk Console
 

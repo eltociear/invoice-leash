@@ -86,7 +86,9 @@ Mallory refused), the window's count, value, target and expiry all hold.
 ### The company's own windows
 
 The company opens a window for a single action, such as paying an over-limit invoice in person or the
-kill switch. Each one names one target and admits one or two transactions (`scoped(...)` in
+kill switch. Each one names one target and admits exactly the transactions of that action: one for an
+approval, a payment in person or a freeze; two for the demo's kill switch (off, then on again); more only
+for setup and `upgrade`, which run once (`scoped(...)` in
 [`leash.mjs`](leash.mjs)). [`scripts/probe-company-window.mjs`](scripts/probe-company-window.mjs) opened one
 the way `approve-v2` does (InvoiceDeskV2 only, 1 transaction). While it was open, the company's classical
 key alone tried three things ([`runs/probes/company-window.json`](runs/probes/company-window.json)):
@@ -109,6 +111,12 @@ of a window the company has just opened. With a desk window, that buys one call 
 (250 fUSD a day). The company notices at once, because its own transaction is refused (the slot is
 used). The allowance window (target fUSD) is the widest: one `fUSD.transfer` of the float. The
 allowance is set rarely, so keep the float small when you open it.
+
+Setup and `upgrade` open windows with several slots, once. An attacker who won several of them could
+chain calls, say `approveVendor(attacker)` then a higher `setLimit`, and with the agent's (classical)
+key have its own invoices paid. In every case the bound is the same: **the ERC-20 float**, because the
+desk can only pull from it and the treasury is a bank coin no window reaches. That is why the float is
+kept small.
 
 ### No classical-only lane at all
 

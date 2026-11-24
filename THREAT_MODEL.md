@@ -79,7 +79,7 @@ Said plainly, because a judge, an auditor or a customer will ask.
 - **A compromised approved vendor.** With Hostline's ML-DSA-87 key, a thief can issue
   genuine-looking Hostline invoices up to the agent's limits, paid only to Hostline's own address
   (the payee is signed). Remedy: `removeVendor`, which only the company can call.
-- **One approved vendor blocking another's invoice number.** The desk records `paid[payer][id]`, where
+- **(InvoiceDeskV2 only) One approved vendor blocking another's invoice number.** The desk records `paid[payer][id]`, where
   `id` is the hash of the vendor's invoice number, without the vendor in the key. An approved vendor (or
   a thief with its key) could sign a small invoice that reuses another vendor's next number; once the
   agent pays it, the real invoice with that number is refused as `AlreadyPaid`. Nobody is paid wrongly

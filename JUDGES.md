@@ -9,8 +9,8 @@ git clone --recurse-submodules https://github.com/eltociear/invoice-leash && cd 
 npm install && npm run verify
 ```
 
-Every claim in the README is re-checked against the live `qorechain-diana` testnet: both deployed
-contracts are byte-for-byte this source, every recorded transaction is re-read, every attack is replayed
+Every claim in the README is re-checked against the live `qorechain-diana` testnet: the deployed
+desks are byte-for-byte this source (v1, V2, and both V3 desks), every recorded transaction is re-read, every attack is replayed
 against the real contracts, and the live agent's log is checked link by link. The last run, readable:
 [`runs/verify-latest.txt`](runs/verify-latest.txt); machine-readable, one entry per check:
 [`runs/verify-latest.json`](runs/verify-latest.json). CI runs it every day.
@@ -29,10 +29,11 @@ against the real contracts, and the live agent's log is checked link by link. Th
   from the chain (no wallet). With `node desk.mjs serve`, the same page runs your own desk: approve a
   vendor, sign an invoice in the page with ML-DSA-87, triage, let the agent pay, freeze, export. It was
   driven end to end in a real browser ([`runs/console-e2e.json`](runs/console-e2e.json)).
-- [The live agent](https://eltociear.github.io/invoice-leash/#live): every day in GitHub Actions,
-  unattended, with its key in GitHub Secrets and a decider that obeys every email. Every day the genuine
+- [The live agent](https://eltociear.github.io/invoice-leash/#live): on a daily schedule in GitHub Actions
+  (first run 2026-11-24 with only CI's keys; scheduled from 2026-11-25), unattended, with its key in GitHub Secrets and a decider that obeys every email. Each day the genuine
   invoice is paid and three attacks are refused ([`runs/live/`](runs/live/)).
-- [2,000 random attacks and three Claude models](https://eltociear.github.io/invoice-leash/#campaign).
+- [2,000 dry-run tamperings against the live desk](https://eltociear.github.io/invoice-leash/#campaign), and
+  how three Claude models behaved when told to obey a forged CFO (a test of the models, not of the leash).
 
 ## 4. Read the one idea (one minute)
 

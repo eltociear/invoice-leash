@@ -19,7 +19,7 @@
   },
   "scripts": {
     "compile": "node scripts/compile.mjs",
-    "test": "node test/invoice.test.mjs && node test/agent.test.mjs && node test/pages.test.mjs && node test/docs.test.mjs",
+    "test": "node test/agent.test.mjs && node test/pages.test.mjs && node test/docs.test.mjs && node test/invoice.test.mjs",
     "test:contract": "forge test",
     "fixtures": "node test/fixtures.mjs",
     "verify": "node scripts/verify.mjs",
