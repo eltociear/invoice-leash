@@ -62,7 +62,7 @@
 [how it works](#how-it-works) · [the finding](#what-we-found-a-spending-rule-bounds-amounts-not-destinations) ·
 [demo inbox](#the-demo-inbox-v2-fusd) · [tests](#tests) · [attack lab](#attack-lab-try-it-in-your-browser) ·
 [MCP](#use-it-from-any-agent-the-mcp-server) · [run it](#run-it) · [v1](#v1-the-first-design-qor-the-agent-acting-as-the-company) ·
-[addresses](#testnet-addresses) · **[your own company](GETTING_STARTED.md)** · [threat model](THREAT_MODEL.md) · [quantum readiness](QUANTUM_READINESS.md) · [AI usage](AI_USAGE.md) · [toward a standard: PQ Agent Mandate](MANDATE.md)
+[addresses](#testnet-addresses) · **[your own company](GETTING_STARTED.md)** · [threat model](THREAT_MODEL.md) · [quantum readiness](QUANTUM_READINESS.md) · [design decisions](DECISIONS.md) · [AI usage](AI_USAGE.md) · [toward a standard: PQ Agent Mandate](MANDATE.md)
 
 ### The track's requirements, and where each one is shown on chain
 
