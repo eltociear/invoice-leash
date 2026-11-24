@@ -1,6 +1,6 @@
 # Invoice Leash: an invoice agent that stays safe when its model does not
 
-[![Built on QoreChain](https://build.qorechain.io/badge/invoice-leash.svg)](https://build.qorechain.io/p/invoice-leash) [![ci](https://github.com/eltociear/invoice-leash/actions/workflows/ci.yml/badge.svg)](https://github.com/eltociear/invoice-leash/actions/workflows/ci.yml)
+[![Built on QoreChain](https://build.qorechain.io/badge/invoice-leash.svg)](https://build.qorechain.io/p/invoice-leash) [![ci](https://github.com/eltociear/invoice-leash/actions/workflows/ci.yml/badge.svg)](https://github.com/eltociear/invoice-leash/actions/workflows/ci.yml) [![live agent](https://github.com/eltociear/invoice-leash/actions/workflows/live.yml/badge.svg)](https://github.com/eltociear/invoice-leash/actions/workflows/live.yml)
 
 ![Invoice Leash: a compromised agent tries every attack; the chain pays only the genuine, in-limit invoices](assets/cover.png)
 
@@ -20,7 +20,7 @@ chain.**
 > npm install && npm run verify
 > ```
 >
-> 108 checks against the live testnet: the deployed contracts are byte-for-byte this source, every
+> 109 checks against the live testnet: the deployed contracts are byte-for-byte this source, every
 > recorded transaction is re-read, every attack is replayed. Last run: [`runs/verify-latest.txt`](runs/verify-latest.txt)
 > ([JSON](runs/verify-latest.json)). CI runs it daily, with 152 Foundry tests and 17 invariants.
 
@@ -47,7 +47,7 @@ chain.**
 
 | Criterion | Evidence |
 |---|---|
-| **Works** (25) | `npm run verify` (108 checks); the [live agent](runs/live/); a [second company](runs/own-company-v3/) set up with `desk.mjs`; the [Desk Console](runs/console-e2e.json) driven in a real browser; 100% coverage and 17 Halmos proofs ([`runs/halmos.txt`](runs/halmos.txt)) |
+| **Works** (25) | `npm run verify` (109 checks); the [live agent](runs/live/); a [second company](runs/own-company-v3/) set up with `desk.mjs`; the [Desk Console](runs/console-e2e.json) driven in a real browser; 100% coverage and 17 Halmos proofs ([`runs/halmos.txt`](runs/halmos.txt)) |
 | **QoreChain tech** (25) | the ML-DSA-87 precompiles `0x…0a01`/`0a02` inside the contract; hybrid accounts; an authenticator with a spending rule; EVM windows with `allowed_targets`; `MsgExecuteEVM` relaying; QoreSign; QoreSeal ML-KEM-1024 and the KEM registry; `MsgConvertCoin`/`MsgConvertERC20`; the AMM; QoreScan; QoreChain's MCP server |
 | **Post-quantum** (20) | [QUANTUM_READINESS.md](QUANTUM_READINESS.md): every algorithm in the system, the Q-Day drill, Shor's gift, no classical-only lane |
 | **Originality** (15) | the finding above, and the redesign it forced; an agent whose key is kept where it can leak, on purpose |
@@ -160,7 +160,8 @@ For your own company: `node desk.mjs mcp`. The recorded sessions: [EVIDENCE.md](
 | Off chain | `npm test`: invoices, what the agent is shown, page scripts, and every count the documents state |
 | Analysis | Slither: informational only ([`runs/slither.txt`](runs/slither.txt)); QoreScan CBOM ([`cbom/`](cbom/)) |
 
-Details: [EVIDENCE.md](EVIDENCE.md#tests).
+Details: [EVIDENCE.md](EVIDENCE.md#tests). What a payment costs in fees: [EVIDENCE.md](EVIDENCE.md#what-it-costs)
+(0.15 QOR on V3, 0.24 QOR on V4).
 
 ## Testnet addresses
 

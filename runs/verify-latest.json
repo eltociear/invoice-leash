@@ -1,8 +1,8 @@
 {
  "chain": "qorechain-diana",
- "block": 10673587,
- "at": "2026-11-24T15:02:45.357Z",
- "passed": 108,
+ "block": 10674488,
+ "at": "2026-11-24T15:24:18.217Z",
+ "passed": 109,
  "failed": 0,
  "checks": [
   {
@@ -432,6 +432,12 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
+   "check": "InvoiceDeskV4, asked live (the attack lab's §7): a genuine unpaid invoice is BadAgentSignature for the agent's classical key alone, and payable by the company in person",
+   "detail": "(LAB-V4-GENUINE)"
+  },
+  {
+   "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
+   "ok": true,
    "check": "InvoiceDeskV4, live: the agent's classical key alone was refused (BadAgentSignature); with its signer's ML-DSA-87 signature the same invoice was paid",
    "detail": "(7858502E…, 2ED77180…; signer 0x3430d5a0… has a proven ML-DSA-87 key)"
   },
@@ -468,7 +474,7 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "live agent: each of its 4 logged transactions re-read from the chain agrees; it last ran 9 h ago (must be < 72 h)",
+   "check": "live agent: each of its 4 logged transactions re-read from the chain agrees; it last ran 10 h ago (must be < 72 h)",
    "detail": "(desk 0x235dA591…, .github/workflows/live.yml)"
   },
   {

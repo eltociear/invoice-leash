@@ -82,7 +82,7 @@ transaction stops the agent, without touching the chain link or the money.
 | PQC stand-in | Local EVMs have no QoreChain precompile, so `0x…0a01` is a stand-in that answers from [`test/fixtures/`](test/fixtures/): 27 (key, signature, message) tuples checked with **real ML-DSA-87** by `test/fixtures.mjs`; unknown tuples fail closed. Keys come from fixed seeds and signing is deterministic, so CI regenerates the files and requires them byte-identical. | `npm run fixtures` |
 | Off chain | the v1 demo inbox and six tamperings, with real ML-DSA-87 and throwaway keys; what the agent and MCP tools are shown and trust (signed amounts, malformed sealed invoices, the company-only message check, expiry, chain id) | `npm test` |
 | Documents | every count the documents state (checks, drill attacks, tests, invariants, mutants) against its source; `verify` fails if its own count drifts from the documents | `npm test` |
-| On chain | 108 read-only checks against the live testnet | `npm run verify` |
+| On chain | 109 read-only checks against the live testnet | `npm run verify` |
 
 ### Cryptography inventory (QoreScan)
 
@@ -239,3 +239,21 @@ node leash.mjs balance-v2           # QOR and fUSD of every account, and the all
 `scripts/probe-v2.mjs`, `probe-v2-rule.mjs` and `probe-v2-pay.mjs` are the probes behind the
 finding above. The v1 commands (`deploy`, `link`, `inbox`, `run [--compromised|--llm]`, `approve`,
 `revoke`, `after-revoke`, `fresh-owner`) are kept for the v1 record.
+
+## What it costs
+
+Measured from the recorded transactions. QoreChain charges the fee on the gas a transaction asks for
+(0.15 uqor per unit), whether it succeeds or is refused. Test QOR has no value; on a mainnet, multiply by
+QOR's price.
+
+| What | Gas asked / used | Fee | Example |
+|---|---|---|---|
+| The agent pays an invoice, InvoiceDeskV3 (one ML-DSA-87 check: the vendor's) | 1,000,000 / 831,998 | 0.15 QOR | [A6E95B76…](https://explore.qore.network/tx/A6E95B76D03AE359E1C8B5438C1AB6D6F0C68C95F500C9D9857AA10B8E18FAA4) |
+| The agent pays an invoice, InvoiceDeskV4 (two ML-DSA-87 checks: the vendor's and the agent's) | 1,600,000 / 1,103,208 | 0.24 QOR | [2ED77180…](https://explore.qore.network/tx/2ED771805A73B521EA2248A694723710EDA7072F21E9AC58C0103F672B3F3004) |
+| A refused agent request, V4 (the classical key alone) | 1,600,000 / 525,697 | 0.24 QOR | [7858502E…](https://explore.qore.network/tx/7858502E11C279445A416F82FBACB8F675C62AA34B638066B461096613A5240E) |
+
+The relayer, a separate wallet the company funds, pays these fees, never the agent. A refused request
+costs the relayer the same fee, so a hijacked agent that keeps trying burns fee money, not company funds.
+`desk.mjs status` warns when the relayer runs low. The live agent's relayer was funded for about a month
+of daily runs.
+

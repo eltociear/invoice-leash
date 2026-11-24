@@ -27,6 +27,7 @@ const data = {
     { key: "big", label: "Genuine, but 300 fUSD", note: "Over the agent's 100 fUSD per-payment limit. Ask as the agent, then as the company.", inv: pick(lab[7].invoice) },
   ],
   pub: (({ address, evmAddress, secp256k1PrivateKey }) => ({ address, evm: evmAddress, key: secp256k1PrivateKey }))(json("runs/qday-public.json")), attacker: dep.attacker,
+  v4: (() => { const l = json("runs/live/v4-lab-invoice.json"), pr = json("runs/probes/v4-agent-sig.json"); return { desk: l.desk, payer: l.payer, agent: l.agent, inv: l.invoice, paidLink: pr.steps[1].link, refusedLink: pr.steps[0].link }; })(),
   messages: json("runs/messages.json").map((m) => ({ name: m.name, signer: m.signer, signerEvm: qorToEvm(m.signer), text: m.text, chainId: m.chainId, pq: m.signature.pq.signature, expect: m.expect })),
   chainRefusals: [
     ["MsgSend 50 QOR", "no send permission", tx((x) => x.action === "send")],
@@ -132,6 +133,14 @@ ol.log{font-size:13px;color:var(--dim);padding-left:20px;margin:0}ol.log li{marg
 <div class="btns"><button type="button" class="main" id="pubgo">Sign with the published key and send</button></div>
 <div class="local" id="pubout">Nothing sent yet.</div>
 <p class="dim" style="font-size:14px;margin-bottom:0">What to expect: the chain refuses it (<i>no open EVM authorisation window</i>). A classical signature alone is accepted only inside a window, and only the account's ML-DSA-87 key can open one. On the Cosmos side, a <code>MsgSend</code> signed with this key gets code 20 (<i>must include</i> the ML-DSA-87 signature): <code>node scripts/qday-public.mjs attack</code>. <code>npm run verify</code> checks every day that the QOR is still there and that the account has executed nothing but its own key registration.</p>
+</div>
+
+<h2 id="v4">7. After Q-Day: the agent's classical key alone, against the real InvoiceDeskV4</h2>
+<div class="card you">
+<p style="margin-top:0">QoreChain links an agent's key as ed25519 or secp256k1, so a quantum computer could derive it from its public key. On <b>InvoiceDeskV4</b>, the live agent's desk, that key is not enough: every agent payment must also carry the agent's own <b>ML-DSA-87</b> signature over this exact invoice, checked by the precompile against the signer the company named. Ask the real desk about a genuine, unpaid invoice (Daily Hosting Co, 3 fUSD), as the agent's account:</p>
+<div class="btns"><button type="button" class="main" id="v4-none">As the agent: classical key only</button><button type="button" id="v4-mine">As the agent: an ML-DSA-87 signature from a key made here</button><button type="button" id="v4-company">As the company, in person</button></div>
+<div class="local" id="v4out">Nothing asked yet.</div>
+<p class="dim" style="font-size:14px;margin-bottom:0">With the real signer's ML-DSA-87 signature, the agent does pay: the same kind of invoice, live, refused without the signature (<a id="v4ref">tx</a>) and paid with it (<a id="v4paid">tx</a>).</p>
 </div>
 
 <h2>The company's leash on its agent, read live</h2>
@@ -349,6 +358,27 @@ $("pubgo").onclick = async () => {
   finally { $("pubgo").disabled = false; pubState().catch(() => {}); }
 };
 pubState().catch((e) => { $("pubstate").textContent = "could not read the chain: " + e.message; });
+// §7: InvoiceDeskV4, asked as the agent without (or with a wrong) ML-DSA-87 signature, and as the company
+const desk4 = new E.Interface(["function pay(address,address,address,uint256,bytes32,uint64,bytes,bytes) payable",
+  "error NotPayersAgent(address)", "error AgentSignerNotSet(address)", "error AgentKeyNotProven(address)", "error BadAgentSignature()", "error UnknownVendor(address)", "error BadSignature()", "error AlreadyPaid(bytes32)", "error PastDue(uint64)", "error OverPerPaymentLimit(uint256,uint256)", "error OverDailyLimit(uint256,uint256,uint256)", "error TransferFailed()", "error ZeroAmount()", "error WrongAmount(uint256,uint256)", "error AgentCannotPayNative()", "error VendorKeyNotProven(address)"]);
+$("v4ref").href = D.v4.refusedLink; $("v4paid").href = D.v4.paidLink;
+const v4ask = async (label, from, agentSig) => {
+  const i = D.v4.inv;
+  const r = await rpc("eth_call", [{ from, to: D.v4.desk, data: desk4.encodeFunctionData("pay", [D.v4.payer, i.token, i.vendor, i.amount, i.id, i.dueBy, i.signature, agentSig]) }, "latest"]);
+  let v = "WOULD PAY"; if (r.error) { try { v = desk4.parseError(r.error.data).name; } catch { v = r.error.message; } }
+  $("v4out").innerHTML = ($("v4out").textContent === "Nothing asked yet." ? "" : $("v4out").innerHTML + "<br>") + h(label) + ": " + (v === "WOULD PAY" ? '<b class="ok">WOULD PAY</b>' : '<b class="no">' + h(v) + "</b>");
+};
+$("v4-none").onclick = () => v4ask("as the agent, classical key only", D.v4.agent, "0x").catch((e) => { $("v4out").textContent = e.message; });
+$("v4-mine").onclick = async () => {
+  try {
+    await noPQ();
+    const i = D.v4.inv, k = window.mldsa.keygen();
+    const m = E.getBytes(E.AbiCoder.defaultAbiCoder().encode(["bytes32", "uint256", "address", "address", "address", "address", "address", "uint256", "bytes32"],
+      [E.keccak256(E.toUtf8Bytes("LEASH-AGENT-PAY-v1")), 9800, D.v4.desk, D.v4.payer, D.v4.agent, i.vendor, i.token, i.amount, i.id]));
+    await v4ask("as the agent, a valid ML-DSA-87 signature by a key made in this tab (not the named signer's)", D.v4.agent, E.hexlify(window.mldsa.sign(m, k.secretKey)));
+  } catch (e) { $("v4out").textContent = e.message; }
+};
+$("v4-company").onclick = () => v4ask("as the company, in person (no agent signature needed)", D.v4.payer, "0x").catch((e) => { $("v4out").textContent = e.message; });
 load(D.presets[0]);
 rpc("eth_blockNumber", []).then((r) => { $("dot").classList.add("on"); $("live").textContent = "live: qorechain-diana, block " + parseInt(r.result, 16).toLocaleString(); }).catch(() => { $("live").textContent = "could not reach the testnet RPC"; });
 state().catch((e) => { $("state").textContent = "could not read the chain: " + e.message; });

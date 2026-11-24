@@ -409,6 +409,10 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
     const [signer] = desk4.decodeFunctionResult("agentSigner", await provider.call({ to: DL4, data: desk4.encodeFunctionData("agentSigner", [getAddress(liveRec.payerEvm), getAddress(liveRec.agentAccountEvm)]) }));
     const [sp] = status.decodeFunctionResult("pqcKeyStatus", await provider.call({ to: "0x0000000000000000000000000000000000000a02", data: status.encodeFunctionData("pqcKeyStatus", [signer]) }));
     const [p4] = desk4.decodeFunctionResult("paid", await provider.call({ to: DL4, data: desk4.encodeFunctionData("paid", [getAddress(liveRec.payerEvm), pr4.invoice.vendor, pr4.invoice.id]) }));
+    const lab4 = json("runs/live/v4-lab-invoice.json"), li = lab4.invoice;
+    const ask4 = async (from) => { try { await provider.call({ from, to: DL4, data: desk4.encodeFunctionData("pay", [lab4.payer, li.token, li.vendor, li.amount, li.id, li.dueBy, li.signature, "0x"]) }); return "WOULD PAY"; } catch (e) { return desk4.parseError(e.data ?? e.info?.error?.data)?.name ?? "?"; } };
+    const [labAgent, labCompany] = [await ask4(lab4.agent), await ask4(lab4.payer)];
+    ok(labAgent === "BadAgentSignature" && labCompany === "WOULD PAY", "InvoiceDeskV4, asked live (the attack lab's §7): a genuine unpaid invoice is BadAgentSignature for the agent's classical key alone, and payable by the company in person", `(${li.ref})`);
     ok(!noSig.ok && /BadAgentSignature/.test(noSig.why) && failedEv && withSig.ok && t2?.tx_response?.code === 0 && p4 && sp,
       "InvoiceDeskV4, live: the agent's classical key alone was refused (BadAgentSignature); with its signer's ML-DSA-87 signature the same invoice was paid", `(${noSig.link.slice(-64, -56)}…, ${withSig.link.slice(-64, -56)}…; signer ${signer.slice(0, 10)}… has a proven ML-DSA-87 key)`);
     const call3 = async (fn, args) => desk3.decodeFunctionResult(fn, await provider.call({ to: D3, data: desk3.encodeFunctionData(fn, args) }));

@@ -20,6 +20,9 @@ against the real contracts, and the live agent's log is checked link by link. Th
 - [Attack lab §6, Shor's gift](https://eltociear.github.io/invoice-leash/lab.html#shor): an account
   whose secp256k1 private key we publish. Your browser signs a transaction with it and sends it. The chain
   refuses: the account also has an ML-DSA-87 key, and that one is secret.
+- [Attack lab §7](https://eltociear.github.io/invoice-leash/lab.html#v4): ask the live InvoiceDeskV4 as the
+  agent with its classical key alone, or with an ML-DSA-87 key your browser makes: `BadAgentSignature`.
+  As the company: it would pay.
 - [Attack lab §1–4](https://eltociear.github.io/invoice-leash/lab.html): change any field of a real
   invoice, or sign one with an ML-DSA-87 key your browser makes, and ask the real desk.
 
