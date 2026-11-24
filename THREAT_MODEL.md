@@ -58,7 +58,7 @@ tests (`test/InvoiceDeskV2.t.sol`).
 | Agent pays in native QOR | `AgentCannotPayNative` (and the agent account cannot move QOR anyway) | tests |
 | Vendor key never proven / other algorithm / rotated | `VendorKeyNotProven` / `BadSignature` (the key is read at payment time) | tests (v2 and v1) |
 | A token that returns `false`, or an address with no code | `TransferFailed`, all rolled back | tests |
-| The agent keeps going after it is caught | revoke the key on chain, or `setAgent(agent, false)` in the desk: one company tx either way | v1 run (revoke); v2 live: `kill-switch-v2` (`NotPayersAgent`), verify §9; tests |
+| The agent keeps going after it is caught | `desk.mjs freeze`: the agent off in the desk, its key revoked on chain and any window closed, in one command (run live, `runs/own-company-v3/freeze.log`); or either step alone | v1 run (revoke); v2 live: `kill-switch-v2` (`NotPayersAgent`), verify §9; tests |
 | An email whose text lies about the amount (`fusd: "5"` next to a signed 95) | the agent and the MCP tools are shown the **signed** amount, in the signed token's units; a label that disagrees is flagged as a warning | `test/agent.test.mjs` |
 | A lost answer from the chain (timeout after sending) | reported as OUTCOME UNKNOWN, never as refused or not sent; for a payment, the desk's `paid()` settles it | `lib/agent.mjs` `settle` |
 | A forgotten agent | the link expires (72 h in the v2 demo) | verify §9 reads it |

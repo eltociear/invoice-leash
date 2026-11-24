@@ -154,7 +154,8 @@ vendors to re-sign any open invoices for the new desk address.
 | Task | Command |
 |---|---|
 | What is set up, and what to do next | `node desk.mjs status` |
-| Stop the agent now (one transaction) | `node desk.mjs agent off` (and `agent on`) |
+| Stop everything now: agent off in the desk, its key revoked, windows closed | `node desk.mjs freeze` (and `unfreeze`) |
+| Stop the agent in the desk only (one transaction) | `node desk.mjs agent off` (and `agent on`) |
 | The agent's link expires: renew it | `node desk.mjs agent link [hours]` |
 | Change limits | `node desk.mjs limits <perPayment> <daily>` |
 | Stop paying a vendor | `node desk.mjs vendor remove <address>` |

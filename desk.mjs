@@ -14,6 +14,8 @@
 //   node desk.mjs vendors                     approved vendors, read from the chain
 //   node desk.mjs limits <perPayment> <daily> the agent's limits, in fUSD
 //   node desk.mjs agent off|on                switch the agent off (or on) in the desk: one transaction
+//   node desk.mjs freeze                      stop everything now: agent off, its key revoked on chain, windows closed
+//   node desk.mjs unfreeze [hours]            the agent on again, its key relinked
 //   node desk.mjs agent link [hours]          (re)link the agent's key; links expire
 //   node desk.mjs allowance <fUSD>            how much the desk may pull from the company in total
 //   node desk.mjs treasury [float]            keep only <float> fUSD in ERC-20; the rest as the bank coin
@@ -256,6 +258,36 @@ const cmds = {
     if (r.code) fail(`linking the agent was refused: ${r.rawLog}`);
     save({ agentRule: { allowedDenoms: [NO_DENOM], allowedEvmCalls: [`${d.invoiceDesk}/${paySel}`], hours, linkTx: r.transactionHash } });
     say(`  agent key linked for ${hours} h: only ${d.invoiceDesk}.pay  ${r.transactionHash}`);
+  },
+
+  /**
+   * Stop everything, now: the agent off in the desk, its key revoked on chain, any open window closed.
+   * Each step is independent, so one failing does not stop the others. Undo with `node desk.mjs unfreeze`.
+   */
+  async freeze() {
+    const d = D(), o = await account("owner"), aa = await account("agentacct"), k = agentKey(), done = [];
+    const step = async (label, fn) => { try { await fn(); done.push(`OK    ${label}`); } catch (e) { done.push(`FAIL  ${label}: ${e.message}`); } };
+    await step("the agent off in the desk (setAgent false)", () => companyWindow([d.invoiceDesk], 1, (w) => sendEvm("setAgent(agent, false)", new Contract(d.invoiceDesk, art().abi, w).setAgent(aa.evmAddr, false))));
+    await step("the agent's key revoked on chain", async () => {
+      const cur = (await links(aa.cosmos)).find((a) => a.pubkeyHex.toLowerCase() === hex(k.pk));
+      if (!cur || cur.revoked) return say("  the agent's key was not linked");
+      const r = await broadcast(aa, [sdk.revokeAuthenticatorMsg({ owner: aa.cosmos, scheme: "ed25519", pubkey: k.pk })], "leash desk: freeze, revoke the agent's key");
+      if (r.code) fail(`refused: ${r.rawLog}`);
+      say(`  revoked                    ${r.transactionHash}`);
+    });
+    for (const [who, acc] of [["company", o], ["agent account", aa]]) await step(`any open EVM window on the ${who} closed`, async () => {
+      const w = await sdk.fetchEvmWindow({ rest: REST, address: acc.cosmos }).catch(() => null);
+      if (!w?.live) return;
+      const r = await broadcast(acc, [sdk.closeEvmWindowMsg(acc.cosmos)], "leash desk: freeze, close window");
+      if (r.code) fail(`refused: ${r.rawLog}`);
+    });
+    say(`\nFROZEN:\n  ${done.join("\n  ")}\nthe agent can pay nothing now. To resume: node desk.mjs unfreeze`);
+    if (done.some((x) => x.startsWith("FAIL"))) process.exitCode = 1;
+  },
+
+  async unfreeze(hours = "168") {
+    await cmds.agent("on");
+    await cmds.agent("link", hours);
   },
 
   async allowance(amount) {

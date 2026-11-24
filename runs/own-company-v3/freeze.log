@@ -1,0 +1,9 @@
+  setAgent(agent, false)     0xb3fb2100c1bdb46528fa39dd4fb969603816508e0fa68165506949675d4b88f6
+  revoked                    4BDD904E1AD6E178A9F3CF4C94715C1013B4E8FE38D66D475D750F0A4B205154
+
+FROZEN:
+  OK    the agent off in the desk (setAgent false)
+  OK    the agent's key revoked on chain
+  OK    any open EVM window on the company closed
+  OK    any open EVM window on the agent account closed
+the agent can pay nothing now. To resume: node desk.mjs unfreeze

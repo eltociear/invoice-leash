@@ -16,7 +16,7 @@
 > npm install && npm run verify
 > ```
 >
-> 101 checks against the live testnet: both deployed contracts are byte-for-byte this source, the
+> 104 checks against the live testnet: both deployed contracts are byte-for-byte this source, the
 > agent's rule is what the chain stores, every attack replayed against the real contracts, where
 > every QOR and fUSD went, every recorded transaction re-read (runs, MCP sessions, the probes below).
 > Last run: [`runs/verify-latest.txt`](runs/verify-latest.txt). CI runs it daily, with 96 Foundry tests and 11 invariants.
@@ -46,6 +46,16 @@
 - **Use it for your own company:** [GETTING_STARTED.md](GETTING_STARTED.md). `desk.mjs` sets up your desk,
   vendors run `vendor.mjs` to sign, and you get triage, payments, an approval path and a CSV for
   accounting. A second company was set up from scratch this way on the testnet ([`runs/own-company/`](runs/own-company/)).
+
+**For judges: the rubric, and where to look**
+
+| Criterion | The evidence, checkable without trusting us |
+|---|---|
+| **Works** (25) | `npm run verify`: every claim below re-checked against the live chain. The [live agent](https://eltociear.github.io/invoice-leash/#live) runs daily, unattended. A second company was set up from nothing with `desk.mjs` ([`runs/own-company/`](runs/own-company/)) and upgraded to V3 ([`runs/own-company-v3/`](runs/own-company-v3/)). A randomized campaign against the live desk: 2,000 random attacks + 23 signed, 0 paid ([`runs/campaign.json`](runs/campaign.json)) |
+| **QoreChain tech** (25) | ML-DSA-87 precompiles `0x…0a01`/`0a02` inside the contract; hybrid accounts; an authenticator with a spending rule; EVM windows with `allowed_targets`; `MsgExecuteEVM` relaying; QoreSign messages; QoreSeal ML-KEM-1024 sealed invoices and the KEM registry; `MsgConvertCoin`/`MsgConvertERC20`; the AMM; QoreScan CBOM; QoreChain's MCP server for audits |
+| **Post-quantum** (20) | invoices verified with ML-DSA-87 on chain; a Q-Day drill (16 classical-only attacks, all refused); [Shor's gift](https://eltociear.github.io/invoice-leash/lab.html#shor): an account whose classical private key is published still holds its QOR; [QUANTUM_READINESS.md](QUANTUM_READINESS.md) |
+| **Originality** (15) | [the finding](#what-we-found-a-spending-rule-bounds-amounts-not-destinations) that a spending rule bounds amounts, not destinations, and the redesign it forced; an agent whose key is kept where it can leak, on purpose; the same injected inbox through Claude Haiku, Sonnet and Opus told to obey a forged CFO: each paid only the genuine invoices ([`runs/models/`](runs/models/)) |
+| **Clarity** (15) | the [site](https://eltociear.github.io/invoice-leash/), the [attack lab](https://eltociear.github.io/invoice-leash/lab.html), the [video](https://youtu.be/K3Teb5sO8JU), [GETTING_STARTED.md](GETTING_STARTED.md), [THREAT_MODEL.md](THREAT_MODEL.md) (including what it does not stop) |
 
 **Contents:** [requirements → evidence](#the-tracks-requirements-and-where-each-one-is-shown-on-chain) ·
 [how it works](#how-it-works) · [the finding](#what-we-found-a-spending-rule-bounds-amounts-not-destinations) ·
@@ -219,7 +229,7 @@ transaction stops the agent, without touching the chain link or the money.
 | PQC stand-in | Local EVMs have no QoreChain precompile, so `0x…0a01` is a stand-in that answers from [`test/fixtures/`](test/fixtures/): 27 (key, signature, message) tuples checked with **real ML-DSA-87** by `test/fixtures.mjs`; unknown tuples fail closed. Keys come from fixed seeds and signing is deterministic, so CI regenerates the files and requires them byte-identical. | `npm run fixtures` |
 | Off chain | the v1 demo inbox and six tamperings, with real ML-DSA-87 and throwaway keys; what the agent and MCP tools are shown and trust (signed amounts, malformed sealed invoices, the company-only message check, expiry, chain id) | `npm test` |
 | Documents | every count the documents state (checks, drill attacks, tests, invariants, mutants) against its source; `verify` fails if its own count drifts from the documents | `npm test` |
-| On chain | 101 read-only checks against the live testnet | `npm run verify` |
+| On chain | 104 read-only checks against the live testnet | `npm run verify` |
 
 ### Cryptography inventory (QoreScan)
 

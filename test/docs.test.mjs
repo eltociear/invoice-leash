@@ -12,6 +12,7 @@ const sol = readdirSync(new URL("test/", root)).filter((f) => f.endsWith(".t.sol
 const truth = {
   checks: Number(read("runs/verify-latest.txt").match(/✓ (\d+) checks passed, 0 failed/)[1]),
   attacks: JSON.parse(read("runs/qday-drill.json")).attempts.length,
+  campaign: JSON.parse(read("runs/campaign.json")).count,
   tests: (sol.match(/function test\w*\(/g) ?? []).length,
   invariants: (sol.match(/function invariant_\w*\(/g) ?? []).length,
   mutants: Number(read("runs/mutation.txt").match(/(\d+) of \1 mutants caught/)[1]),
@@ -20,7 +21,8 @@ const truth = {
 const docs = ["README.md", "V1.md", "THREAT_MODEL.md", "AI_USAGE.md", "QUANTUM_READINESS.md", "scripts/site.mjs", "scripts/lab.mjs"];
 const rules = [
   ["checks", /(\d+) (?:read-only )?checks\b/g],
-  ["attacks", /(\d+) attacks\b/g],
+  ["attacks", /(?<![\d,])(\d+) attacks\b/g],
+  ["campaign", /(\d[\d,]*) random attacks\b/g],
   ["attacks", /(\d+) of \1 refused/g],
   ["attacks", /attacks with every classical key, (\d+) refused/g],
   ["tests", /(\d+) Foundry tests/g],
@@ -36,7 +38,7 @@ for (const f of docs) {
   lines.forEach((line, i) => {
     for (const [k, re] of rules) for (const m of line.matchAll(re)) {
       seen++;
-      if (Number(m[1]) !== truth[k]) { bad++; console.error(`✗ ${f}:${i + 1}: "${m[0]}", but ${k} = ${truth[k]}`); }
+      if (Number(m[1].replaceAll(",", "")) !== truth[k]) { bad++; console.error(`✗ ${f}:${i + 1}: "${m[0]}", but ${k} = ${truth[k]}`); }
     }
   });
 }

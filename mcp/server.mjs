@@ -46,7 +46,21 @@ const inbox = () => JSON.parse(readFileSync(INBOX, "utf8")).map((m) => {
 const provider = new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID, { staticNetwork: true });
 const erc20 = new Interface(["function balanceOf(address) view returns (uint256)", "function allowance(address,address) view returns (uint256)"]);
 const text = (s) => ({ content: [{ type: "text", text: s }] });
-const log = (entry) => { if (RO) return; mkdirSync(LOGDIR, { recursive: true }); appendFileSync(LOG, JSON.stringify({ at: new Date().toISOString(), ...entry }) + "\n"); };
+// The log is hash-chained (each row names the SHA3-256 of the row before) and each row is signed with the
+// relayer's ML-DSA-87 key, which is registered on chain: a row edited, removed or reordered afterwards shows.
+const { sha3_256 } = await import("@noble/hashes/sha3.js");
+const { pqcSign } = await import("@qorechain/sdk");
+const logSigner = RO ? null : await account("gas");
+let logPrev = "0".repeat(64);
+const log = (entry) => {
+  if (RO) return;
+  mkdirSync(LOGDIR, { recursive: true });
+  const row = { at: new Date().toISOString(), ...entry, prev: logPrev, signer: logSigner.cosmos };
+  row.signature = Buffer.from(pqcSign(logSigner.pqc.secretKey, new TextEncoder().encode(JSON.stringify(row)))).toString("hex");
+  const line = JSON.stringify(row);
+  appendFileSync(LOG, line + "\n");
+  logPrev = Buffer.from(sha3_256(new TextEncoder().encode(line))).toString("hex");
+};
 const fusd = (u) => `${formatUnits(u, 6).replace(/\.0$/, "")} fUSD`;
 const view = async (to, i, fn, args) => i.decodeFunctionResult(fn, await provider.call({ to, data: i.encodeFunctionData(fn, args) }));
 
