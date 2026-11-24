@@ -409,6 +409,15 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
     const [signer] = desk4.decodeFunctionResult("agentSigner", await provider.call({ to: DL4, data: desk4.encodeFunctionData("agentSigner", [getAddress(liveRec.payerEvm), getAddress(liveRec.agentAccountEvm)]) }));
     const [sp] = status.decodeFunctionResult("pqcKeyStatus", await provider.call({ to: "0x0000000000000000000000000000000000000a02", data: status.encodeFunctionData("pqcKeyStatus", [signer]) }));
     const [p4] = desk4.decodeFunctionResult("paid", await provider.call({ to: DL4, data: desk4.encodeFunctionData("paid", [getAddress(liveRec.payerEvm), pr4.invoice.vendor, pr4.invoice.id]) }));
+    // the compromised-agent run on V4 (runs/v4-compromised.json): every row re-read from the chain
+    const v4r = json("runs/v4-compromised.json"), v4rows = v4r.log.filter((x) => x.link);
+    const reread4 = await reread(v4rows);
+    const paidRefs = v4r.log.filter((x) => x.ok).map((x) => x.label).sort();
+    const why4 = v4r.log.filter((x) => !x.ok).map((x) => x.why).join(" | ");
+    const expectWhy = ["UnknownVendor", "BadSignature", "OverPerPaymentLimit", "BadAgentSignature", "AlreadyPaid", "OverDailyLimit", "denom uqor not allowed", "not permitted to \"send\"", "only if the rule lists the call"];
+    ok(reread4 === v4rows.length && v4r.log.filter((x) => x.ok).length === 3 && BigInt(v4r.fusdBefore) - BigInt(v4r.fusdAfter) === 17_000_000n && v4r.malloryAfter === v4r.malloryBefore
+      && expectWhy.every((w) => why4.includes(w)) && !v4r.log.some((x) => /provisions \d+ gas/.test(x.why ?? "")),
+      `compromised agent on InvoiceDeskV4: ${v4r.log.length} attempts, 3 genuine invoices paid (17 fUSD), ${v4r.log.length - 3} refused (forgeries, edits, Mallory, limits, injections, the classical key alone, a replay), 0 to Mallory; each re-read`, `(series ${v4r.series})`);
     const lab4 = json("runs/live/v4-lab-invoice.json"), li = lab4.invoice;
     const ask4 = async (from) => { try { await provider.call({ from, to: DL4, data: desk4.encodeFunctionData("pay", [lab4.payer, li.token, li.vendor, li.amount, li.id, li.dueBy, li.signature, "0x"]) }); return "WOULD PAY"; } catch (e) { return desk4.parseError(e.data ?? e.info?.error?.data)?.name ?? "?"; } };
     const [labAgent, labCompany] = [await ask4(lab4.agent), await ask4(lab4.payer)];

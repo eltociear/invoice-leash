@@ -1,8 +1,8 @@
 {
  "chain": "qorechain-diana",
- "block": 10674488,
- "at": "2026-11-24T15:24:18.217Z",
- "passed": 109,
+ "block": 10677795,
+ "at": "2026-11-24T16:58:51.740Z",
+ "passed": 110,
  "failed": 0,
  "checks": [
   {
@@ -297,7 +297,7 @@
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
    "check": "the lab can show the human path: company holds ≥300 fUSD with ≥300 allowance and ≥80 QOR; v1 payer ≥5 QOR",
-   "detail": "(400.0 fUSD, allowance 970.0, 126.92 QOR; v1 8.180 QOR)"
+   "detail": "(400.0 fUSD, allowance 970.0, 111.80 QOR; v1 8.180 QOR)"
   },
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
@@ -432,6 +432,12 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
+   "check": "compromised agent on InvoiceDeskV4: 16 attempts, 3 genuine invoices paid (17 fUSD), 13 refused (forgeries, edits, Mallory, limits, injections, the classical key alone, a replay), 0 to Mallory; each re-read",
+   "detail": "(series MWUWZRIS)"
+  },
+  {
+   "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
+   "ok": true,
    "check": "InvoiceDeskV4, asked live (the attack lab's §7): a genuine unpaid invoice is BadAgentSignature for the agent's classical key alone, and payable by the company in person",
    "detail": "(LAB-V4-GENUINE)"
   },
@@ -474,7 +480,7 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "live agent: each of its 4 logged transactions re-read from the chain agrees; it last ran 10 h ago (must be < 72 h)",
+   "check": "live agent: each of its 4 logged transactions re-read from the chain agrees; it last ran 11 h ago (must be < 72 h)",
    "detail": "(desk 0x235dA591…, .github/workflows/live.yml)"
   },
   {

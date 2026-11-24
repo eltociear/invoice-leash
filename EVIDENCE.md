@@ -34,6 +34,21 @@ limit check, **no** vendor check and **no** signature check. Then we run it with
 fully compromised (it obeys every instruction it reads, the attacker's included) and show that the
 chain still refuses every attack. Invoices are in **fUSD**, signed with **ML-DSA-87**.
 
+## The compromised agent on InvoiceDeskV4
+
+[`scripts/v4-inbox.mjs`](scripts/v4-inbox.mjs) ran a decider that obeys every email against the live agent's
+InvoiceDeskV4, relaying every attempt for real ([`runs/v4-compromised.json`](runs/v4-compromised.json)):
+3 genuine invoices paid (4 + 3 + 10 fUSD), 13 refused, 0 fUSD to Mallory. The refusals: Mallory's own
+valid invoice (`UnknownVendor`); a forgery and an edited amount (`BadSignature`); the invoice in QOR, and
+direct transfers (the spending rule: no QOR, no fUSD, one call); `approveVendor` (not an allowed call);
+over the per-payment and daily limits; a replay (`AlreadyPaid`); and the agent's classical key alone
+(`BadAgentSignature`).
+
+**One correction, kept in the record.** In the first pass, four injections were refused for the wrong
+reason: the relaying transaction provisioned less gas than the agent signed (a bug in `lib/agent.mjs`).
+So the spending rule was never asked. The bug was fixed and those four were run again. The chain's answer
+is now the rule's. The first answers are kept under `superseded`.
+
 ## The demo inbox (v2, fUSD)
 
 Ten emails: two honest vendors (Hostline and Tokenwell) and Mallory, who has a valid ML-DSA-87 key of
@@ -82,7 +97,7 @@ transaction stops the agent, without touching the chain link or the money.
 | PQC stand-in | Local EVMs have no QoreChain precompile, so `0x…0a01` is a stand-in that answers from [`test/fixtures/`](test/fixtures/): 27 (key, signature, message) tuples checked with **real ML-DSA-87** by `test/fixtures.mjs`; unknown tuples fail closed. Keys come from fixed seeds and signing is deterministic, so CI regenerates the files and requires them byte-identical. | `npm run fixtures` |
 | Off chain | the v1 demo inbox and six tamperings, with real ML-DSA-87 and throwaway keys; what the agent and MCP tools are shown and trust (signed amounts, malformed sealed invoices, the company-only message check, expiry, chain id) | `npm test` |
 | Documents | every count the documents state (checks, drill attacks, tests, invariants, mutants) against its source; `verify` fails if its own count drifts from the documents | `npm test` |
-| On chain | 109 read-only checks against the live testnet | `npm run verify` |
+| On chain | 110 read-only checks against the live testnet | `npm run verify` |
 
 ### Cryptography inventory (QoreScan)
 

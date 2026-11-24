@@ -20,7 +20,7 @@ chain.**
 > npm install && npm run verify
 > ```
 >
-> 109 checks against the live testnet: the deployed contracts are byte-for-byte this source, every
+> 110 checks against the live testnet: the deployed contracts are byte-for-byte this source, every
 > recorded transaction is re-read, every attack is replayed. Last run: [`runs/verify-latest.txt`](runs/verify-latest.txt)
 > ([JSON](runs/verify-latest.json)). CI runs it daily, with 152 Foundry tests and 17 invariants.
 
@@ -31,8 +31,10 @@ chain.**
   a fresh address ([779FAF6E…](https://explore.qore.network/tx/779FAF6E8871B3FFF1D0D2D129AC904529E78E5198718C1DD630676E05AD4CEC),
   [details](#what-we-found-a-spending-rule-bounds-amounts-not-destinations)). So the agent got its own
   account, which holds no money and may make one call: the desk's `pay`.
-- **What that buys.** A decider that obeys every email made 16 payment attempts and got only the 3
-  genuine invoices paid. 2,000 dry-run tamperings of 10 kinds against the live desk: 0 would pay.
+- **What that buys.** On the live InvoiceDeskV4, a decider that obeys every email made 16 attempts
+  (forgeries, an edited amount, Mallory's own valid invoice, injections, the agent's classical key alone,
+  a replay, both limits) and got only the 3 genuine invoices paid, 0 to the attacker
+  ([`runs/v4-compromised.json`](runs/v4-compromised.json)). 2,000 dry-run tamperings of 10 kinds against the live desk: 0 would pay.
 - **After Q-Day.** With four accounts' classical keys alone, 16 attacks were refused, including
   swapping a vendor's ML-DSA-87 key. On InvoiceDeskV4 the agent's own classical key alone pays nothing
   either: each payment needs the agent's ML-DSA-87 signature too ([live](runs/probes/v4-agent-sig.json)). An ordinary EVM wallet with no post-quantum key cannot send
@@ -47,7 +49,7 @@ chain.**
 
 | Criterion | Evidence |
 |---|---|
-| **Works** (25) | `npm run verify` (109 checks); the [live agent](runs/live/); a [second company](runs/own-company-v3/) set up with `desk.mjs`; the [Desk Console](runs/console-e2e.json) driven in a real browser; 100% coverage and 17 Halmos proofs ([`runs/halmos.txt`](runs/halmos.txt)) |
+| **Works** (25) | `npm run verify` (110 checks); the [live agent](runs/live/); a [second company](runs/own-company-v3/) set up with `desk.mjs`; the [Desk Console](runs/console-e2e.json) driven in a real browser; 100% coverage and 17 Halmos proofs ([`runs/halmos.txt`](runs/halmos.txt)) |
 | **QoreChain tech** (25) | the ML-DSA-87 precompiles `0x…0a01`/`0a02` inside the contract; hybrid accounts; an authenticator with a spending rule; EVM windows with `allowed_targets`; `MsgExecuteEVM` relaying; QoreSign; QoreSeal ML-KEM-1024 and the KEM registry; `MsgConvertCoin`/`MsgConvertERC20`; the AMM; QoreScan; QoreChain's MCP server |
 | **Post-quantum** (20) | [QUANTUM_READINESS.md](QUANTUM_READINESS.md): every algorithm in the system, the Q-Day drill, Shor's gift, no classical-only lane |
 | **Originality** (15) | the finding above, and the redesign it forced; an agent whose key is kept where it can leak, on purpose |
@@ -121,7 +123,8 @@ account holds no fUSD and its key may move nothing; the company's money moves on
 
 | What | Result | Record |
 |---|---|---|
-| A decider that obeys every email (v2 inbox: injections, forgeries, Mallory's own valid key) | 3 genuine invoices paid, 13 attempts refused, 0 to the attacker | [EVIDENCE.md](EVIDENCE.md#the-demo-inbox-v2-fusd) |
+| A decider that obeys every email, on InvoiceDeskV4 (forgeries, edits, Mallory's own valid key, injections, the agent's classical key alone, a replay, both limits) | 3 genuine invoices paid (17 fUSD), 13 refused, 0 to the attacker | [`runs/v4-compromised.json`](runs/v4-compromised.json), [site](https://eltociear.github.io/invoice-leash/#v4run) |
+| The same, recorded earlier on InvoiceDeskV2 | 3 paid, 13 refused, 0 to the attacker | [EVIDENCE.md](EVIDENCE.md#the-demo-inbox-v2-fusd) |
 | The live agent, scheduled daily in GitHub Actions | each day: the genuine invoice paid; a forgery, a raised amount and a prompt-injected transfer refused | [`runs/live/`](runs/live/), [site](https://eltociear.github.io/invoice-leash/#live) |
 | 2,000 dry-run tamperings of 10 kinds, plus 23 signed attacks, against the live desk | 0 would pay; each refusal the expected one | [`runs/campaign.json`](runs/campaign.json) |
 | The Q-Day drill: four accounts' classical keys alone | 16 attacks refused | [QUANTUM_READINESS.md](QUANTUM_READINESS.md) |
