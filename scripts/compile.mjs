@@ -2,7 +2,7 @@
 // InvoiceDesk is v1 (QOR only); InvoiceDeskV2 adds ERC-20 (fUSD) invoices; InvoiceDeskV3 keys invoices per vendor and lets the payer settle late ones.
 import solc from "solc";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
-for (const name of ["InvoiceDesk", "InvoiceDeskV2", "InvoiceDeskV3"]) {
+for (const name of ["InvoiceDesk", "InvoiceDeskV2", "InvoiceDeskV3", "InvoiceDeskV4"]) {
   const src = readFileSync(new URL(`../contracts/${name}.sol`, import.meta.url), "utf8");
   const input = {
     language: "Solidity",

@@ -5,7 +5,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 
 const root = new URL("../", import.meta.url);
 const json = (p) => JSON.parse(readFileSync(new URL(p, root), "utf8"));
-const v2 = json("build/InvoiceDeskV2.json"), v3 = json("build/InvoiceDeskV3.json");
+const v2 = json("build/InvoiceDeskV2.json"), v3 = json("build/InvoiceDeskV3.json"), v4 = json("build/InvoiceDeskV4.json");
 const dep = json("deployment.json"), live = json("runs/live/desk.json").v2, own = json("runs/own-company-v3/desk.json").v2;
 const pub = json("runs/public-vendor.json");
 const liveLog = readFileSync(new URL("runs/live/log.jsonl", root), "utf8").trim().split("\n").filter(Boolean).map((l) => JSON.parse(l));
@@ -16,14 +16,14 @@ const data = {
   chain: { chainId: 9800, name: "QoreChain testnet (qorechain-diana)", rpc: "https://evm-testnet.qore.host", explorer: "https://explore.qore.network/tx/", faucet: "https://dashboard.qorechain.io/faucet" },
   fusd: "0x97143B771D34ddb9130b807b135Ae675A5a963CA",
   desks: [
-    desk("The live agent's desk", "InvoiceDeskV3. The agent pays here every day from GitHub Actions, with a decider that obeys every email.", live, 3, {
+    desk("The live agent's desk", "InvoiceDeskV4: the agent's payments need its own ML-DSA-87 signature too. A scheduled GitHub Actions job runs the agent here daily, with a decider that obeys every email.", live, live.version ?? 3, {
       agentPayments: liveLog.filter((r) => r.ok).map((r) => ({ at: r.at, label: r.label, link: r.link })),
       refusals: liveLog.filter((r) => !r.ok).length }),
     desk("A company set up with desk.mjs", "InvoiceDeskV3, upgraded from V2 with desk.mjs upgrade. Three vendors, each with its own key.", own, 3, {
       agentPayments: ownCsv.filter((r) => r[7] === "agent" && r[9] === own.invoiceDesk).map((r) => ({ at: r[0], label: `${r[1]} ${r[3]}, ${r[5]} fUSD`, link: `https://explore.qore.network/tx/${r[8]}` })) }),
     desk("The demo company (v2)", "InvoiceDeskV2, the desk the recorded runs and the attack lab use.", { ...dep.v2, vendors: Object.fromEntries(Object.entries(dep.vendors).map(([k, v]) => [v, k])) }, 2),
   ],
-  abiV2: v2.abi, abiV3: v3.abi, bytecodeV3: v3.bytecode,
+  abiV2: v2.abi, abiV3: v3.abi, abiV4: v4.abi, bytecodeV3: v3.bytecode,
   publicVendor: { address: pub.address, evm: pub.evmAddress, publicKey: pub.mlDsa87PublicKey, secretKey: pub.mlDsa87SecretKey, registerTx: pub.registerTx },
 };
 writeFileSync(new URL("docs/app-data.json", root), JSON.stringify(data) + "\n");

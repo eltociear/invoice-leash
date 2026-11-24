@@ -17,6 +17,7 @@ const truth = {
   invariants: (sol.match(/function invariant_\w*\(/g) ?? []).length,
   mutants: Number(read("runs/mutation.txt").match(/(\d+) of \1 mutants caught/)[1]),
   mutantsV3: Number(read("runs/mutation-v3.txt").match(/(\d+) of \1 mutants caught/)[1]),
+  mutantsV4: Number(read("runs/mutation-v4.txt").match(/(\d+) of \1 mutants caught/)[1]),
 };
 const docs = ["README.md", "EVIDENCE.md", "JUDGES.md", "DECISIONS.md", "GETTING_STARTED.md", "V1.md", "THREAT_MODEL.md", "AI_USAGE.md", "QUANTUM_READINESS.md", "scripts/site.mjs", "scripts/lab.mjs"];
 const rules = [
@@ -28,8 +29,9 @@ const rules = [
   ["tests", /(\d+) Foundry tests/g],
   ["tests", /(\d+) tests \+ \d+ invariants/g],
   ["invariants", /(\d+) invariants\b/g],
-  ["mutants", /(?<!V3: )\b(\d+) of \1 mutants/g],
+  ["mutants", /(?<!V[34]: )\b(\d+) of \1 mutants/g],
   ["mutantsV3", /V3: (\d+) of \1\b/g],
+  ["mutantsV4", /V4: (\d+) of \1\b/g],
   ["mutants", /(\d+)-mutant\b/g],
 ];
 let bad = 0, seen = 0;

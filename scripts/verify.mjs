@@ -35,7 +35,7 @@ async function retry(fn) {
 // A public testnet stops answering now and then. If it does, say so instead of printing a stack trace.
 const offline = (e) => {
   const t = `${e?.code ?? ""} ${e?.message ?? e}`;
-  if (/timeout|ETIMEDOUT|ECONNRESET|ENETUNREACH|ECONNREFUSED|EAI_AGAIN|fetch failed|TIMEOUT|socket hang up|SERVER_ERROR|429/.test(t)) {
+  if (/timeout|ETIMEDOUT|ECONNRESET|ENETUNREACH|ECONNREFUSED|EAI_AGAIN|fetch failed|TIMEOUT|socket hang up|SERVER_ERROR|429|REST .* unavailable/.test(t)) {
     console.error(`\n✗ the testnet did not answer (${t.trim().slice(0, 120)}). Nothing was checked wrong: run npm run verify again in a minute.`);
     process.exit(2);
   }
@@ -396,8 +396,21 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
       settings: { optimizer: { enabled: true, runs: 200 }, evmVersion: "paris", outputSelection: { "*": { InvoiceDeskV3: ["abi", "evm.deployedBytecode.object"] } } } })));
     const c3 = out3.contracts["InvoiceDeskV3.sol"].InvoiceDeskV3, desk3 = new Interface(c3.abi);
     ok((await provider.getCode(D3)).slice(2) === c3.evm.deployedBytecode.object, `InvoiceDeskV3: bytecode at ${D3} == contracts/InvoiceDeskV3.sol`);
-    const DL = getAddress(json("runs/live/desk.json").v2.invoiceDesk);
-    ok((await provider.getCode(DL)).slice(2) === c3.evm.deployedBytecode.object, `InvoiceDeskV3, the live agent's desk: bytecode at ${DL} == contracts/InvoiceDeskV3.sol`);
+    const liveRec = json("runs/live/desk.json").v2, DL3 = getAddress(liveRec.previous?.find((p) => p.version === 3)?.invoiceDesk ?? liveRec.invoiceDesk);
+    ok((await provider.getCode(DL3)).slice(2) === c3.evm.deployedBytecode.object, `InvoiceDeskV3, the live agent's first desk (kept for the attack campaign): bytecode at ${DL3} == contracts/InvoiceDeskV3.sol`);
+    // InvoiceDeskV4: the live agent's desk now. The agent's own ML-DSA-87 signature is required too.
+    const out4 = JSON.parse(solc.compile(JSON.stringify({ language: "Solidity", sources: { "InvoiceDeskV4.sol": { content: readFileSync(new URL("contracts/InvoiceDeskV4.sol", root), "utf8") } },
+      settings: { optimizer: { enabled: true, runs: 200 }, evmVersion: "paris", outputSelection: { "*": { InvoiceDeskV4: ["abi", "evm.deployedBytecode.object"] } } } })));
+    const c4 = out4.contracts["InvoiceDeskV4.sol"].InvoiceDeskV4, desk4 = new Interface(c4.abi), DL4 = getAddress(liveRec.invoiceDesk);
+    ok(liveRec.version === 4 && (await provider.getCode(DL4)).slice(2) === c4.evm.deployedBytecode.object, `InvoiceDeskV4, the live agent's desk: bytecode at ${DL4} == contracts/InvoiceDeskV4.sol`);
+    const pr4 = json("runs/probes/v4-agent-sig.json"), [noSig, withSig] = pr4.steps;
+    const [t1, t2] = await Promise.all([rest(`/cosmos/tx/v1beta1/txs/${noSig.link.slice(-64)}`), rest(`/cosmos/tx/v1beta1/txs/${withSig.link.slice(-64)}`)]);
+    const failedEv = t1?.tx_response?.events?.some((e) => e.type === "abstractaccount_execution_failed");
+    const [signer] = desk4.decodeFunctionResult("agentSigner", await provider.call({ to: DL4, data: desk4.encodeFunctionData("agentSigner", [getAddress(liveRec.payerEvm), getAddress(liveRec.agentAccountEvm)]) }));
+    const [sp] = status.decodeFunctionResult("pqcKeyStatus", await provider.call({ to: "0x0000000000000000000000000000000000000a02", data: status.encodeFunctionData("pqcKeyStatus", [signer]) }));
+    const [p4] = desk4.decodeFunctionResult("paid", await provider.call({ to: DL4, data: desk4.encodeFunctionData("paid", [getAddress(liveRec.payerEvm), pr4.invoice.vendor, pr4.invoice.id]) }));
+    ok(!noSig.ok && /BadAgentSignature/.test(noSig.why) && failedEv && withSig.ok && t2?.tx_response?.code === 0 && p4 && sp,
+      "InvoiceDeskV4, live: the agent's classical key alone was refused (BadAgentSignature); with its signer's ML-DSA-87 signature the same invoice was paid", `(${noSig.link.slice(-64, -56)}…, ${withSig.link.slice(-64, -56)}…; signer ${signer.slice(0, 10)}… has a proven ML-DSA-87 key)`);
     const call3 = async (fn, args) => desk3.decodeFunctionResult(fn, await provider.call({ to: D3, data: desk3.encodeFunctionData(fn, args) }));
     const ask3 = async (from, v) => { try { await provider.call({ from, to: D3, data: desk3.encodeFunctionData("pay", [P3, v.token, v.vendor, v.amount, v.id, v.dueBy, v.signature]) }); return "WOULD PAY"; } catch (e) { return desk3.parseError(e.data ?? e.info?.error?.data)?.name ?? "?"; } };
     const inv = (f) => json(`runs/own-company-v3/invoices/${f}.json`).invoice;
@@ -436,8 +449,8 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
     const signed = rows.filter((r) => r.signer);
     const sigsOk = signed.length > 0 && signed.every((r) => r.signer === live.gas && pqcVerify(getBytesHex(keys[r.signer]), new TextEncoder().encode(JSON.stringify({ ...r, signature: undefined })), getBytesHex(r.signature)));
     const days = [...new Set(rows.map((r) => r.day))];
-    const shapeOk = days.every((dd) => { const r = rows.filter((x) => x.day === dd); return r.length === 4 && r[0].ok && r.slice(1).every((x) => !x.ok); });
-    ok(chained && sigsOk && shapeOk, `live agent log: ${rows.length} rows over ${days.length} day(s), hash-chained (SHA3-256), each day signed with the relayer's on-chain ML-DSA-87 key; every day 1 genuine paid, 3 attacks refused`,
+    const shapeOk = days.every((dd) => { const r = rows.filter((x) => x.day === dd); return (r.length === 4 || (r.length === 5 && /BadAgentSignature/.test(r[4].why))) && r[0].ok && r.slice(1).every((x) => !x.ok); });
+    ok(chained && sigsOk && shapeOk, `live agent log: ${rows.length} rows over ${days.length} day(s), hash-chained (SHA3-256), each day signed with the relayer's on-chain ML-DSA-87 key; each day the genuine invoice paid and every attack refused (on V4 days, also the agent's classical key alone)`,
       `(${days[0]} … ${days.at(-1)})`);
     let txOk = 0, withTx = 0;
     for (const r of rows.filter((x) => x.link)) {
@@ -494,7 +507,7 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
 
   // the randomized attack campaign against the live desk (runs/campaign.json): regenerate a sample, ask again
   {
-    const cp = json("runs/campaign.json"), live = json("runs/live/desk.json").v2;
+    const cp = json("runs/campaign.json"), live = { ...json("runs/live/desk.json").v2, invoiceDesk: json("runs/campaign.json").desk }; // the V3 desk it ran against
     const { attack, ask } = await import("./attack-campaign.mjs");
     const step = Math.floor(cp.count / 40), sample = Array.from({ length: 40 }, (_, k) => k * step + (Date.now() % step));
     let same = 0, refused = 0;

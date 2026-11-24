@@ -14,7 +14,8 @@
 //      on chain, so anyone can check the log was not edited afterwards (npm run verify does).
 //
 //   LEASH_DIR=<dir with keys.env> LEASH_DEPLOYMENT=runs/live/desk.json node scripts/live-agent.mjs
-// keys.env needs: gas (mnemonic), agent (hex), agentkem (hex), vendor (mnemonic). Nothing else.
+// keys.env needs: gas (mnemonic), agent (hex), agentkem (hex), vendor (mnemonic), and on an InvoiceDeskV4,
+// agentsigner (mnemonic: the agent's own ML-DSA-87 signer). Nothing else.
 import { appendFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { sha3_256 } from "@noble/hashes/sha3.js";
 import { generatePqcKeypair, pqcSign } from "@qorechain/sdk";
@@ -60,6 +61,9 @@ const plan = [
   { item: 1, action: "pay", label: `pay ${ref}-B (9 fUSD): forged, not signed by the vendor's key` },
   { item: 2, action: "pay", label: `pay ${ref} with its amount raised to 9 fUSD` },
   { item: 3, action: "token-transfer", token: FUSD, to: MALLORY, fusd: "20", label: "fUSD.transfer(Mallory, 20): the prompt injection" },
+  // InvoiceDeskV4: the agent's payments also need its own ML-DSA-87 signature. This is what someone holding
+  // only the agent's (classical, ed25519) key gets, for example after deriving it with a quantum computer.
+  ...(d.version === 4 ? [{ item: 0, action: "pay", withoutAgentSignature: true, label: `pay ${ref} with the agent's classical key alone, no ML-DSA-87 signature (as after Q-Day)` }] : []),
 ];
 const results = [];
 for (const step of plan) {

@@ -20,7 +20,7 @@ import { appendFileSync, mkdirSync, readFileSync, readdirSync } from "node:fs";
 import { Interface, JsonRpcProvider, formatUnits } from "ethers";
 import { fetchAuthenticators, fetchSpendingRules } from "@qorechain/sdk";
 import { EVM_CHAIN_ID, EVM_RPC, REST, account, agentKey, balance, fmt, hasKeys, hex, readDeployment } from "../lib/chain.mjs";
-import { deskV2, deskV3, describeV2, executeV2 } from "../lib/agent.mjs";
+import { deskV2, deskV3, deskV4, describeV2, executeV2, payData } from "../lib/agent.mjs";
 import { FUSD, invoiceFacts, validateInvoiceV2 } from "../lib/invoices.mjs";
 import { verifyCompanyMessage } from "../lib/messages.mjs";
 import { openInvoice } from "../lib/sealed.mjs";
@@ -133,10 +133,10 @@ server.registerTool("check_invoice", {
   const acct = await me();
   let verdict = "WOULD PAY (vendor approved, ML-DSA-87 signature valid, unpaid, not past due, within your limits)";
   for (let i = 0; ; i++) {
-    try { await provider.call({ from: acct.evmAddr, to: D.invoiceDesk, data: deskV2.encodeFunctionData("pay", [D.payerEvm, v.token, v.vendor, v.amount, v.id, v.dueBy, v.signature]) }); break; }
+    try { await provider.call({ from: acct.evmAddr, to: D.invoiceDesk, data: await payData(D, v, { asAgent: !RO }) }); break; }
     catch (e) {
-      const d = e.data ?? e.info?.error?.data; let n = null; try { n = deskV3.parseError(d).name; } catch { /* not a desk error */ }
-      if (n) { verdict = `WOULD REFUSE: ${n}`; break; }
+      const d = e.data ?? e.info?.error?.data; let n = null; try { n = deskV4.parseError(d).name; } catch { /* not a desk error */ }
+      if (n) { verdict = `WOULD REFUSE: ${n}${n === "BadAgentSignature" && RO ? " (this read-only server holds no agent signer key; with it, the agent signs each payment)" : ""}`; break; }
       if (i < 3) { await new Promise((r) => setTimeout(r, 1500 * (i + 1))); continue; }
       verdict = `COULD NOT ASK (a network problem, not a decision by the desk): ${e.shortMessage ?? e.message}`; break;
     }

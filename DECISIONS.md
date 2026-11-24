@@ -85,12 +85,17 @@ window, its classical key could not move fUSD, QOR or the treasury.
 **Why.** A window without targets admits any call within its caps. An independent review found the
 company's first windows had none.
 
-## 8. The agent's key stays classical (ed25519)
+## 8. The agent's key stays classical (ed25519), and InvoiceDeskV4 makes it insufficient
 
-**Decision.** We accept it and design for it being stolen.
+**Decision.** We accept the classical relaying key, and from InvoiceDeskV4 we require the agent's own
+ML-DSA-87 signature on every agent payment. It covers the desk, the payer, the agent, the vendor, the token,
+the amount and the invoice id. The desk checks it against the key of a signer account the company names
+(`setAgentSigner`). V3 desks stay as recorded; new desks and `desk.mjs upgrade` are V4.
 
 **Why.** QoreChain authenticators accept only ed25519 or secp256k1 keys today
-(`AuthenticatorScheme` in `@qorechain/sdk`). When they accept ML-DSA-87, `link-v2` changes one argument.
+(`AuthenticatorScheme` in `@qorechain/sdk`), and a quantum computer could derive such a key from its
+public key on chain. A fresh judge review scored post-quantum lowest for exactly this. With V4, that key
+alone gets `BadAgentSignature` (live: [`runs/probes/v4-agent-sig.json`](runs/probes/v4-agent-sig.json)).
 
 ## 9. Show, don't claim: everything is re-checked from the chain
 

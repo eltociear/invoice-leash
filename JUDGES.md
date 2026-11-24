@@ -46,7 +46,7 @@ signature with QoreChain's precompile.
 
 | Criterion | Evidence |
 |---|---|
-| Works (25) | `npm run verify`; 100% coverage of the contracts, 8 properties proved with Halmos ([`runs/halmos.txt`](runs/halmos.txt)); the live agent; a second company set up from nothing with `desk.mjs` and upgraded to InvoiceDeskV3 ([`runs/own-company/`](runs/own-company/), [`runs/own-company-v3/`](runs/own-company-v3/)); the attack campaign ([`runs/campaign.json`](runs/campaign.json)) |
+| Works (25) | `npm run verify`; 100% coverage of the contracts, 17 properties proved with Halmos ([`runs/halmos.txt`](runs/halmos.txt)); the live agent; a second company set up from nothing with `desk.mjs` and upgraded to InvoiceDeskV3 ([`runs/own-company/`](runs/own-company/), [`runs/own-company-v3/`](runs/own-company-v3/)); the attack campaign ([`runs/campaign.json`](runs/campaign.json)) |
 | QoreChain tech (25) | the PQC precompiles in the contract; hybrid accounts; an authenticator with a spending rule; EVM windows with `allowed_targets`; `MsgExecuteEVM`; QoreSign; QoreSeal and the KEM registry; `MsgConvertCoin` / `MsgConvertERC20`; the AMM; QoreScan; QoreChain's MCP server |
 | Post-quantum (20) | [QUANTUM_READINESS.md](QUANTUM_READINESS.md): every algorithm in the system and what a quantum computer does to it; the Q-Day drill; Shor's gift |
 | Originality (15) | the finding above; an agent whose key is kept where it can leak, on purpose |

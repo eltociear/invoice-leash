@@ -39,7 +39,9 @@ again: it skips what is done.
 2. Sends fee money: 3 QOR to the **fee wallet**, which relays the agent's requests, and 1 QOR to the
    **agent account**.
 3. Registers their ML-DSA-87 keys.
-4. Deploys **your InvoiceDeskV3**, in a window that admits one transaction.
+4. Deploys **your InvoiceDeskV4**, in a window that admits one transaction. On V4 every agent payment
+   also needs the agent's own ML-DSA-87 signature: `setup` registers an **agent signer** account's
+   ML-DSA-87 key and names it to the desk, so the agent's classical key alone pays nothing.
 5. In a window scoped to the desk and fUSD, it names the agent account as your agent, sets its limits
    (`--per-payment`, `--daily`, in fUSD) and gives the desk an fUSD allowance (`--allowance`, the total it
    may ever pull).
@@ -134,7 +136,7 @@ diana). A payment with no matching invoice in your inbox is flagged.
 
 ## Late invoices, and vendors that use the same invoice numbers
 
-Your desk is an **InvoiceDeskV3**:
+Your desk is an **InvoiceDeskV4** (InvoiceDeskV3 plus the agent's own ML-DSA-87 signature):
 - **Invoice numbers are per vendor.** Two vendors may both send `INV-2001`, and both are paid, each once.
 - **Overdue invoices.** The agent never pays after the due date (`PastDue`), but the company can settle
   an overdue invoice in person: `triage` marks it NEEDS A PERSON, then run `node desk.mjs pay <n>`. A
@@ -144,7 +146,7 @@ Your desk is an **InvoiceDeskV3**:
 
 All of this was run on the testnet: [`runs/own-company-v3/`](runs/own-company-v3/).
 
-**Set up before V3?** `node desk.mjs upgrade` deploys a V3 desk and copies your vendors, agent, limits
+**Set up before V4?** `node desk.mjs upgrade` deploys a V4 desk and copies your vendors, agent, limits
 and allowance. It switches the agent off on the old desk, sets the old allowance to 0, and relinks the
 agent's key. `export` keeps the old desk's history. Then run `node desk.mjs inbox archive`, and ask
 vendors to re-sign any open invoices for the new desk address.

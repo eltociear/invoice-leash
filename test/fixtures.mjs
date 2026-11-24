@@ -109,4 +109,33 @@ console.log(`test/fixtures/mldsa.json: ${cases.length} cases, ${cases.filter((c)
   for (const c of cases2) if (c.valid !== valid3.has(c.name)) throw new Error(`v3 fixture ${c.name}: real ML-DSA-87 says ${c.valid}`);
   writeFileSync(new URL("./fixtures/mldsa-v3.json", import.meta.url), JSON.stringify({ note: out.note, chainId: 9800, addresses: A, tokens: T3, keys: out.keys, cases: cases2 }, null, 1) + "\n");
   console.log(`test/fixtures/mldsa-v3.json: ${cases2.length} cases, ${cases2.filter((c) => c.valid).length} valid under real ML-DSA-87`);
+
+  // ---------------------------------------------------------------- v4 (V3 + the agent's own ML-DSA-87 signature)
+  // The agent signer's key signs agentMessage(...) for every v3 case, for both test agents (the unit tests'
+  // and the invariant handler's), so a test fails on the check it is about, not on the agent's signature.
+  const { AbiCoder } = await import("ethers");
+  const signer = generatePqcKeypair(seed("fixture:agentsigner"));
+  const AGENT_DOMAIN = keccak256(toUtf8Bytes("LEASH-AGENT-PAY-v1"));
+  const agentMsg = (c, agent) => Uint8Array.from(Buffer.from(AbiCoder.defaultAbiCoder().encode(
+    ["bytes32", "uint256", "address", "address", "address", "address", "address", "uint256", "bytes32"],
+    [AGENT_DOMAIN, 9800, c.desk, c.payer, agent, c.vendor, c.token, c.amount, c.id]).slice(2), "hex"));
+  const AGENTS = ["0x000000000000000000000000000000000000A9E7", "0x00000000000000000000000000000000000A6E47"];
+  const agentSigs = {};
+  for (const agent of AGENTS) agentSigs[agent] = cases2.map((c) => { const m = agentMsg(c, agent), sg = pqcSign(signer.secretKey, m); return { name: c.name, message: hexlify(m), signature: hexlify(sg), valid: pqcVerify(signer.publicKey, m, sg) }; });
+  const g = cases2.find((c) => c.name === "genuine_fusd"), gm = agentMsg(g, AGENTS[0]), foreign = pqcSign(keys.mallory.secretKey, gm);
+  // Genuine vendor invoices that differ from genuine_fusd in one field only. The agent's signature for
+  // genuine_fusd must not authorise any of them: a corrected amount, a second invoice for the same amount,
+  // a reissue in another token. (For each, Hostline's own signature is valid.)
+  const extras = [
+    ["hostline_corrected_95", { amount: 95000000n }],
+    ["hostline_second_invoice_same_amount", { id: keccak256(toUtf8Bytes("HOSTLINE-V2-0044")) }],
+    ["hostline_reissued_in_other_token", { token: T.other }],
+  ].map(([name, o]) => { const m = m2(o), sg = s2("hostline", o); return { name, pubkey: hexlify(keys.hostline.publicKey), signature: hexlify(sg), message: hexlify(m), valid: pqcVerify(keys.hostline.publicKey, m, sg),
+    payer: b2.payer, vendor: b2.vendor, token: o.token ?? b2.token, amount: String(o.amount ?? b2.amount), id: o.id ?? b2.id, dueBy: b2.dueBy }; });
+  if (extras.some((x) => !x.valid)) throw new Error("v4 extras: real ML-DSA-87 disagrees");
+  const v4 = { note: out.note, chainId: 9800, addresses: A, tokens: T3, keys: { ...out.keys, agentsigner: hexlify(signer.publicKey) }, cases: cases2, extras, agentSigs,
+    foreign: { name: "genuine_fusd signed by a key that is not the agent signer's", message: hexlify(gm), signature: hexlify(foreign), valid: pqcVerify(signer.publicKey, gm, foreign) } };
+  if (Object.values(agentSigs).flat().some((x) => !x.valid) || v4.foreign.valid) throw new Error("v4 agent signatures: real ML-DSA-87 disagrees");
+  writeFileSync(new URL("./fixtures/mldsa-v4.json", import.meta.url), JSON.stringify(v4, null, 1) + "\n");
+  console.log(`test/fixtures/mldsa-v4.json: ${cases2.length} cases, ${AGENTS.length * cases2.length} agent signatures (real ML-DSA-87), 1 foreign`);
 }

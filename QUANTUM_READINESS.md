@@ -6,7 +6,11 @@ ciphers. What still holds?
 
 **Short answer:** the invoices, the limits and the company's treasury stay safe. Three parts are
 classical, and each is bounded:
-- the agent's ed25519 key, bounded like a stolen key;
+- the agent's ed25519 key. **On an InvoiceDeskV4 it pays nothing alone**: every agent payment also needs
+  the agent's own ML-DSA-87 signature, checked on chain (live: the classical key alone was refused with
+  `BadAgentSignature`, then the same invoice with the signature was paid,
+  [`runs/probes/v4-agent-sig.json`](runs/probes/v4-agent-sig.json)). On V2/V3 desks it is bounded like a
+  stolen key;
 - an EVM window while it is open: one target, a transaction count, a value cap, an expiry. The worst
   case is a company window whose single slot an attacker wins in a race. That gets one call to one
   contract, and never the treasury, which is held as a bank coin;
@@ -133,7 +137,7 @@ a MetaMask-style wallet.
 |---|---|---|---|---|
 | Company, agent-account, relayer and vendor **transactions** | hybrid: secp256k1 + **ML-DSA-87** (FIPS 204, level 5); the chain requires the ML-DSA-87 layer once a PQC key is registered | ML-DSA-87: safe. secp256k1: broken, but **alone it is refused** | nothing | drill (code 20); every recorded tx shows `pqc_hybrid_verify: verified` |
 | **EVM transactions** (secp256k1 only) | accepted only inside an EVM window, which only an ML-DSA-87-signed transaction can open | breakable | only what an *open* window admits: its tx count, value cap, expiry and (for the agent account) its one target, InvoiceDeskV2 | drill ("no open EVM authorisation window"); [`runs/probes/window.json`](runs/probes/window.json) (target), [`runs/probes/window-caps.json`](runs/probes/window-caps.json) (count, value) |
-| **Vendor invoices** | **ML-DSA-87**, verified on chain by `pqcVerify` (`0x…0a01`) against the key in `pqcKeyStatus` (`0x…0a02`), proof of possession required | safe | — | demo inbox, verify §4/§9, 102 Foundry tests, 11 invariants |
+| **Vendor invoices** | **ML-DSA-87**, verified on chain by `pqcVerify` (`0x…0a01`) against the key in `pqcKeyStatus` (`0x…0a02`), proof of possession required | safe | — | demo inbox, verify §4/§9, 152 Foundry tests, 17 invariants |
 | **Company instructions** to the agent | QoreSign message-signing-v1: secp256k1 (ADR-36) + **ML-DSA-87** over `qorechain-msg-v1\|chain\|text` | ML-DSA-87 half: safe | a valid classical half is not enough: the Q-Day forgery is refused | [`runs/messages.json`](runs/messages.json), the lab |
 | **Sealed invoices** | **ML-KEM-1024** (FIPS 203, level 5), `mlkem` mode (no X25519), HKDF with SHA3-256, AES-256-GCM | safe against "harvest now, decrypt later"; AES-256 keeps about 128-bit strength under Grover | — | [`runs/sealed.json`](runs/sealed.json) |
 | **The agent's key** | **ed25519** (QoreChain authenticators accept only ed25519 / secp256k1 today) | **broken** | exactly what a stolen agent key gets: genuine invoices from approved vendors, within the company's limits; nothing else | the compromised-agent run (16 attempts, 3 genuine paid), probes |
@@ -145,9 +149,13 @@ a MetaMask-style wallet.
 
 ## What remains classical, and why that is acceptable
 
-1. **The agent's ed25519 key.** Invoice Leash already treats it as stolen; the whole design is
-   about what a thief can do with it. When QoreChain authenticators accept ML-DSA-87, `link-v2`
-   changes one argument.
+1. **The agent's ed25519 key.** QoreChain authenticators accept only ed25519 or secp256k1 today, so the
+   key that relays the agent's requests stays classical. InvoiceDeskV4 makes it insufficient: the desk
+   also requires the agent's own ML-DSA-87 signature over this desk, this payer, this agent and this
+   exact invoice, verified with the precompile against the key of the signer the company named
+   (`setAgentSigner`). After Q-Day, deriving the ed25519 key from its public key pays nothing. The live
+   agent's desk is a V4 and its daily run includes that attempt. On V2/V3 desks the key is bounded like
+   a stolen key. When authenticators accept ML-DSA-87, the relaying key can be post-quantum too.
 2. **An open EVM window.** A quantum attacker with a classical key can act inside a window while it is
    open, within its caps. Every window names one target. The agent account's window is 300 blocks, at
    most 3 transactions and 0.4 QOR, to the desk. The company's windows admit one action and close in

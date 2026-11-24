@@ -6,7 +6,7 @@
   const h = (x) => String(x ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const D = await (await fetch("app-data.json")).json();
   const ZERO = "0x0000000000000000000000000000000000000000", CHAIN_HEX = "0x" + D.chain.chainId.toString(16);
-  const i2 = new E.Interface(D.abiV2), i3 = new E.Interface(D.abiV3);
+  const i2 = new E.Interface(D.abiV2), i3 = new E.Interface(D.abiV3), i4 = new E.Interface(D.abiV4);
   const erc = new E.Interface(["function balanceOf(address) view returns (uint256)", "function allowance(address,address) view returns (uint256)"]);
   const pqc = new E.Interface(["function pqcKeyStatus(address) view returns (bool registered,uint8 algorithmId,bytes pubkey,bool possessionProven)"]);
   const DOMAIN = E.keccak256(E.toUtf8Bytes("LEASH-INVOICE-v2"));
@@ -34,7 +34,7 @@
   async function ask(from, to, data, value) {
     const r = await rpc("eth_call", [{ from, to, data, ...(value ? { value: E.toQuantity(value) } : {}) }, "latest"]);
     if (!r.error) return "WOULD PAY";
-    try { const n = i3.parseError(r.error.data)?.name; if (n) return n; } catch { /* not a desk error */ }
+    try { const n = i4.parseError(r.error.data)?.name; if (n) return n; } catch { /* not a desk error */ }
     return r.error.message;
   }
   async function logs(address, topics, from, to) {
@@ -68,7 +68,7 @@
     $("desks").appendChild(b);
   });
   async function watch(k) {
-    const d = D.desks[k], iface = d.version === 3 ? i3 : i2;
+    const d = D.desks[k], iface = d.version === 4 ? i4 : d.version === 3 ? i3 : i2;
     $("watch").innerHTML = `<span class="dim">reading ${h(d.desk)} from the chain…</span>`;
     let from = d.deployBlock;
     if (!from && d.deployTx) from = parseInt((await rpc("eth_getTransactionReceipt", [d.deployTx])).result.blockNumber, 16);

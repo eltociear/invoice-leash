@@ -11,7 +11,7 @@ the AI's work was checked, and the mistakes the AI made that those checks caught
 | **AI** | Claude Code (Anthropic), model `claude-opus-5-5`: one main session that writes code, runs the testnet steps and reports, plus sub-agents started for independent reviews and research |
 | **Human** | the team (one person, [@eltociear](https://github.com/eltociear)): goals, product decisions, accounts and wallets, everything that needs a human identity, and the final call on what ships |
 | **Written by the AI** | nearly all code, tests, scripts, documentation, the demo video (slides, narration script, music) and the cover image |
-| **How the AI's work is checked** | not by trusting it: `npm run verify` (106 read-only checks against the live testnet), 102 Foundry tests and 11 invariants, mutation checks (V2: 14 of 14 mutants caught; V3: 18 of 18), Slither, QoreScan, browser tests, CI daily, and AI reviewers that did not write the code |
+| **How the AI's work is checked** | not by trusting it: `npm run verify` (108 read-only checks against the live testnet), 152 Foundry tests and 17 invariants, mutation checks (V2: 14 of 14 mutants caught; V3: 18 of 18), Slither, QoreScan, browser tests, CI daily, and AI reviewers that did not write the code |
 
 ## The workflow
 
@@ -70,7 +70,7 @@ the AI's work was checked, and the mistakes the AI made that those checks caught
 |---|---|
 | "the deployed contract is this source" | `verify` recompiles and compares bytecode |
 | "the chain refused this attack" | `verify` re-reads every recorded transaction and its failure event |
-| "the contract enforces X" | 8 properties proved for every input with Halmos, 100% coverage, 102 Foundry tests, 11 invariants (256,000 random calls per suite), mutants caught: V2 14 of 14, V3: 18 of 18 |
+| "the contract enforces X" | 17 properties proved for every input with Halmos, 100% coverage, 152 Foundry tests, 17 invariants (256,000 random calls per suite), mutants caught: V2 14 of 14, V3: 18 of 18 |
 | "the only signature scheme is ML-DSA-87" | QoreScan CBOM, re-run by `verify` |
 | "the page works" | `npm test` parses every page script; Playwright runs the lab in a real browser |
 | "the docs say N" | `npm test` checks every stated count against its source; `verify` fails when its own count drifts |

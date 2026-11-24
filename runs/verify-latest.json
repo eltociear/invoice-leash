@@ -1,8 +1,8 @@
 {
  "chain": "qorechain-diana",
- "block": 10659135,
- "at": "2026-11-24T09:18:52.435Z",
- "passed": 106,
+ "block": 10673587,
+ "at": "2026-11-24T15:02:45.357Z",
+ "passed": 108,
  "failed": 0,
  "checks": [
   {
@@ -422,7 +422,18 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "InvoiceDeskV3, the live agent's desk: bytecode at 0x54bdEa75F3eD7ac23bC47F29c1E4029ecA5E7887 == contracts/InvoiceDeskV3.sol"
+   "check": "InvoiceDeskV3, the live agent's first desk (kept for the attack campaign): bytecode at 0x54bdEa75F3eD7ac23bC47F29c1E4029ecA5E7887 == contracts/InvoiceDeskV3.sol"
+  },
+  {
+   "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
+   "ok": true,
+   "check": "InvoiceDeskV4, the live agent's desk: bytecode at 0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4 == contracts/InvoiceDeskV4.sol"
+  },
+  {
+   "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
+   "ok": true,
+   "check": "InvoiceDeskV4, live: the agent's classical key alone was refused (BadAgentSignature); with its signer's ML-DSA-87 signature the same invoice was paid",
+   "detail": "(7858502E…, 2ED77180…; signer 0x3430d5a0… has a proven ML-DSA-87 key)"
   },
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
@@ -451,14 +462,14 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "live agent log: 4 rows over 1 day(s), hash-chained (SHA3-256), each day signed with the relayer's on-chain ML-DSA-87 key; every day 1 genuine paid, 3 attacks refused",
+   "check": "live agent log: 4 rows over 1 day(s), hash-chained (SHA3-256), each day signed with the relayer's on-chain ML-DSA-87 key; each day the genuine invoice paid and every attack refused (on V4 days, also the agent's classical key alone)",
    "detail": "(2026-11-24 … 2026-11-24)"
   },
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "live agent: each of its 4 logged transactions re-read from the chain agrees; it last ran 4 h ago (must be < 72 h)",
-   "detail": "(desk 0x54bdEa75…, .github/workflows/live.yml)"
+   "check": "live agent: each of its 4 logged transactions re-read from the chain agrees; it last ran 9 h ago (must be < 72 h)",
+   "detail": "(desk 0x235dA591…, .github/workflows/live.yml)"
   },
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",

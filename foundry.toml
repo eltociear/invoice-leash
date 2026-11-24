@@ -8,6 +8,8 @@ solc_version = "0.8.30"
 evm_version = "paris"
 optimizer = true
 optimizer_runs = 200
+# the ML-DSA-87 fixtures are large (4,627-byte signatures): recording them in setUp needs more than the default
+gas_limit = "18446744073709551615"
 fs_permissions = [{ access = "read", path = "./test/fixtures" }]
 
 [fuzz]

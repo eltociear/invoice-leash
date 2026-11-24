@@ -35,6 +35,7 @@ jobs:
           pip install --quiet halmos==0.3.3
           mkdir -p out && ln -sfn . out/contracts   # halmos 0.3.3 looks for out/contracts/<file>/<name>.json
           FOUNDRY_OUT=out FOUNDRY_CACHE_PATH=cache-halmos halmos --contract InvoiceDeskV3Halmos
+          FOUNDRY_OUT=out FOUNDRY_CACHE_PATH=cache-halmos halmos --contract InvoiceDeskV4Halmos
       - name: every README claim against the live qorechain-diana testnet (read-only, no keys)
         # a public testnet flakes; a real failure fails all three tries
         run: for i in 1 2 3; do npm run verify && exit 0; echo "attempt $i failed, retrying in 60 s"; sleep 60; done; exit 1

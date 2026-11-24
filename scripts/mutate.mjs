@@ -1,13 +1,14 @@
 // Mutation check: inject one bug at a time into a desk contract and confirm `forge test` fails.
 //   node scripts/mutate.mjs      > runs/mutation.txt      (InvoiceDeskV2)
 //   node scripts/mutate.mjs v3   > runs/mutation-v3.txt   (InvoiceDeskV3: V2's mutants, adapted, plus V3's own)
+//   node scripts/mutate.mjs v4   > runs/mutation-v4.txt   (InvoiceDeskV4: V3's, adapted, plus the agent signature's)
 // Restores the contract after every mutant (and on any error). Needs Foundry (forge on PATH or ~/.foundry/bin).
 // Never run it while `npm run verify` runs: it edits the contract in place.
 import { readFileSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 
-const V3 = process.argv[2] === "v3";
-const NAME = V3 ? "InvoiceDeskV3" : "InvoiceDeskV2";
+const V4 = process.argv[2] === "v4", V3 = process.argv[2] === "v3" || V4;
+const NAME = V4 ? "InvoiceDeskV4" : V3 ? "InvoiceDeskV3" : "InvoiceDeskV2";
 const FILE = new URL(`../contracts/${NAME}.sol`, import.meta.url);
 const ORIGINAL = readFileSync(FILE, "utf8");
 const forge = spawnSync("sh", ["-c", "command -v forge || echo ~/.foundry/bin/forge"]).stdout.toString().trim();
@@ -16,9 +17,9 @@ const PAID = V3 ? "paid[payer][vendor][id]" : "paid[payer][id]";
 const PAID_CHECK = `        if (${PAID}) revert AlreadyPaid(id);\n`;
 const MUTANTS = [
   ["signature check removed", (s) => s.replace("if (!PQC_VERIFY.pqcVerify(", "if (false && !PQC_VERIFY.pqcVerify(")],
-  ["replay check moved before the signature", (s) => s.replace(PAID_CHECK, "").replace("        if (!approved[payer][vendor])", PAID_CHECK + "        if (!approved[payer][vendor])")],
-  ["vendor key: proof of possession not required", (s) => s.replace("!registered || !proven ||", "!registered ||")],
-  ["vendor key: algorithm not checked", (s) => s.replace("|| alg != ALG_ML_DSA_87)", ")")],
+  ["replay check moved before the signature", (s) => V4 ? s.replace(PAID_CHECK, "").replace("        _vendorSignature(", PAID_CHECK + "        _vendorSignature(") : s.replace(PAID_CHECK, "").replace("        if (!approved[payer][vendor])", PAID_CHECK + "        if (!approved[payer][vendor])")],
+  ["vendor key: proof of possession not required", (s) => s.replace("if (!registered || !proven || alg != ALG_ML_DSA_87) revert VendorKeyNotProven", "if (!registered || alg != ALG_ML_DSA_87) revert VendorKeyNotProven")],
+  ["vendor key: algorithm not checked", (s) => s.replace("|| alg != ALG_ML_DSA_87) revert VendorKeyNotProven", ") revert VendorKeyNotProven")],
   ["currency left out of the signed bytes", (s) => s.replace("payer, vendor, token, amount, id, dueBy);\n    }", "payer, vendor, amount, id, dueBy);\n    }")],
   ["ERC-20 return value ignored", (s) => s.replace("if (!ok || (ret.length != 0 && !abi.decode(ret, (bool))))", "if (!ok)")],
   ["QOR sent along with an fUSD invoice accepted", (s) => s.replace("if (msg.value != native)", "if (false && msg.value != native)")],
@@ -37,6 +38,15 @@ const MUTANTS = [
     ["V3: invoice ids not keyed by vendor (V2's collision)", (s) => s.replaceAll("paid[payer][vendor][id]", "paid[payer][address(0)][id]")],
     ["V3: zero-amount invoice accepted", (s) => s.replace("if (amount == 0) revert ZeroAmount();", "")],
     ["V3: what the vendor received not checked", (s) => s.replace("if (_balanceOf(token, vendor) != before + amount) revert TransferFailed();", "")],
+  ] : []),
+  ...(V4 ? [
+    ["V4: the agent's signature not checked", (s) => s.replace("if (byAgent) _agentSignature(", "if (false) _agentSignature(")],
+    ["V4: the agent signer's key: proof of possession not required", (s) => s.replace("if (!registered || !proven || alg != ALG_ML_DSA_87) revert AgentKeyNotProven", "if (!registered || alg != ALG_ML_DSA_87) revert AgentKeyNotProven")],
+    ["V4: no signer named is not refused", (s) => s.replace("if (signer == address(0)) revert AgentSignerNotSet(msg.sender);", "")],
+    ["V4: the agent's signed bytes omit the amount", (s) => s.replace("payer, agent, vendor, token, amount, id);", "payer, agent, vendor, token, uint256(0), id);")],
+    ["V4: the agent's signed bytes omit the invoice id", (s) => s.replace("payer, agent, vendor, token, amount, id);", "payer, agent, vendor, token, amount, bytes32(0));")],
+    ["V4: the agent's signed bytes omit the token", (s) => s.replace("payer, agent, vendor, token, amount, id);", "payer, agent, vendor, address(0), amount, id);")],
+    ["V4: the agent's signed bytes omit the agent", (s) => s.replace("payer, agent, vendor, token, amount, id);", "payer, address(0), vendor, token, amount, id);")],
   ] : []),
 ];
 

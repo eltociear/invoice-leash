@@ -31,9 +31,10 @@ jobs:
           AGENT: ${{ secrets.LEASH_AGENT }}
           AGENTKEM: ${{ secrets.LEASH_AGENTKEM }}
           VENDOR: ${{ secrets.LEASH_VENDOR }}
+          AGENTSIGNER: ${{ secrets.LEASH_AGENTSIGNER }}
         run: |
           umask 077 && mkdir -p "$HOME/leash"
-          printf 'gas="%s"\nagent=%s\nagentkem=%s\nvendor="%s"\n' "$GAS" "$AGENT" "$AGENTKEM" "$VENDOR" > "$HOME/leash/keys.env"
+          printf 'gas="%s"\nagent=%s\nagentkem=%s\nvendor="%s"\nagentsigner="%s"\n' "$GAS" "$AGENT" "$AGENTKEM" "$VENDOR" "$AGENTSIGNER" > "$HOME/leash/keys.env"
       - name: today's inbox, through the leash
         # one attempt only: a retry could send twice (the script refuses a second run for a logged day)
         env:
