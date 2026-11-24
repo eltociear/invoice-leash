@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Invoice Leash: Desk Console</title>
+<link rel="icon" href="data:,">
 <meta name="description" content="Watch a live InvoiceDeskV3 on QoreChain testnet, or connect a wallet and run your own: deploy a desk, approve a vendor, sign an ML-DSA-87 invoice in your browser, pay it, and watch tampering fail.">
 <style>
 :root{--bg:#0d1117;--panel:#161b22;--line:#30363d;--fg:#e6edf3;--dim:#8b949e;--ok:#3ddc97;--no:#ff7b72;--warn:#e3b341}
@@ -31,7 +32,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}td,th{text-align:left;p
 <h2>2. Run your own desk (your keys, this page)</h2>
 <div class="card">
 <p style="margin-top:0"><b>Why there is no MetaMask button.</b> On this chain an ordinary EVM wallet cannot send anything. We tried, with a fresh funded key, and QoreChain answered: <span class="mono small">“has no usable registered post-quantum key; the EVM lane requires one, like every other lane”</span>. Every transaction needs an ML-DSA-87 key (<a href="https://github.com/eltociear/invoice-leash/blob/main/runs/probes/no-pq-evm.json">the record</a>).</p>
-<p>So the console signs with <b>your own hybrid keys (secp256k1 + ML-DSA-87), on your machine</b>. Run the local signer, then open the link it prints. The page talks to it on 127.0.0.1, and your keys never leave your computer.</p>
+<p>So the console signs with <b>your own hybrid keys (secp256k1 + ML-DSA-87), on your machine</b>. Run the local signer, then open the link it prints. The page talks to it on 127.0.0.1, and your keys never leave your computer. Chrome asks once whether this page may <i>access devices on your local network</i>: allow it, since that is how the page reaches your signer.</p>
 <pre class="card mono small" style="margin:8px 0">node desk.mjs init &amp;&amp; node desk.mjs setup    # once: your company, your InvoiceDeskV3 (GETTING_STARTED.md)
 node desk.mjs serve                            # prints: …/app.html#local=http://127.0.0.1:8742&amp;token=…</pre>
 <div class="row"><div><label for="lurl">Local signer</label><input id="lurl" value="http://127.0.0.1:8742"></div><div><label for="ltok">Token (from desk.mjs serve)</label><input id="ltok" placeholder="paste it, or open the printed link"></div></div>

@@ -157,7 +157,8 @@ node desk.mjs serve      # prints a link to https://eltociear.github.io/invoice-
 
 Open the link to run your desk from the page: the agent on, off or frozen, vendors, limits, the float, the
 inbox (including invoices signed in the page by the public test vendor), triage, "pay in person", and the
-CSV. The page talks only to `127.0.0.1`, and your keys stay on your machine. Only the console's origin may
+CSV. The page talks only to `127.0.0.1`, and your keys stay on your machine. Chrome asks once whether the
+page may access devices on your local network: allow it. Only the console's origin may
 call the signer, and only with the printed token. Why not MetaMask: QoreChain refuses every transaction
 without an ML-DSA-87 key, including a plain EVM wallet's ([`runs/probes/no-pq-evm.json`](runs/probes/no-pq-evm.json)).
 
