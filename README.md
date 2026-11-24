@@ -5,6 +5,7 @@
 ![Invoice Leash: a compromised agent tries every attack; the chain pays only the genuine, in-limit invoices](assets/cover.png)
 
 **Every email and transaction, browsable:** https://eltociear.github.io/invoice-leash/ ·
+**Run it from your browser:** [Desk Console](https://eltociear.github.io/invoice-leash/app.html) (watch the live desks; connect your own desk through a local signer, so your hybrid keys stay on your machine) ·
 **Try to break it, live in your browser:** [attack lab](https://eltociear.github.io/invoice-leash/lab.html) (tamper with invoices, sign your own, check a Q-Day forgery, [take QOR from an account whose private key we publish](https://eltociear.github.io/invoice-leash/lab.html#shor)) ·
 **Threat model:** [THREAT_MODEL.md](THREAT_MODEL.md) · **Quantum readiness:** [QUANTUM_READINESS.md](QUANTUM_READINESS.md) (Q-Day drill: 16 attacks with four accounts' classical keys, 16 refused) ·
 **Demo video (2:50, v2 in fUSD, narrated):** https://youtu.be/K3Teb5sO8JU
@@ -16,7 +17,7 @@
 > npm install && npm run verify
 > ```
 >
-> 104 checks against the live testnet: both deployed contracts are byte-for-byte this source, the
+> 105 checks against the live testnet: both deployed contracts are byte-for-byte this source, the
 > agent's rule is what the chain stores, every attack replayed against the real contracts, where
 > every QOR and fUSD went, every recorded transaction re-read (runs, MCP sessions, the probes below).
 > Last run: [`runs/verify-latest.txt`](runs/verify-latest.txt). CI runs it daily, with 102 Foundry tests and 11 invariants.
@@ -229,7 +230,7 @@ transaction stops the agent, without touching the chain link or the money.
 | PQC stand-in | Local EVMs have no QoreChain precompile, so `0x…0a01` is a stand-in that answers from [`test/fixtures/`](test/fixtures/): 27 (key, signature, message) tuples checked with **real ML-DSA-87** by `test/fixtures.mjs`; unknown tuples fail closed. Keys come from fixed seeds and signing is deterministic, so CI regenerates the files and requires them byte-identical. | `npm run fixtures` |
 | Off chain | the v1 demo inbox and six tamperings, with real ML-DSA-87 and throwaway keys; what the agent and MCP tools are shown and trust (signed amounts, malformed sealed invoices, the company-only message check, expiry, chain id) | `npm test` |
 | Documents | every count the documents state (checks, drill attacks, tests, invariants, mutants) against its source; `verify` fails if its own count drifts from the documents | `npm test` |
-| On chain | 104 read-only checks against the live testnet | `npm run verify` |
+| On chain | 105 read-only checks against the live testnet | `npm run verify` |
 
 ### Cryptography inventory (QoreScan)
 

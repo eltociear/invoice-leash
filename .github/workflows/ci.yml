@@ -26,7 +26,7 @@ jobs:
       - name: offline invoice signatures (ML-DSA-87), page scripts parse
         run: npm test
       - name: docs/ pages match the scripts and recorded runs
-        run: node scripts/site.mjs && node scripts/lab.mjs && node scripts/lab-v1.mjs && git diff --exit-code docs/
+        run: node scripts/site.mjs && node scripts/lab.mjs && node scripts/lab-v1.mjs && node scripts/app.mjs && git diff --exit-code docs/
       - uses: foundry-rs/foundry-toolchain@v1
       - name: contract tests (Foundry, fuzzed; PQC precompile stand-in answers from real ML-DSA-87)
         run: forge test -vv

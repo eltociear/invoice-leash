@@ -25,6 +25,10 @@ against the real contracts, and the live agent's log is checked link by link. Th
 
 ## 3. Watch it run (one minute)
 
+- [The Desk Console](https://eltociear.github.io/invoice-leash/app.html): pick a desk and read it live
+  from the chain (no wallet). With `node desk.mjs serve`, the same page runs your own desk: approve a
+  vendor, sign an invoice in the page with ML-DSA-87, triage, let the agent pay, freeze, export. It was
+  driven end to end in a real browser ([`runs/console-e2e.json`](runs/console-e2e.json)).
 - [The live agent](https://eltociear.github.io/invoice-leash/#live): every day in GitHub Actions,
   unattended, with its key in GitHub Secrets and a decider that obeys every email. Every day the genuine
   invoice is paid and three attacks are refused ([`runs/live/`](runs/live/)).

@@ -1,0 +1,11 @@
+{
+ "what": "an ordinary EVM wallet (a fresh secp256k1 key, funded with 1 QOR, no post-quantum key registered) sends a plain EVM transaction on qorechain-diana",
+ "account": "qor1lfctuxmu0gxag5s229r6ze33gkaea4gphprjd6",
+ "accountEvm": "0xfa70BE1B7c7A0dd4520a5147a1663145BB9eD501",
+ "fundTx": "99EA47F1C8FA1CD977966BB648BB5799F7A500EA88AB783F09F0CF1F16E6E6D2",
+ "attempts": [
+  { "tx": "deploy InvoiceDeskV3 from the wallet (what a MetaMask-style dApp would do)", "result": "REFUSED: failed to broadcast transaction: no open EVM authorisation window" },
+  { "tx": "1 wei to itself", "result": "REFUSED: failed to broadcast transaction: account qor1lfctuxmu0gxag5s229r6ze33gkaea4gphprjd6 has no usable registered post-quantum key; the EVM lane requires one, like every other lane: no open EVM authorisation window" }
+ ],
+ "meaning": "There is no classical-only lane on qorechain-diana: an account without an ML-DSA-87 key cannot send an EVM transaction at all, and one with a key needs a window that only that key can open. A browser wallet holding only a secp256k1 key cannot transact."
+}

@@ -116,6 +116,7 @@ footer{margin-top:64px;color:var(--dim);font-size:14px}
 <h1>Invoice Leash</h1>
 <p class="lede">An invoice-paying AI agent that stays safe when its model does not. The agent's code has no limit check, no vendor check and no signature check; invoices are in fUSD and signed with ML-DSA-87. Every limit lives on QoreChain, so we can hand the agent to an attacker and watch the chain say no.</p>
 <div class="links">
+  <a href="app.html" style="border-color:var(--acc);color:var(--acc)">Desk Console: watch the live desks, or run your own from the browser</a>
   <a href="lab.html" style="border-color:var(--acc);color:var(--acc)">Try to break it: attack lab, sign your own ML-DSA-87 invoice (live, in your browser)</a>
   <a href="#requirements">Track requirements, on chain</a>
   <a href="#found">What we found about spending rules</a>

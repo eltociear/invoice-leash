@@ -28,6 +28,7 @@
 //   node desk.mjs pay <n>                     a person pays inbox item n as the company (the approval path)
 //   node desk.mjs export [file.csv]           every payment the desk made for you, from the chain, as CSV
 //   node desk.mjs mcp                         an MCP config that gives an AI agent your inbox and the leash
+//   node desk.mjs serve [port]                the Desk Console's local signer (docs/app.html): your keys stay here
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync, chmodSync } from "node:fs";
@@ -54,7 +55,9 @@ const NO_DENOM = "erc20/0x4604e7e45b2ecdbfbdc157103f5b2b62cb16451a"; // fBTC, 1-
 const provider = new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID, { staticNetwork: true });
 const fusd = (u) => `${formatUnits(u, 6).replace(/\.0$/, "")} fUSD`;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const say = (s) => console.log(s);
+// output goes to the terminal, or, while `serve` handles a request, to that request's log
+let sink = null;
+const say = (s) => (sink ? sink.push(String(s)) : console.log(s));
 const fail = (s) => { throw new Error(s); };
 const opt = (args, name, dflt) => { const i = args.indexOf(`--${name}`); return i >= 0 ? args[i + 1] : dflt; };
 const view = async (to, i, fn, a) => i.decodeFunctionResult(fn, await provider.call({ to, data: i.encodeFunctionData(fn, a) }));
@@ -493,6 +496,72 @@ const cmds = {
     say(`\ndone: InvoiceDeskV3 at ${addr}. Tell your vendors the new desk address: invoices name the desk they are for.`);
   },
 
+  /**
+   * The Desk Console's local signer: https://eltociear.github.io/invoice-leash/app.html talks to this server
+   * on 127.0.0.1, and every action runs here with your own hybrid (secp256k1 + ML-DSA-87) keys. The keys
+   * never leave this machine. Only the console's origin may call it, with the token printed below.
+   */
+  async serve(port = "8742") {
+    const { createServer } = await import("node:http");
+    const { randomBytes } = await import("node:crypto");
+    const { tmpdir } = await import("node:os");
+    const token = process.env.LEASH_SERVE_TOKEN ?? randomBytes(16).toString("hex");
+    const ALLOWED = new Set(["https://eltociear.github.io", "http://127.0.0.1:8765", "http://localhost:8765", ...(process.env.LEASH_SERVE_ORIGIN ? [process.env.LEASH_SERVE_ORIGIN] : [])]);
+    let busy = Promise.resolve();
+    const run = (fn) => { // one action at a time, with its output captured
+      const p = busy.then(async () => { sink = []; try { const value = await fn(); return { ok: true, log: sink.join("\n"), value }; } catch (e) { return { ok: false, log: sink.join("\n"), error: e.message || String(e) }; } finally { sink = null; } });
+      busy = p.catch(() => {}); return p;
+    };
+    const snapshot = async () => {
+      const o = await account("owner"), aa = await account("agentacct"), g = await account("gas"), d = D();
+      const snap = { company: o.cosmos, companyEvm: o.evmAddr, qor: fmt(await balance(o.cosmos)), feeWallet: fmt(await balance(g.cosmos)), agentAccount: aa.cosmos, desk: d.invoiceDesk ?? null, version: d.version ?? (d.invoiceDesk ? 2 : null), vendors: d.vendors ?? {} };
+      if (d.invoiceDesk) {
+        const [[bal], [allow], lim, [left], [on]] = await Promise.all([view(FUSD, ERC20, "balanceOf", [o.evmAddr]), view(FUSD, ERC20, "allowance", [o.evmAddr, d.invoiceDesk]), view(d.invoiceDesk, desk, "limits", [o.evmAddr, FUSD]), view(d.invoiceDesk, desk, "remainingToday", [o.evmAddr, FUSD]), view(d.invoiceDesk, desk, "isAgent", [o.evmAddr, aa.evmAddr])]);
+        const coin = ((await chain.getJson(`/cosmos/bank/v1beta1/balances/${o.cosmos}`)).balances ?? []).find((b) => b.denom.toLowerCase() === `erc20:${FUSD}`.toLowerCase());
+        const link = (await links(aa.cosmos)).find((a) => a.pubkeyHex.toLowerCase() === hex(agentKey().pk));
+        Object.assign(snap, { float: fusd(bal), treasury: fusd(coin?.amount ?? 0), allowance: fusd(allow), perPayment: fusd(lim[0]), daily: fusd(lim[1]), leftToday: fusd(left), agentOn: on,
+          agentKey: !link ? "not linked" : link.revoked ? "revoked" : Number(link.expiryUnix) * 1000 < Date.now() ? "expired" : `linked until ${new Date(Number(link.expiryUnix) * 1000).toISOString().slice(0, 16)}Z` });
+      }
+      return snap;
+    };
+    const routes = {
+      "GET /status": async () => { const r = await run(() => cmds.status()); return { ...r, value: await snapshot(), next: (r.log.match(/next: (.*)$/m) ?? [])[1] }; },
+      "GET /triage": async () => { const r = await run(() => cmds.triage()); return { ...r, value: existsSync(TRIAGE) ? JSON.parse(readFileSync(TRIAGE, "utf8")).items : [] }; },
+      "POST /run": () => run(() => cmds.run()),
+      "POST /pay": (q) => run(() => cmds.pay(q.get("n"))),
+      "POST /agent": (q) => run(() => cmds.agent(q.get("do"), q.get("hours") ?? "168")),
+      "POST /freeze": () => run(() => cmds.freeze()),
+      "POST /unfreeze": () => run(() => cmds.unfreeze()),
+      "POST /vendor": (q) => run(() => cmds.vendor(q.get("do"), q.get("address"), q.get("name") ?? "")),
+      "POST /limits": (q) => run(() => cmds.limits(q.get("per"), q.get("daily"))),
+      "POST /treasury": (q) => run(() => cmds.treasury(q.get("float") ?? "400")),
+      "POST /inbox": (q, body) => run(async () => { const f = join(tmpdir(), `leash-inbox-${Date.now()}.json`); writeFileSync(f, body); await cmds.inbox("add", f); }),
+      "GET /export": async () => { const f = join(tmpdir(), `leash-export-${Date.now()}.csv`); const r = await run(() => cmds.export(f)); return { ...r, value: existsSync(f) ? readFileSync(f, "utf8") : "" }; },
+    };
+    createServer(async (req, res) => {
+      const origin = req.headers.origin;
+      if (origin && ALLOWED.has(origin)) {
+        res.setHeader("access-control-allow-origin", origin);
+        res.setHeader("access-control-allow-headers", "authorization, content-type");
+        res.setHeader("access-control-allow-methods", "GET, POST");
+        if (req.headers["access-control-request-private-network"]) res.setHeader("access-control-allow-private-network", "true"); // Chrome: a public page asking a local server
+      }
+      if (req.method === "OPTIONS") return res.end();
+      const send = (code, obj) => { res.writeHead(code, { "content-type": "application/json" }); res.end(JSON.stringify(obj)); };
+      if (origin && !ALLOWED.has(origin)) return send(403, { ok: false, error: `origin ${origin} may not use this desk` });
+      if (req.headers.authorization !== `Bearer ${token}`) return send(401, { ok: false, error: "wrong or missing token: use the link desk.mjs serve printed" });
+      const u = new URL(req.url, "http://127.0.0.1"), route = routes[`${req.method} ${u.pathname}`];
+      if (!route) return send(404, { ok: false, error: `no route ${req.method} ${u.pathname}` });
+      let body = ""; for await (const c of req) body += c;
+      try { send(200, await route(u.searchParams, body)); } catch (e) { send(500, { ok: false, error: e.message }); }
+    }).listen(Number(port), "127.0.0.1", () => {
+      console.log(`Desk Console signer for ${D().invoiceDesk ?? "(no desk yet)"} on http://127.0.0.1:${port}`);
+      console.log(`open: https://eltociear.github.io/invoice-leash/app.html#local=http://127.0.0.1:${port}&token=${token}`);
+      console.log("Your keys stay on this machine. Ctrl-C to stop.");
+    });
+    await new Promise(() => {});
+  },
+
   async mcp() {
     say(JSON.stringify({ mcpServers: { "invoice-leash": { command: "node", args: [new URL("./mcp/server.mjs", import.meta.url).pathname], env: { LEASH_DIR: HOME, LEASH_DEPLOYMENT: join(HOME, "desk.json"), LEASH_INBOX2: INBOX } } } }, null, 2));
     console.error("\nsave as .mcp.json (or pass with claude --mcp-config). The server holds only the agent's key; the desk and the chain hold the limits.");
@@ -500,5 +569,5 @@ const cmds = {
 };
 
 const [cmd, ...args] = process.argv.slice(2);
-if (!cmds[cmd]) { say(readFileSync(new URL(import.meta.url), "utf8").split("\n").filter((l) => l.startsWith("//")).slice(0, 26).map((l) => l.slice(3)).join("\n")); process.exit(cmd ? 1 : 0); }
+if (!cmds[cmd]) { say(readFileSync(new URL(import.meta.url), "utf8").split("\n").filter((l) => l.startsWith("//")).slice(0, 32).map((l) => l.slice(3)).join("\n")); process.exit(cmd ? 1 : 0); }
 try { await cmds[cmd](...args); } catch (e) { console.error(`\n${e.message || e.shortMessage || e.code || e}`); if (process.env.LEASH_DEBUG) console.error(e); process.exitCode = 1; }

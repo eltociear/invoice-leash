@@ -476,6 +476,20 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
       "desk.mjs freeze, live: one command switched the agent off in the desk and revoked its key on chain (then unfreeze restored it)", `(revoke ${rv?.slice(0, 8)}…)`);
   }
 
+  // the Desk Console, driven in a real browser: an invoice signed in the page with ML-DSA-87 was paid on chain
+  {
+    const ce = json("runs/console-e2e.json"), v = ce.signedInBrowser;
+    const i3c = new Interface(JSON.parse(readFileSync(new URL("build/InvoiceDeskV3.json", root), "utf8")).abi);
+    const [p] = i3c.decodeFunctionResult("paid", await provider.call({ to: ce.desk, data: i3c.encodeFunctionData("paid", [ce.payerEvm, v.vendor, v.id]) }));
+    const t = (await rest(`/cosmos/tx/v1beta1/txs/${ce.paidTx}`))?.tx_response;
+    const { invoiceMessageV2 } = await import("../lib/invoices.mjs");
+    const pk = status.decodeFunctionResult("pqcKeyStatus", await provider.call({ to: "0x0000000000000000000000000000000000000a02", data: status.encodeFunctionData("pqcKeyStatus", [v.vendor]) }))[2];
+    const { pqcVerify } = await import("@qorechain/sdk");
+    const sigOk = pqcVerify(Uint8Array.from(Buffer.from(pk.slice(2), "hex")), invoiceMessageV2({ desk: ce.desk, payer: ce.payerEvm, vendor: v.vendor, token: v.token, amount: BigInt(v.amount), id: v.id, dueBy: v.dueBy }), Uint8Array.from(Buffer.from(v.signature.slice(2), "hex")));
+    ok(p && sigOk && t?.code === 0 && !t.events.some((e) => e.type === "abstractaccount_execution_failed"),
+      "Desk Console: an invoice signed in the browser (noble ML-DSA-87, as the public test vendor) verifies under the vendor's on-chain key and was paid by the agent on chain", `(${v.ref}, ${ce.paidTx.slice(0, 8)}…)`);
+  }
+
   // the randomized attack campaign against the live desk (runs/campaign.json): regenerate a sample, ask again
   {
     const cp = json("runs/campaign.json"), live = json("runs/live/desk.json").v2;

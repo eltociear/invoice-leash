@@ -110,6 +110,15 @@ of a window the company has just opened. With a desk window, that buys one call 
 used). The allowance window (target fUSD) is the widest: one `fUSD.transfer` of the float. The
 allowance is set rarely, so keep the float small when you open it.
 
+### No classical-only lane at all
+
+An ordinary EVM wallet, a fresh secp256k1 key funded with 1 QOR and no post-quantum key, cannot send
+anything on `qorechain-diana`: *"account … has no usable registered post-quantum key; the EVM lane
+requires one, like every other lane"* ([`runs/probes/no-pq-evm.json`](runs/probes/no-pq-evm.json)). So a
+quantum attacker who derives a key nobody registered gets nowhere either, and that is also why the
+[Desk Console](https://eltociear.github.io/invoice-leash/app.html) signs through your own hybrid keys, not
+a MetaMask-style wallet.
+
 ## Every piece of cryptography, and what a quantum computer does to it
 
 | Where | Algorithm | Quantum status | If broken, the attacker gets | Evidence |

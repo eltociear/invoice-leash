@@ -1,8 +1,8 @@
 {
  "chain": "qorechain-diana",
- "block": 10651340,
- "at": "2026-11-24T06:09:16.307Z",
- "passed": 104,
+ "block": 10655767,
+ "at": "2026-11-24T07:58:30.770Z",
+ "passed": 105,
  "failed": 0,
  "checks": [
   {
@@ -297,7 +297,7 @@
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
    "check": "the lab can show the human path: company holds ≥300 fUSD with ≥300 allowance and ≥80 QOR; v1 payer ≥5 QOR",
-   "detail": "(400.0 fUSD, allowance 970.0, 129.16 QOR; v1 8.180 QOR)"
+   "detail": "(400.0 fUSD, allowance 970.0, 126.92 QOR; v1 8.180 QOR)"
   },
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
@@ -452,7 +452,7 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "live agent: each of its 4 logged transactions re-read from the chain agrees; it last ran 0 h ago (must be < 72 h)",
+   "check": "live agent: each of its 4 logged transactions re-read from the chain agrees; it last ran 2 h ago (must be < 72 h)",
    "detail": "(desk 0x54bdEa75…, .github/workflows/live.yml)"
   },
   {
@@ -466,6 +466,12 @@
    "ok": true,
    "check": "desk.mjs freeze, live: one command switched the agent off in the desk and revoked its key on chain (then unfreeze restored it)",
    "detail": "(revoke 4BDD904E…)"
+  },
+  {
+   "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
+   "ok": true,
+   "check": "Desk Console: an invoice signed in the browser (noble ML-DSA-87, as the public test vendor) verifies under the vendor's on-chain key and was paid by the agent on chain",
+   "detail": "(PTV-HVHB1G, 06561FD5…)"
   },
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",

@@ -149,6 +149,18 @@ and allowance. It switches the agent off on the old desk, sets the old allowance
 agent's key. `export` keeps the old desk's history. Then run `node desk.mjs inbox archive`, and ask
 vendors to re-sign any open invoices for the new desk address.
 
+## In the browser: the Desk Console
+
+```sh
+node desk.mjs serve      # prints a link to https://eltociear.github.io/invoice-leash/app.html#local=…&token=…
+```
+
+Open the link to run your desk from the page: the agent on, off or frozen, vendors, limits, the float, the
+inbox (including invoices signed in the page by the public test vendor), triage, "pay in person", and the
+CSV. The page talks only to `127.0.0.1`, and your keys stay on your machine. Only the console's origin may
+call the signer, and only with the printed token. Why not MetaMask: QoreChain refuses every transaction
+without an ML-DSA-87 key, including a plain EVM wallet's ([`runs/probes/no-pq-evm.json`](runs/probes/no-pq-evm.json)).
+
 ## Day to day
 
 | Task | Command |

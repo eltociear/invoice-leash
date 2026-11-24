@@ -10,6 +10,10 @@ for (const f of readdirSync(docs).filter((f) => f.endsWith(".html"))) {
     try { new Function(js); n++; } catch (e) { console.error(`✗ docs/${f}: ${e.message}`); process.exit(1); }
   }
 }
+// standalone page scripts (docs/*.js) must parse too
+for (const f of readdirSync(docs).filter((f) => f.endsWith(".js"))) {
+  try { new Function(readFileSync(new URL(f, docs), "utf8")); n++; } catch (e) { console.error(`✗ docs/${f}: ${e.message}`); process.exit(1); }
+}
 const { ml_dsa87 } = await import(new URL("vendor/mldsa87.min.js", docs));
 const kp = generatePqcKeypair(new Uint8Array(32).fill(9)), msg = new TextEncoder().encode("invoice");
 const sig = ml_dsa87.sign(msg, kp.secretKey);
