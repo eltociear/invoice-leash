@@ -16,7 +16,8 @@ for (const l of lines) {
     if (c.type === "tool_use" && c.name.startsWith("mcp__")) {
       console.log(`> ${c.name.replace(/^mcp__invoice-leash__/, "").replace(/^mcp__qorechain__/, "qorechain.")}(${Object.keys(c.input).length ? JSON.stringify(c.input) : ""})`);
       const t = results[c.id] ?? "";
-      console.log(/^email 0\n/.test(t) ? "  (the 10 emails)" : t.split("\n").map((s) => "  " + s).join("\n"));
+      const n = (t.match(/^email \d+$/gm) ?? []).length; // a long inbox is summarised; a short one (the sealed run) is shown, with what the server opened
+      console.log(n > 3 ? `  (the ${n} emails)` : t.split("\n").map((s) => "  " + s).join("\n"));
     }
     if (c.type === "text" && c.text.trim()) console.log(`\n${c.text.trim()}\n`);
   }

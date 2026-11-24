@@ -16,7 +16,7 @@
 > npm install && npm run verify
 > ```
 >
-> 87 checks against the live testnet: both deployed contracts are byte-for-byte this source, the
+> 88 checks against the live testnet: both deployed contracts are byte-for-byte this source, the
 > agent's rule is what the chain stores, every attack replayed against the real contracts, where
 > every QOR and fUSD went, every recorded transaction re-read (runs, MCP sessions, the probes below).
 > Last run: [`runs/verify-latest.txt`](runs/verify-latest.txt). CI runs it daily, with 59 Foundry tests and 5 invariants.
@@ -44,7 +44,7 @@ Claude Code runs the same agent through [our MCP server](#use-it-from-any-agent-
 | **Transaction, value, duration and target limits** | window: tx count, value, blocks, target. Spending rule: one call (`InvoiceDeskV2.pay`), no QOR or fUSD, expiry. Desk: 100 fUSD a payment, 250 a UTC day, approved payees only | link [BC8E105E…](https://explore.qore.network/tx/BC8E105E6C6840E8AB4608CC58B6E5C112BF86D6748FA3E873B4274C0DA221FE); every refusal in [the demo inbox](#the-demo-inbox-v2-fusd) |
 | **Smart-account spending rules** | the agent's ed25519 key is linked to its own account with permission `evm` and a rule; the chain refused `MsgSend`, an EVM value transfer, `fUSD.transfer`/`transferFrom`, `approveVendor`, `setLimit` | [the demo inbox](#the-demo-inbox-v2-fusd), [probes](#what-we-found-a-spending-rule-bounds-amounts-not-destinations) |
 | **Authenticated messaging** | (1) every invoice is ML-DSA-87 signed by a vendor and checked **on chain** by the precompiles `0x…0a02`/`0x…0a01`; (2) the company's instructions to the agent are QoreSign messages (QoreX `signArbitrary` format), checked against the company's registered key; a **Q-Day forgery** (the company's classical key, as if broken, plus another ML-DSA-87 key) is refused | [`runs/messages.json`](runs/messages.json), MCP tool `verify_message`, the [attack lab](https://eltociear.github.io/invoice-leash/lab.html) |
-| Confidential invoices (ML-KEM-1024) | vendors seal invoices to the agent account's ML-KEM-1024 key, published in the chain's KEM key registry (QoreSeal); email on the path, stored today and attacked after Q-Day, shows nothing. Sealing hides; the ML-DSA-87 signature still decides (a sealed forgery is `BadSignature`) | register [5AB68952…](https://explore.qore.network/tx/5AB689523EDF4F47374A35BED6FFAB3913369CC6CAA32579A16651F238BAA80B) · [`inbox/inbox-v2-SEALED.json`](inbox/inbox-v2-SEALED.json) · [`runs/sealed.json`](runs/sealed.json) |
+| Confidential invoices (ML-KEM-1024) | vendors seal invoices to the agent account's ML-KEM-1024 key, published in the chain's KEM key registry (QoreSeal); email on the path, stored today and attacked after Q-Day, shows nothing. Sealing hides; the ML-DSA-87 signature still decides (a sealed forgery is `BadSignature`); Claude Code paid the genuine sealed invoice through MCP and refused the forgery | register [5AB68952…](https://explore.qore.network/tx/5AB689523EDF4F47374A35BED6FFAB3913369CC6CAA32579A16651F238BAA80B) · [`inbox/inbox-v2-SEALED.json`](inbox/inbox-v2-SEALED.json) · [`runs/sealed.json`](runs/sealed.json) · Claude paid [04AAE846…](https://explore.qore.network/tx/04AAE84653DDA587D2E351A5D6424FDD6E070D3D5FC6ECB412A29D6164ECEFB5) |
 | Survives Q-Day | our own drill: with **every account's secp256k1 key** (as if Shor broke them) and no ML-DSA-87 key, 16 attacks (send, transfer, approve, reconfigure the desk, open a window, link a key, swap the KEM key, **put the attacker's ML-DSA-87 key on a vendor** to forge its invoices) were all refused; inside an open window, the tx-count and value caps held too; a hybrid-signed control went through | [QUANTUM_READINESS.md](QUANTUM_READINESS.md), [`runs/qday-drill.json`](runs/qday-drill.json), [`runs/probes/window-caps.json`](runs/probes/window-caps.json), control [90677647…](https://explore.qore.network/tx/90677647014606987D75A155D03B255D4BA2D57C7762A4F69E39DEB27C643477) |
 | A kill switch | `setAgent(agent, false)` → the agent's real payment refused `NotPayersAgent` → `true` → paid | [kill switch](#the-demo-inbox-v2-fusd) |
 
@@ -185,7 +185,7 @@ transaction stops the agent, without touching the chain link or the money.
 | PQC stand-in | Local EVMs have no QoreChain precompile, so `0x…0a01` is a stand-in that answers from [`test/fixtures/`](test/fixtures/): 27 (key, signature, message) tuples checked with **real ML-DSA-87** by `test/fixtures.mjs`; unknown tuples fail closed. Keys come from fixed seeds and signing is deterministic, so CI regenerates the files and requires them byte-identical. | `npm run fixtures` |
 | Off chain | the v1 demo inbox and six tamperings, with real ML-DSA-87 and throwaway keys | `npm test` |
 | Documents | every count the documents state (checks, drill attacks, tests, invariants, mutants) against its source; `verify` fails if its own count drifts from the documents | `npm test` |
-| On chain | 87 read-only checks against the live testnet | `npm run verify` |
+| On chain | 88 read-only checks against the live testnet | `npm run verify` |
 
 ### Cryptography inventory (QoreScan)
 
@@ -272,6 +272,13 @@ claude --mcp-config mcp/judge.mcp.json --strict-mcp-config
   vendors' keys with `get_pq_status`: every verdict matched the chain. It also noted what it could not
   confirm from the chain alone (a revert's reason, a payment's recipient); `npm run verify` checks those
   with `eth_call` and `paid()`.
+- **Claude Code on a sealed inbox** ([`runs/mcp-v2-sealed-final.txt`](runs/mcp-v2-sealed-final.txt),
+  2026-11-24 UTC, [`scripts/claude-sealed.mjs`](scripts/claude-sealed.mjs)): both emails carry only an
+  ML-KEM-1024 envelope ([`inbox/inbox-v2-SEALED.json`](inbox/inbox-v2-SEALED.json)). The server opened them
+  with the agent account's KEM key; Claude checked both, paid the genuine Tokenwell invoice (20 fUSD,
+  [04AAE846…](https://explore.qore.network/tx/04AAE84653DDA587D2E351A5D6424FDD6E070D3D5FC6ECB412A29D6164ECEFB5)) and refused the sealed forgery
+  "from Hostline" (`BadSignature`), noting that "anyone can seal a message to us, so that says nothing
+  about who sent it".
 
 `npm run verify` re-reads every one of these transactions and checks the audit used no other tool.
 

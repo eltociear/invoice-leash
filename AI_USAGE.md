@@ -11,7 +11,7 @@ the AI's work was checked, and the mistakes the AI made that those checks caught
 | **AI** | Claude Code (Anthropic), model `claude-opus-5-5`: one main session that writes code, runs the testnet steps and reports, plus sub-agents started for independent reviews and research |
 | **Human** | the team (one person, [@eltociear](https://github.com/eltociear)): goals, product decisions, accounts and wallets, everything that needs a human identity, and the final call on what ships |
 | **Written by the AI** | nearly all code, tests, scripts, documentation, the demo video (slides, narration script, music) and the cover image |
-| **How the AI's work is checked** | not by trusting it: `npm run verify` (87 read-only checks against the live testnet), 59 Foundry tests and 5 invariants, a 14-mutant check, Slither, QoreScan, browser tests, CI daily, and AI reviewers that did not write the code |
+| **How the AI's work is checked** | not by trusting it: `npm run verify` (88 read-only checks against the live testnet), 59 Foundry tests and 5 invariants, a 14-mutant check, Slither, QoreScan, browser tests, CI daily, and AI reviewers that did not write the code |
 
 ## The workflow
 
@@ -116,5 +116,7 @@ Listed because they show why the checks exist.
 - **Claude Code through MCP.** `runs/mcp-v2-claude-final.txt`: Claude Code, with nothing but the
   invoice-leash MCP server, dry-ran all nine invoices and paid the three genuine ones (220 fUSD).
   `runs/mcp-v2-compromised-final.txt`: an obey-everything client with the same tools was refused 12 times.
+- **Claude Code on a sealed inbox.** `runs/mcp-v2-sealed-final.txt`: the two invoices arrived as ML-KEM-1024
+  envelopes; the server opened them; Claude paid the genuine one (20 fUSD) and refused the sealed forgery.
 - **Claude Code as auditor.** `runs/mcp-v2-audit-final.txt`: given read-only tools and QoreChain's own
   MCP server, and told not to trust the agent's server, it matched all 15 transactions on chain.
