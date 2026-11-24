@@ -48,7 +48,7 @@ signature with QoreChain's precompile.
 |---|---|
 | Works (25) | `npm run verify`; 100% coverage of the contracts, 17 properties proved with Halmos ([`runs/halmos.txt`](runs/halmos.txt)); the live agent; a second company set up from nothing with `desk.mjs` and upgraded to InvoiceDeskV3 ([`runs/own-company/`](runs/own-company/), [`runs/own-company-v3/`](runs/own-company-v3/)); the attack campaign ([`runs/campaign.json`](runs/campaign.json)) |
 | QoreChain tech (25) | the PQC precompiles in the contract; hybrid accounts; an authenticator with a spending rule; EVM windows with `allowed_targets`; `MsgExecuteEVM`; QoreSign; QoreSeal and the KEM registry; `MsgConvertCoin` / `MsgConvertERC20`; the AMM; QoreScan; QoreChain's MCP server |
-| Post-quantum (20) | [QUANTUM_READINESS.md](QUANTUM_READINESS.md): every algorithm in the system and what a quantum computer does to it; the Q-Day drill; Shor's gift |
+| Post-quantum (20) | [QUANTUM_READINESS.md](QUANTUM_READINESS.md): every algorithm in the system and what a quantum computer does to it; the Q-Day drill; Shor's gift; on InvoiceDeskV4 the agent's own classical key pays nothing without its ML-DSA-87 signature ([live](runs/probes/v4-agent-sig.json)); no classical-only lane on the chain at all ([record](runs/probes/no-pq-evm.json)) |
 | Originality (15) | the finding above; an agent whose key is kept where it can leak, on purpose |
 | Clarity (15) | the [site](https://eltociear.github.io/invoice-leash/), the [video](https://youtu.be/K3Teb5sO8JU), [GETTING_STARTED.md](GETTING_STARTED.md), [THREAT_MODEL.md](THREAT_MODEL.md) |
 
@@ -65,6 +65,8 @@ shortened). These are the chain's messages, not ours.
 | Inside a window, a call to a target it does not list | the chain | `the EVM authorisation window for … does not admit this transaction: the window does not list 0x97143B77… as an allowed recipient` | [`runs/probes/window.json`](runs/probes/window.json) |
 | Inside a window, past its transaction or value cap | the chain | `does not admit this transaction (remaining: 89 blocks, 0 transactions, 87250 uqor; this transaction needs 12750 uqor): EVM authorisation window exhausted` | [`runs/probes/window-caps.json`](runs/probes/window-caps.json) |
 | The agent's key asks for a direct fUSD transfer (a prompt injection) | the chain's spending rule | `a linked key with a spending rule may call 0x97143B77… with data only if the rule lists the call in allowed_evm_calls … authenticator not permitted for this action` | [live log](runs/live/log.jsonl) |
+| The agent's classical key alone, on InvoiceDeskV4 (as after Q-Day) | InvoiceDeskV4, via the ML-DSA-87 precompile | `BadAgentSignature` | [`runs/probes/v4-agent-sig.json`](runs/probes/v4-agent-sig.json) |
+| An ordinary EVM wallet with no post-quantum key | the chain | `has no usable registered post-quantum key; the EVM lane requires one, like every other lane` | [`runs/probes/no-pq-evm.json`](runs/probes/no-pq-evm.json) |
 | A forged invoice, or one whose amount was edited | InvoiceDeskV3, via the ML-DSA-87 precompile | `BadSignature` | [live log](runs/live/log.jsonl), [`runs/campaign.json`](runs/campaign.json) |
 | An invoice from a vendor the company never approved | InvoiceDeskV3 | `UnknownVendor` | [`runs/campaign.json`](runs/campaign.json) |
 | Over the agent's limit; past due (agent); zero amount | InvoiceDeskV3 | `OverPerPaymentLimit`, `OverDailyLimit`, `PastDue`, `ZeroAmount` | [`runs/own-company-v3/`](runs/own-company-v3/) |
