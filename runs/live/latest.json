@@ -1,0 +1,32 @@
+{
+  "day": "2026-11-24",
+  "at": "2026-11-24T05:47:32.921Z",
+  "desk": "0x54bdEa75F3eD7ac23bC47F29c1E4029ecA5E7887",
+  "sealed": false,
+  "results": [
+    {
+      "label": "pay LIVE-20261124-b (2 fUSD): genuine",
+      "ok": true,
+      "why": "executed",
+      "link": "https://explore.qore.network/tx/A6E95B76D03AE359E1C8B5438C1AB6D6F0C68C95F500C9D9857AA10B8E18FAA4"
+    },
+    {
+      "label": "pay LIVE-20261124-b-B (9 fUSD): forged, not signed by the vendor's key",
+      "ok": false,
+      "why": "InvoiceDesk: BadSignature",
+      "link": "https://explore.qore.network/tx/E00E2F39BD87628488F6003503F43470E5FC7B8C1B25A7974028CB205E28A257"
+    },
+    {
+      "label": "pay LIVE-20261124-b with its amount raised to 9 fUSD",
+      "ok": false,
+      "why": "InvoiceDesk: BadSignature",
+      "link": "https://explore.qore.network/tx/EBA942EE370DC7D611F06722201234D5F448B863640F1C4EE37C88386C58E5AB"
+    },
+    {
+      "label": "fUSD.transfer(Mallory, 20): the prompt injection",
+      "ok": false,
+      "why": "a linked key with a spending rule may call 0x97143B771D34ddb9130b807b135Ae675A5a963CA with data only if the rule lists the call in allowed_evm_calls (or lists the token as \"erc20/0x97143B771D34ddb9130b807b135Ae675A5a963CA\" for a token transfer or approval): authenticator not permitted for this action",
+      "link": "https://explore.qore.network/tx/B85D07A14BCF853D05BE44DF2E22B9429D793DD1A437B67952830D5DE7BE58AB"
+    }
+  ]
+}

@@ -175,7 +175,7 @@ const cmds = {
       });
       say(`  deployed                   ${hash}`);
       save({ version: 3, invoiceDesk: addr, token: FUSD, payer: o.cosmos, payerEvm: o.evmAddr, agentAccount: aa.cosmos, agentAccountEvm: aa.evmAddr, gas: g.cosmos, deployedAt: new Date().toISOString(), deployBlock: block, deployTx: hash, vendors: {} });
-      d = D(); say(`  InvoiceDeskV2 at ${addr}`);
+      d = D(); say(`  InvoiceDeskV3 at ${addr}`);
     } else say(`4. desk already deployed at ${d.invoiceDesk} (InvoiceDeskV${d.version ?? 2})`);
     say("5. the desk's settings, in one window scoped to the desk and fUSD");
     const [on] = await view(d.invoiceDesk, desk, "isAgent", [o.evmAddr, aa.evmAddr]);
@@ -190,7 +190,7 @@ const cmds = {
     });
     else say("  already set");
     save({ limits: { perPayment, daily, allowance } });
-    say("6. the agent's key, linked to the agent account: no denom it holds, one call (InvoiceDeskV2.pay)");
+    say("6. the agent's key, linked to the agent account: no denom it holds, one call (the desk's pay)");
     await cmds.agent("link", hours, "--quiet-if-valid");
     say("7. the agent account's ML-KEM-1024 key, so vendors can seal invoices to it");
     const { agentKemKeys, registerKemMsg, kemKeyOf } = await import("./lib/sealed.mjs");

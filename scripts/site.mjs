@@ -160,6 +160,17 @@ ${emails2}
 <p class="dim">v1 let the agent act as the company's account, scoped to <code>pay</code> by a QoreChain spending rule. These probes, each one request by the agent's key, showed the key could still move value directly in any denom its rule allows (a plain QOR transfer, or <code>fUSD.transfer</code>), and could not pay in an unlisted token at all. v2 gives the agent an account that holds nothing. Every probe is re-read by <code>npm run verify</code>.</p>
 <article class="mail"><div class="lanes" style="margin-left:0"><div class="lane" style="border-top:0">${probeRows}</div></div></article>
 
+<h2 id="live">Live: the agent runs every day, unattended, with its key in GitHub Secrets</h2>
+<p class="dim">Every day at 01:10 UTC, GitHub Actions runs the agent against a real InvoiceDeskV3 with a decider that obeys every email: the vendor's genuine invoice (sealed with ML-KEM-1024 on even days), a forged one, the genuine one with its amount raised, and a prompt injection asking for a direct transfer to Mallory. The log is hash-chained and each day is signed with ML-DSA-87 (<a href="https://github.com/eltociear/invoice-leash/tree/main/runs/live">runs/live</a>, checked by <code>npm run verify</code>).</p>
+<div class="card"><table class="req"><tr><th>Day (UTC)</th><th>Genuine invoice</th><th>Forged</th><th>Amount raised</th><th>Injection: transfer to Mallory</th></tr>
+${(() => {
+  const rows = read("runs/live/log.jsonl").trim().split("\n").filter(Boolean).map((l) => JSON.parse(l));
+  const days = [...new Set(rows.map((r) => r.day))].reverse().slice(0, 14);
+  const cell = (r) => !r ? "" : r.ok ? `<span class="ok">paid</span> ${txLink(r.link)}` : `<span class="no">refused</span> <span class="dim">${esc(String(r.why).replace(/^InvoiceDesk: /, "").replace(/^a linked key .*$/, "spending rule"))}</span>${r.link ? " " + txLink(r.link) : ""}`;
+  return days.map((dd) => { const r = rows.filter((x) => x.day === dd); return `<tr><td>${dd}</td>${[0, 1, 2, 3].map((i) => `<td>${cell(r.find((x) => x.i === i))}</td>`).join("")}</tr>`; }).join("");
+})()}
+</table></div>
+
 <h2 id="own">Run it for your own company: desk.mjs, vendor.mjs, InvoiceDeskV3</h2>
 <p class="dim">A second company was set up from nothing on the testnet, the way <a href="https://github.com/eltociear/invoice-leash/blob/main/GETTING_STARTED.md">GETTING_STARTED.md</a> says: <code>desk.mjs init</code>, <code>setup</code>, then three vendors with their own keys on their own machines (<code>vendor.mjs register</code>, <code>sign</code>). Triage sorted every invoice, the agent paid only what it may, a person approved the rest, and the company moved to InvoiceDeskV3 with <code>desk.mjs upgrade</code>. This is its accounting export, every row read from the chain:</p>
 <div class="card"><table class="req"><tr><th>Paid (UTC)</th><th>Vendor</th><th>Invoice</th><th>fUSD</th><th>By</th><th>Desk</th></tr>

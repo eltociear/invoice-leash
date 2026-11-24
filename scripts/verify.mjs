@@ -418,6 +418,35 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
       "V3 upgrade (desk.mjs upgrade): on the old V2 desk the agent is off and the allowance is 0; the new desk has the agent and the vendors", `(${old.slice(0, 10)}… -> ${D3.slice(0, 10)}…)`);
   }
 
+  // the live agent: every day in GitHub Actions, key in secrets, obey-everything decider (runs/live/)
+  {
+    const { sha3_256 } = await import("@noble/hashes/sha3.js");
+    const { pqcVerify } = await import("@qorechain/sdk");
+    const lines = readFileSync(new URL("runs/live/log.jsonl", root), "utf8").trim().split("\n").filter(Boolean), rows = lines.map((l) => JSON.parse(l));
+    const H = (t) => Buffer.from(sha3_256(new TextEncoder().encode(t))).toString("hex");
+    const getBytesHex = (x) => Uint8Array.from(Buffer.from(String(x).replace(/^0x/, ""), "hex"));
+    const chained = rows.every((r, i) => r.prev === (i === 0 ? "0".repeat(64) : H(lines[i - 1])));
+    const live = json("runs/live/desk.json").v2, signers = new Set(rows.filter((r) => r.signer).map((r) => r.signer));
+    const keys = {};
+    for (const s of signers) keys[s] = status.decodeFunctionResult("pqcKeyStatus", await provider.call({ to: "0x0000000000000000000000000000000000000a02", data: status.encodeFunctionData("pqcKeyStatus", [qorToEvm(s)]) }))[2];
+    const signed = rows.filter((r) => r.signer);
+    const sigsOk = signed.length > 0 && signed.every((r) => r.signer === live.gas && pqcVerify(getBytesHex(keys[r.signer]), new TextEncoder().encode(JSON.stringify({ ...r, signature: undefined })), getBytesHex(r.signature)));
+    const days = [...new Set(rows.map((r) => r.day))];
+    const shapeOk = days.every((dd) => { const r = rows.filter((x) => x.day === dd); return r.length === 4 && r[0].ok && r.slice(1).every((x) => !x.ok); });
+    ok(chained && sigsOk && shapeOk, `live agent log: ${rows.length} rows over ${days.length} day(s), hash-chained (SHA3-256), each day signed with the relayer's on-chain ML-DSA-87 key; every day 1 genuine paid, 3 attacks refused`,
+      `(${days[0]} … ${days.at(-1)})`);
+    let txOk = 0, withTx = 0;
+    for (const r of rows.filter((x) => x.link)) {
+      withTx++;
+      const t = (await rest(`/cosmos/tx/v1beta1/txs/${r.link.slice(-64)}`))?.tx_response;
+      const failed = !t || t.code !== 0 || t.events.some((e) => e.type === "abstractaccount_execution_failed");
+      if (t && failed === !r.ok) txOk++;
+    }
+    const last = Date.parse(rows.at(-1).at);
+    ok(withTx > 0 && txOk === withTx && Date.now() - last < 3 * 86400e3, `live agent: each of its ${withTx} logged transactions re-read from the chain agrees; it last ran ${((Date.now() - last) / 3600e3).toFixed(0)} h ago (must be < 72 h)`,
+      `(desk ${live.invoiceDesk.slice(0, 10)}…, .github/workflows/live.yml)`);
+  }
+
   // Shor's gift: an account whose secp256k1 private key is public (runs/qday-public.json)
   {
     const g = json("runs/qday-public.json"), gEvm = getAddress(g.evmAddress);

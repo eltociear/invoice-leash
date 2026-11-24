@@ -1,0 +1,53 @@
+name: live-agent
+# The agent, unattended, every day through judging (scripts/live-agent.mjs). Its key is in this repo's
+# secrets on purpose: Invoice Leash assumes the agent's key leaks, so it runs it where it could, with a
+# decider that obeys every email. The run log is committed (runs/live/log.jsonl, hash-chained, signed).
+on:
+  schedule:
+    - cron: "10 1 * * *" # 01:10 UTC: just after the desk's UTC day starts
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: live-agent
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: the agent's keys (testnet only; only what the agent's host needs)
+        env:
+          GAS: ${{ secrets.LEASH_GAS }}
+          AGENT: ${{ secrets.LEASH_AGENT }}
+          AGENTKEM: ${{ secrets.LEASH_AGENTKEM }}
+          VENDOR: ${{ secrets.LEASH_VENDOR }}
+        run: |
+          umask 077 && mkdir -p "$HOME/leash"
+          printf 'gas="%s"\nagent=%s\nagentkem=%s\nvendor="%s"\n' "$GAS" "$AGENT" "$AGENTKEM" "$VENDOR" > "$HOME/leash/keys.env"
+      - name: today's inbox, through the leash
+        # one attempt only: a retry could send twice (the script refuses a second run for a logged day)
+        env:
+          LEASH_DIR: /home/runner/leash
+          NODE_OPTIONS: --dns-result-order=ipv4first
+        run: node scripts/live-agent.mjs
+      - name: publish the log and the site
+        if: always()
+        run: |
+          rm -f "$HOME/leash/keys.env"
+          node scripts/site.mjs
+          git config user.name "invoice-leash live agent"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add runs/live docs/index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "live agent: $(date -u +%F)"
+          for i in 1 2 3; do git pull --rebase -q && git push -q && break; sleep 10; done

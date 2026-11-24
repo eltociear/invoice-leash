@@ -16,7 +16,7 @@
 > npm install && npm run verify
 > ```
 >
-> 99 checks against the live testnet: both deployed contracts are byte-for-byte this source, the
+> 101 checks against the live testnet: both deployed contracts are byte-for-byte this source, the
 > agent's rule is what the chain stores, every attack replayed against the real contracts, where
 > every QOR and fUSD went, every recorded transaction re-read (runs, MCP sessions, the probes below).
 > Last run: [`runs/verify-latest.txt`](runs/verify-latest.txt). CI runs it daily, with 96 Foundry tests and 11 invariants.
@@ -37,6 +37,10 @@
   swapping a vendor's ML-DSA-87 key to forge its invoices ([QUANTUM_READINESS.md](QUANTUM_READINESS.md)).
   You don't have to take our word for it: we publish the private key of one account. Try to take its QOR
   ([lab §6](https://eltociear.github.io/invoice-leash/lab.html#shor)).
+- **It runs live, every day, unattended.** GitHub Actions runs the agent at 01:10 UTC against a real
+  InvoiceDeskV3, with its key in GitHub Secrets on purpose and a decider that obeys every email: each day
+  the genuine invoice is paid and a forgery, a raised amount and a prompt injection are refused. The log
+  is hash-chained and signed with ML-DSA-87 ([`runs/live/`](runs/live/), [the table](https://eltociear.github.io/invoice-leash/#live)).
 - Claude Code runs the same agent through [our MCP server](#use-it-from-any-agent-the-mcp-server),
   including invoices sealed with ML-KEM-1024.
 - **Use it for your own company:** [GETTING_STARTED.md](GETTING_STARTED.md). `desk.mjs` sets up your desk,
@@ -215,7 +219,7 @@ transaction stops the agent, without touching the chain link or the money.
 | PQC stand-in | Local EVMs have no QoreChain precompile, so `0x…0a01` is a stand-in that answers from [`test/fixtures/`](test/fixtures/): 27 (key, signature, message) tuples checked with **real ML-DSA-87** by `test/fixtures.mjs`; unknown tuples fail closed. Keys come from fixed seeds and signing is deterministic, so CI regenerates the files and requires them byte-identical. | `npm run fixtures` |
 | Off chain | the v1 demo inbox and six tamperings, with real ML-DSA-87 and throwaway keys; what the agent and MCP tools are shown and trust (signed amounts, malformed sealed invoices, the company-only message check, expiry, chain id) | `npm test` |
 | Documents | every count the documents state (checks, drill attacks, tests, invariants, mutants) against its source; `verify` fails if its own count drifts from the documents | `npm test` |
-| On chain | 99 read-only checks against the live testnet | `npm run verify` |
+| On chain | 101 read-only checks against the live testnet | `npm run verify` |
 
 ### Cryptography inventory (QoreScan)
 
@@ -378,6 +382,7 @@ finding above. The v1 commands (`deploy`, `link`, `inbox`, `run [--compromised|-
 ```
 contracts/InvoiceDeskV2.sol v2: fUSD/QOR invoices, the payer/agent split, per-token limits, ML-DSA-87 check
 contracts/InvoiceDesk.sol   v1: QOR invoices, the agent acting as the payer (see "What we found")
+scripts/live-agent.mjs      the live agent, run daily by .github/workflows/live.yml (runs/live/)
 desk.mjs                    for your own company: setup, vendors, limits, triage, run, pay, export (GETTING_STARTED.md)
 vendor.mjs                  for a vendor: its own ML-DSA-87 key, register, sign (and seal) invoices
 leash.mjs                   the demo's CLI: keys, funding, deploy, link, inbox, run, approve, revoke (v1 and v2)
