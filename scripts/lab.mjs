@@ -81,6 +81,8 @@ ol.log{font-size:13px;color:var(--dim);padding-left:20px;margin:0}ol.log li{marg
 <p>Pick a real fUSD invoice, change anything, choose who sends it, and ask the <b>real InvoiceDeskV2 on the QoreChain testnet</b> whether it would pay. Your browser sends an <code>eth_call</code> to <code>${data.rpc}</code>; the ML-DSA-87 check is the chain's own precompile. Nothing is sent and nothing is spent, so try as much as you like. You can also <a href="#you">be the vendor</a>: make an ML-DSA-87 key in this tab and sign an invoice yourself, or <a href="#msg">check a company instruction</a>, including a Q-Day forgery.</p>
 <p class="live"><span class="dot" id="dot"></span><span id="live">connecting to qorechain-diana…</span></p>
 
+<div class="card" style="font-size:14px;margin-bottom:18px"><b>Which desk is which.</b> §1–5 and the lists at the end use <b>InvoiceDeskV2</b>, the demo's recorded desk (<a href="https://explore.qore.network/address/${data.desk}">${data.desk.slice(0, 10)}…</a>). §6 is an ordinary account. §7 asks <b>InvoiceDeskV4</b>, the live agent's desk now (<a href="https://explore.qore.network/address/${json("runs/live/desk.json").v2.invoiceDesk}">${json("runs/live/desk.json").v2.invoiceDesk.slice(0, 10)}…</a>). V3 and V4 keep V2's checks and add per-vendor invoice ids and late settlement (V3) and the agent's own ML-DSA-87 signature (V4).</div>
+
 <h2>1. Start from</h2>
 <div class="presets" id="presets"></div>
 <p class="note" id="note"></p>

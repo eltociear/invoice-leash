@@ -10,7 +10,7 @@ npm install && npm run verify
 ```
 
 Every claim in the README is re-checked against the live `qorechain-diana` testnet: the deployed
-desks are byte-for-byte this source (v1, V2, and both V3 desks), every recorded transaction is re-read, every attack is replayed
+desks are byte-for-byte this source (v1, V2, both V3 desks and the live V4 desk), every recorded transaction is re-read, every attack is replayed
 against the real contracts, and the live agent's log is checked link by link. The last run, readable:
 [`runs/verify-latest.txt`](runs/verify-latest.txt); machine-readable, one entry per check:
 [`runs/verify-latest.json`](runs/verify-latest.json). CI runs it every day.

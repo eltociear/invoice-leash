@@ -4,8 +4,10 @@ Invoice Leash assumes the agent will be fooled or stolen, and asks one question:
 a fully hostile agent can do with the company's money?** The answer has to come from the chain, not
 from the agent's code, because the agent's code is the part we assume is lost.
 
-This describes v2 (fUSD, [`InvoiceDeskV2`](contracts/InvoiceDeskV2.sol)). v1 and why it was
-replaced are at the end.
+This describes the current design: fUSD invoices through [`InvoiceDeskV4`](contracts/InvoiceDeskV4.sol)
+(the live agent's desk and what `desk.mjs` deploys). V2 and V3 have the same checks except where marked:
+V3 added per-vendor invoice ids and late settlement by the company, V4 the agent's own ML-DSA-87
+signature. v1, and why it was replaced, are at the end.
 
 ## Who holds what
 
@@ -42,7 +44,7 @@ tests (`test/InvoiceDeskV2.t.sol`).
 | …as `fUSD.transfer(attacker)` from the agent's account | chain: not an allowed call (and the account holds no fUSD) | inbox #2 |
 | …as `fUSD.transferFrom(company, attacker)` | chain: not an allowed call (and only the desk has an allowance) | inbox #2 |
 | Agent reconfigures its leash (`approveVendor`, `setLimit`, `setAgent`) | chain: only `pay` (`0xf19ff4ff`) is allowed; and in the desk, settings are per `msg.sender`, so the agent would only configure its own empty entry | inbox #3, test `test_agent_limits_are_the_payers_alone` |
-| The agent's classical key used directly (EVM transactions) | its account's EVM window: ≤3 txs, ≤0.4 QOR, 300 blocks, target InvoiceDeskV2 only; no window, no transaction. Only the human's hybrid ML-DSA-87 signature opens one | `runs/probes/window.json`, verify §9 |
+| The agent's classical key used directly (EVM transactions) | its account's EVM window: ≤3 txs, ≤0.4 QOR, 300 blocks, target the desk only; no window, no transaction. Only the human's hybrid ML-DSA-87 signature opens one | `runs/probes/window.json`, verify §9 |
 | "Approved by the CFO" in an email | instructions count only as QoreSign messages from the company's own account, verified against its registered ML-DSA-87 key, for this chain, with an optional "valid until" (MCP `verify_message`). A Q-Day forgery (the company's classical key + another ML-DSA-87 key), a stranger signing as herself, and an expired instruction are refused | `runs/messages.json`, verify §9 |
 | Reading invoices in transit, now or after Q-Day ("harvest now, decrypt later") | sealed invoices: ML-KEM-1024 to the agent account's key in the chain's KEM registry; only the agent's KEM key opens them, and it gives no spending power | `runs/sealed.json`, verify §9 |
 | A forged invoice sent sealed, to look trustworthy | sealing is not authenticity: once opened it is `BadSignature` | `runs/sealed.json` |
@@ -88,13 +90,13 @@ Said plainly, because a judge, an auditor or a customer will ask.
   cause. Remedy today: `removeVendor`, and vendor-prefixed numbers (every invoice in this repo has one).
   **Fixed in InvoiceDeskV3**, which keys `paid[payer][vendor][id]`: two vendors' INV-2001 were both paid
   on the testnet (`runs/own-company-v3/`). The demo's V2 desk stays as recorded, so its runs remain
-  checkable; new desks (`desk.mjs setup`) are V3, and `desk.mjs upgrade` moves a V2 company.
+  checkable; new desks (`desk.mjs setup`) are V4, and `desk.mjs upgrade` moves a V2 or V3 company.
 - **A compromised company key.** The company can do anything; that is what an owner is. It is a
   hybrid ML-DSA-87 key, so a quantum computer alone does not get it.
 - **Paying a genuine invoice the company did not want.** Within the limits, the agent decides. The
   Claude runs show a careful model still making mistakes; the limits are what bound them.
 - **Draining the gas wallet.** A hostile agent can spend the gas wallet's fees on refused requests
-  (about 0.15 QOR each). It cannot touch the company's money this way. Keep the gas wallet small.
+  (0.15 QOR each on V3, 0.24 on V4). It cannot touch the company's money this way. Keep the gas wallet small.
 - **The allowance is shared.** The desk pulls the company's in-person payments from the same
   allowance as the agent's, so a big human-approved payment shrinks what the agent can use; the
   agent's daily limit still applies on top.

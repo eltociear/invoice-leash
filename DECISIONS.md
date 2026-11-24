@@ -94,8 +94,20 @@ the amount and the invoice id. The desk checks it against the key of a signer ac
 
 **Why.** QoreChain authenticators accept only ed25519 or secp256k1 keys today
 (`AuthenticatorScheme` in `@qorechain/sdk`), and a quantum computer could derive such a key from its
-public key on chain. A fresh judge review scored post-quantum lowest for exactly this. With V4, that key
-alone gets `BadAgentSignature` (live: [`runs/probes/v4-agent-sig.json`](runs/probes/v4-agent-sig.json)).
+public key on chain. With V4, that key alone gets `BadAgentSignature` (live:
+[`runs/probes/v4-agent-sig.json`](runs/probes/v4-agent-sig.json)).
+
+**What V4 does and does not stop.** It stops a key *derived* from the agent's public key, the
+quantum attack: without the signer's ML-DSA-87 secret key, the derived ed25519 key pays nothing. It does
+not stop someone who steals the agent's host, because the host holds the signer's key too (the live agent's
+host is GitHub Actions, so both keys are repository secrets). A stolen host is the compromised agent this
+whole design bounds: genuine invoices from approved vendors, within the company's limits.
+
+**Known limits of the agent's signature.** `agentMessage(payer, agent, token, vendor, amount, id)` takes
+`token, vendor` in that order but encodes `vendor, token`: call the view, or use `agentMessageV4` in
+`lib/invoices.mjs`, rather than re-encoding by hand. The signature has no expiry of its own. It binds one
+unpaid invoice, so it is spent when that invoice is paid, and the company voids every outstanding one by
+naming another signer (`setAgentSigner`).
 
 ## 9. Show, don't claim: everything is re-checked from the chain
 

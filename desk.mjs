@@ -496,7 +496,7 @@ const cmds = {
       return { addr: await c.getAddress(), block: rc.blockNumber, hash: rc.hash };
     });
     say(`  deployed at ${addr}           ${hash}`);
-    save({ previous: [...(d.previous ?? []), { version: oldVersion, invoiceDesk: old, deployBlock: d.deployBlock }], version: 4, invoiceDesk: addr, deployBlock: block, deployTx: hash, upgradedAt: new Date().toISOString() });
+    save({ previous: [...(d.previous ?? []), { version: oldVersion, invoiceDesk: old, deployBlock: d.deployBlock, deployedAt: d.deployedAt }], version: 4, invoiceDesk: addr, deployBlock: block, deployTx: hash, deployedAt: new Date().toISOString(), upgradedAt: new Date().toISOString() });
     say("3. the same settings on the new desk, and the agent's signer (a window scoped to it and fUSD)");
     await companyWindow([addr, FUSD], vendors.length + 4, async (w) => {
       const c = new Contract(addr, ART4.abi, w);

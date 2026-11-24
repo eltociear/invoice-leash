@@ -8,7 +8,7 @@
     "agentAccount": "qor1fedluhureaezx79ychmnlmvm736vf94sv5rp0k",
     "agentAccountEvm": "0x4e5bfe5f83cf722378a4c5f73fed9bf474c496b0",
     "gas": "qor1f7uaz6vwxmv70x9p9d2djd0j3z8d9mvktz77zg",
-    "deployedAt": "2026-11-24T05:43:23.792Z",
+    "deployedAt": "2026-11-24T09:30:45.201Z",
     "deployBlock": 10659714,
     "deployTx": "0xb9427ff2585c455e34ce6fd67ef0a80f2dfa8c97297dc963abbb318fc5450825",
     "vendors": {
@@ -33,7 +33,8 @@
       {
         "version": 3,
         "invoiceDesk": "0x54bdEa75F3eD7ac23bC47F29c1E4029ecA5E7887",
-        "deployBlock": 10650352
+        "deployBlock": 10650352,
+        "deployedAt": "2026-11-24T05:43:23.792Z"
       }
     ],
     "upgradedAt": "2026-11-24T09:30:45.201Z"
