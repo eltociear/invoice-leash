@@ -60,13 +60,15 @@ tests (`test/InvoiceDeskV2.t.sol`).
 | A token that returns `false`, or an address with no code | `TransferFailed`, all rolled back | tests |
 | The agent keeps going after it is caught | revoke the key on chain, or `setAgent(agent, false)` in the desk: one company tx either way | v1 run (revoke); v2 live: `kill-switch-v2` (`NotPayersAgent`), verify §9; tests |
 | A forgotten agent | the link expires (72 h in the v2 demo) | verify §9 reads it |
+| The company's classical key, while a company window is open (after Q-Day) | every company window names one target and admits one action; the treasury is a bank coin no window reaches, and only a ~400 fUSD float is ERC-20. Worst case: one call to the window's target, if the attacker wins the race, and the company's own call then fails | `runs/probes/company-window.json` (fUSD, QOR and the treasury refused inside a desk window); verify |
 
 ## After Q-Day
 
 [QUANTUM_READINESS.md](QUANTUM_READINESS.md) lists every algorithm in the system and what a quantum
-computer does to it. It also has our own drill: with every account's classical key and no ML-DSA-87
+computer does to it. It also has our own drill: with four accounts' classical keys and no ML-DSA-87
 key, 16 attacks on the live testnet, all refused, including replacing a vendor's ML-DSA-87 key
-with the attacker's (which would let it forge that vendor's invoices).
+with the attacker's (which would let it forge that vendor's invoices). And one account's classical
+private key is published outright: its QOR is still there (Shor's gift, in the lab).
 
 ## What Invoice Leash does not stop
 

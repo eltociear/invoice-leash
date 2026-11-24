@@ -26,6 +26,7 @@ const data = {
     { key: "replay", label: "Replay a paid invoice", note: "Hostline's 80 fUSD invoice that the agent already paid in the recorded v2 run.", inv: pick(main[0].invoice) },
     { key: "big", label: "Genuine, but 300 fUSD", note: "Over the agent's 100 fUSD per-payment limit. Ask as the agent, then as the company.", inv: pick(lab[7].invoice) },
   ],
+  pub: (({ address, evmAddress, secp256k1PrivateKey }) => ({ address, evm: evmAddress, key: secp256k1PrivateKey }))(json("runs/qday-public.json")), attacker: dep.attacker,
   messages: json("runs/messages.json").map((m) => ({ name: m.name, signer: m.signer, signerEvm: qorToEvm(m.signer), text: m.text, chainId: m.chainId, pq: m.signature.pq.signature, expect: m.expect })),
   chainRefusals: [
     ["MsgSend 50 QOR", "no send permission", tx((x) => x.action === "send")],
@@ -120,6 +121,17 @@ ol.log{font-size:13px;color:var(--dim);padding-left:20px;margin:0}ol.log li{marg
 <div class="local" id="qxout">QoreX: not connected.</div>
 </div>
 <p class="dim" style="font-size:14px;margin-bottom:0">The classical half is checked too, by <code>npm run verify</code> and the MCP tool <code>verify_message</code> (QoreSign's <code>verifyMessageWithChain</code>). After Q-Day only the ML-DSA-87 half means anything, and that is the half shown here.</p>
+</div>
+
+<h2 id="shor">6. Shor's gift: this account's private key is public. Take its QOR.</h2>
+<div class="card you">
+<p style="margin-top:0">Pretend Q-Day has come: a quantum computer has broken this account's <b>secp256k1</b> key. We publish it below, so you hold it too. The account holds about 5 QOR. Its <b>ML-DSA-87</b> key is registered on chain and is <i>not</i> published. Your browser signs an ordinary Ethereum transaction with the public key and sends it to the testnet.</p>
+<div class="kv" id="pubstate"><span class="dim">reading…</span></div>
+<label for="pubto">Send to (any 0x address, yours if you like)</label><input id="pubto">
+<label for="pubamt">QOR</label><input id="pubamt" value="4">
+<div class="btns"><button type="button" class="main" id="pubgo">Sign with the published key and send</button></div>
+<div class="local" id="pubout">Nothing sent yet.</div>
+<p class="dim" style="font-size:14px;margin-bottom:0">What to expect: the chain refuses it (<i>no open EVM authorisation window</i>). A classical signature alone is accepted only inside a window, and only the account's ML-DSA-87 key can open one. On the Cosmos side, a <code>MsgSend</code> signed with this key gets code 20 (<i>must include</i> the ML-DSA-87 signature): <code>node scripts/qday-public.mjs attack</code>. <code>npm run verify</code> checks every day that the QOR is still there and that the account has executed nothing but its own key registration.</p>
 </div>
 
 <h2>The company's leash on its agent, read live</h2>
@@ -312,6 +324,29 @@ $("signme").onclick = () => {
   $("out").innerHTML = '<h2 style="margin-top:0">3. The chain’s answer</h2><p class="dim">Your signature is in step 2. Ask the chain.</p>';
   $("go").scrollIntoView({ behavior: "smooth", block: "center" });
 };
+async function pubState() {
+  const [bal, n, k] = await Promise.all([rpc("eth_getBalance", [D.pub.evm, "latest"]), rpc("eth_getTransactionCount", [D.pub.evm, "latest"]), pqcKey(D.pub.evm)]);
+  $("pubstate").innerHTML = "<div><span>Account</span><span class='mono'>" + h(D.pub.address) + " · " + h(D.pub.evm) + "</span></div>" +
+    "<div><span>secp256k1 private key (public)</span><span class='mono'>" + h(D.pub.key) + "</span></div>" +
+    "<div><span>Balance, live</span><span class='mono'>" + E.formatEther(BigInt(bal.result)) + " QOR</span></div>" +
+    "<div><span>ML-DSA-87 key on chain</span><span class='mono'>" + (k[0] ? (k[2].length - 2) / 2 + " bytes, possession " + (k[3] ? "proven" : "not proven") : "none") + " (secret key not published)</span></div>" +
+    "<div><span>Transactions it has executed</span><span class='mono'>" + parseInt(n.result, 16) + " (its own key registration)</span></div>";
+}
+$("pubto").value = D.attacker;
+$("pubgo").onclick = async () => {
+  $("pubgo").disabled = true; $("pubout").textContent = "Signing with the published key…";
+  try {
+    const to = E.getAddress($("pubto").value.trim()), value = E.parseEther($("pubamt").value.trim() || "0");
+    const [n, gp] = await Promise.all([rpc("eth_getTransactionCount", [D.pub.evm, "pending"]), rpc("eth_gasPrice", [])]);
+    const raw = await new E.Wallet(D.pub.key).signTransaction({ type: 0, chainId: 9800, nonce: parseInt(n.result, 16), gasPrice: BigInt(gp.result), gasLimit: 21000, to, value });
+    const r = await rpc("eth_sendRawTransaction", [raw]);
+    $("pubout").innerHTML = "Signed: a valid secp256k1 signature by the account's own key (" + (raw.length / 2 - 1) + "-byte transaction).<br>" + (r.error
+      ? '<b class="ok">REFUSED by the chain</b>: ' + h(r.error.message.split(" [")[0])
+      : '<b class="no">ACCEPTED</b> (transaction ' + h(r.result) + "). That would be news: please open an issue.");
+  } catch (e) { $("pubout").textContent = "Could not send: " + e.message; }
+  finally { $("pubgo").disabled = false; pubState().catch(() => {}); }
+};
+pubState().catch((e) => { $("pubstate").textContent = "could not read the chain: " + e.message; });
 load(D.presets[0]);
 rpc("eth_blockNumber", []).then((r) => { $("dot").classList.add("on"); $("live").textContent = "live: qorechain-diana, block " + parseInt(r.result, 16).toLocaleString(); }).catch(() => { $("live").textContent = "could not reach the testnet RPC"; });
 state().catch((e) => { $("state").textContent = "could not read the chain: " + e.message; });

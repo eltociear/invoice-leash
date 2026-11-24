@@ -345,6 +345,25 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
     ok(w1?.tx_response?.code === 0 && m1?.max_txs === "1" && w2?.tx_response?.code === 0 && m2?.max_txs === "2" && m2.max_value === "20000" && rc1?.status === 1 && getAddress(rc1.from) === agent2
       && /exhausted/.test(cs[2].result) && /remaining: \d+ blocks, 0 transactions/.test(cs[2].result) && /remaining: \d+ blocks, 2 transactions, 20000 uqor; this transaction needs 62750 uqor/.test(cs[5].result),
       "the window's count and value caps hold against the classical key: a 1-tx window refuses the 2nd tx; a 0.02 QOR window refuses a 0.05 QOR call", `(${cs[0].tx.slice(0, 8)}…, ${cs[4].tx.slice(0, 8)}…)`);
+    // the company's own window, with the company's classical key in an attacker's hands (runs/probes/company-window.json)
+    const cw = json("runs/probes/company-window.json").steps;
+    const cwOpen = await rest(`/cosmos/tx/v1beta1/txs/${cw[0].tx}`), cm = cwOpen?.tx?.body?.messages?.[0], cwSlot = await provider.getTransactionReceipt(cw[4].tx);
+    ok(cwOpen?.tx_response?.code === 0 && cm?.sender === dep.v2.payer && cm.allowed_targets?.length === 1 && getAddress(cm.allowed_targets[0]) === DESK2 && cm.max_txs === "1"
+      && /does not list 0x97143B771D34ddb9130b807b135Ae675A5a963CA/.test(cw[1].result) && cw[2].result.includes(`does not list ${MALLORY}`) && /code 20/.test(cw[3].result) && cwSlot?.status === 1,
+      "inside the company's own window (InvoiceDeskV2 only, 1 tx), its classical key could not move fUSD or QOR, nor the treasury (code 20)", `(${cw[0].tx.slice(0, 8)}…)`);
+    const coin = ((await rest(`/cosmos/bank/v1beta1/balances/${dep.v2.payer}`))?.balances ?? []).find((b) => /0x97143b77/i.test(b.denom));
+    ok(BigInt(coin?.amount ?? 0) >= 1_000_000_000n, "the company's fUSD treasury is a bank coin (moves only with ML-DSA-87); the desk's ERC-20 float is what a window could ever expose",
+      `(treasury ${formatUnits(coin?.amount ?? 0, 6)} fUSD, float ${formatUnits(await bal(payer2), 6)} fUSD)`);
+  }
+
+  // Shor's gift: an account whose secp256k1 private key is public (runs/qday-public.json)
+  {
+    const g = json("runs/qday-public.json"), gEvm = getAddress(g.evmAddress);
+    const k = new (await import("ethers")).Wallet(g.secp256k1PrivateKey);
+    const [reg, alg, , proven] = status.decodeFunctionResult("pqcKeyStatus", await provider.call({ to: "0x0000000000000000000000000000000000000a02", data: status.encodeFunctionData("pqcKeyStatus", [gEvm]) }));
+    const [gBal, gNonce] = await Promise.all([provider.getBalance(gEvm), provider.getTransactionCount(gEvm)]);
+    ok(getAddress(k.address) === gEvm && reg && alg === 1n && proven && gBal >= 4_800_000_000_000_000_000n && gNonce === 1 && g.attempts.every((a) => a.refused) && /code 20/.test(g.attempts[0].why) && /no open EVM authorisation window/.test(g.attempts[1].why),
+      "Shor's gift: the account whose secp256k1 private key is published still holds its QOR and has executed nothing but its own key registration", `(${formatUnits(gBal, 18).slice(0, 5)} QOR, ${gNonce} tx; try it in the lab)`);
   }
 
   // authenticated messaging: company instructions in QoreSign message-signing-v1, checked against the chain

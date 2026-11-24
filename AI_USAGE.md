@@ -11,12 +11,12 @@ the AI's work was checked, and the mistakes the AI made that those checks caught
 | **AI** | Claude Code (Anthropic), model `claude-opus-5-5`: one main session that writes code, runs the testnet steps and reports, plus sub-agents started for independent reviews and research |
 | **Human** | the team (one person, [@eltociear](https://github.com/eltociear)): goals, product decisions, accounts and wallets, everything that needs a human identity, and the final call on what ships |
 | **Written by the AI** | nearly all code, tests, scripts, documentation, the demo video (slides, narration script, music) and the cover image |
-| **How the AI's work is checked** | not by trusting it: `npm run verify` (88 read-only checks against the live testnet), 59 Foundry tests and 5 invariants, a 14-mutant check, Slither, QoreScan, browser tests, CI daily, and AI reviewers that did not write the code |
+| **How the AI's work is checked** | not by trusting it: `npm run verify` (91 read-only checks against the live testnet), 59 Foundry tests and 5 invariants, a 14-mutant check, Slither, QoreScan, browser tests, CI daily, and AI reviewers that did not write the code |
 
 ## The workflow
 
 1. **The human sets the goal and the constraints.** For example: "enter the Post-Quantum AI Agents
-   track and win"; "make the agent pay in fUSD"; "build an interactive web demo, but with no server";
+   track"; "make the agent pay in fUSD"; "build an interactive web demo, but with no server";
    "add Foundry tests and use QoreScan and QoreChain's MCP server"; "review everything for problems";
    "look at the other projects and find what to strengthen".
 2. **The AI reads the sources first.** It reads the `@qorechain/sdk` type definitions and bundled code,
@@ -32,7 +32,7 @@ the AI's work was checked, and the mistakes the AI made that those checks caught
 5. **Independent review by AI agents that did not write the code.** For the full review, three
    sub-agents read the repository in parallel, with no access to the main session's reasoning: one for
    the contracts and tests, one for documentation claims against recorded evidence, and one for scripts
-   that would break over time. A fourth compared the rival entries. Their findings were checked, then
+   that would break over time. A fourth read other public entries in the track, to see what was already common. Their findings were checked, then
    fixed or documented (below).
 6. **Machine checks, then CI.** Every change runs `npm test`, `forge test` and `npm run verify`. CI
    re-runs everything daily against the live chain, so a claim that stops being true turns the badge red.
@@ -54,8 +54,8 @@ the AI's work was checked, and the mistakes the AI made that those checks caught
 
 ## What the human did
 
-- Chose the hackathon, the track and the goal, and kept raising the bar ("think deeply, beat the other
-  entries", "review everything", "find more to strengthen").
+- Chose the hackathon, the track and the goal, and kept raising the bar ("think deeply", "review
+  everything", "find more to strengthen").
 - Made the product decisions when asked: the name (after two other entries were already called *Leash*),
   a server-less web demo, Foundry tests, QoreScan and QoreChain's MCP server, fUSD payments, redoing the
   video for v2, doing every improvement found in the reviews.

@@ -1,0 +1,34 @@
+{
+  "what": "the company's own scoped window, against an attacker holding the company's classical key",
+  "company": "qor16fluqkmkgaqq98hkgdyccny93gwsm32c4awtmg",
+  "steps": [
+    {
+      "step": "company opens a window: InvoiceDeskV2 only, 1 tx (hybrid)",
+      "result": "opened",
+      "tx": "7DFFC26C746D1A15D29D0C74FA72F4BD97A8ADBEBC753EB8D6A90705C4215CB3"
+    },
+    {
+      "step": "attacker, classical key: fUSD.transfer(Mallory, 1)",
+      "result": "REFUSED: failed to broadcast transaction: the EVM authorisation window for qor16fluqkmkgaqq98hkgdyccny93gwsm32c4awtmg does not admit this transaction: the window does not list 0x97143B771D34ddb9130b807b135Ae675A5a963CA as an allowed recipient: EVM authorisation window exhausted: EVM authorisation window exha"
+    },
+    {
+      "step": "attacker, classical key: 1 QOR to Mallory",
+      "result": "REFUSED: failed to broadcast transaction: the EVM authorisation window for qor16fluqkmkgaqq98hkgdyccny93gwsm32c4awtmg does not admit this transaction: the window does not list 0x37F35dDeFb85A16A0c13A2567DF57a50474a4609 as an allowed recipient: EVM authorisation window exhausted: EVM authorisation window exha"
+    },
+    {
+      "step": "attacker, classical key: MsgSend the whole treasury (bank fUSD)",
+      "result": "REFUSED: Broadcasting transaction failed with code 20 (codespace: pqc). Log: account qor16fluqkmkgaqq98hkgdyccny93gwsm32c4awtmg has a registered PQC key and must include the hybrid signature extension (hybrid mode: required): hybrid PQC signature required"
+    },
+    {
+      "step": "company uses its one slot (a call to the desk)",
+      "result": "EXECUTED",
+      "tx": "0xb9516ac52b97aa93960f59fe69c61b1e5f12b87a67ccdc9f3ea7f541532de9df"
+    },
+    {
+      "step": "close window",
+      "result": "closed",
+      "tx": "7647AA56C082A206FD744FB3F22EC1F5A4B02A24EDD2F9760B39B29A25FBD1F0"
+    }
+  ],
+  "treasury": "1108140060"
+}

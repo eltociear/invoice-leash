@@ -1,0 +1,23 @@
+{
+  "what": "an account whose secp256k1 private key is public, as if Shor had broken it; its ML-DSA-87 key is not",
+  "address": "qor1ven5euj4fcu30euzz28a90wfw3qshsy58tc8ah",
+  "evmAddress": "0x66674cf2554e3917e782128fd2bdc974410bc094",
+  "fundTx": "C9A92D7BEB64E51378F03502A83E1447734F93647A5E730B6F7A0CA3E6EBDFCA",
+  "registerTx": "4E09315A67FAEF62F51E20CF2ADBB79F96F763C257C7BCBE50EBABA0F451B13E",
+  "secp256k1PrivateKey": "0x3c2292aa10562dceb48dd9d74de999b7e093fc0f8eac619690b963c8e3f8085f",
+  "attempts": [
+    {
+      "lane": "cosmos",
+      "label": "MsgSend 5 QOR to the attacker",
+      "refused": true,
+      "why": "Broadcasting transaction failed with code 20 (codespace: pqc). Log: account qor1ven5euj4fcu30euzz28a90wfw3qshsy58tc8ah has a registered PQC key and must include the hybrid signature extension (hybrid mode: required): hybrid PQC signature required"
+    },
+    {
+      "lane": "evm",
+      "label": "send 4 QOR to the attacker",
+      "refused": true,
+      "why": "failed to broadcast transaction: account qor1ven5euj4fcu30euzz28a90wfw3qshsy58tc8ah has no open EVM authorisation window; open one with MsgOpenEVMWindow, signed on the Cosmos lane with the account's post-quantum key: no open EVM authorisation window: no open EVM authorisation window [cosmossdk.io/er"
+    }
+  ],
+  "attackedAt": "2026-11-24T03:50:39.626Z"
+}

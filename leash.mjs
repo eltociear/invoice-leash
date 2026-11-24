@@ -50,6 +50,10 @@ const NO_DENOM = "erc20/0x4604e7e45b2ecdbfbdc157103f5b2b62cb16451a";
 const loadInbox = () => JSON.parse(readFileSync(INBOX, "utf8"));
 const need = (d, k, hint) => { if (!d[k]) throw new Error(`no ${k} yet: run "node leash.mjs ${hint}" first`); return d[k]; };
 
+// Every v2 window names its one target: whoever holds the classical key while it is open (after Q-Day,
+// anyone) can reach only that contract, and only for the window's transaction count.
+const scoped = (msg, targets) => { msg.value.allowedTargets = targets; return msg; };
+
 const cmds = {
   async init() {
     console.log(`keys saved in ${createKeys()} (mode 600, never in the repo)`);
@@ -324,7 +328,7 @@ const cmds = {
     }
     await cmds.register("agentacct");
     // 2. the desk
-    const w = await broadcast(o, [openEvmWindowMsg({ sender: o.cosmos, blocks: 600, maxTxs: 8, maxValue: String(toUqor("3")) })], "leash: owner window (v2)");
+    const w = await broadcast(o, [scoped(openEvmWindowMsg({ sender: o.cosmos, blocks: 600, maxTxs: 8, maxValue: String(toUqor("3")) }), [d.invoiceDesk, FUSD])], "leash: owner window (v2)");
     if (w.code) throw new Error(`open window REFUSED code ${w.code}: ${w.rawLog}`);
     const wallet = new Wallet(o.privateKey, new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID));
     const c = await new ContractFactory(ART2.abi, ART2.bytecode, wallet).deploy();
@@ -402,7 +406,7 @@ const cmds = {
     console.log(`owner reviews ${inv.ref}: ${inv.fusd} fUSD to ${inv.vendor}`);
     try { await c.pay.staticCall(...args); } catch (e) { const dd = e.data ?? e.info?.error?.data; let n = e.shortMessage; try { n = c.interface.parseError(dd).name; } catch { /* keep */ } throw new Error(`InvoiceDeskV2 would refuse it: ${n}`); }
     console.log("  dry run: vendor approved, ML-DSA-87 signature valid, unpaid, not past due");
-    const w = await broadcast(o, [openEvmWindowMsg({ sender: o.cosmos, blocks: 300, maxTxs: 1, maxValue: String(toUqor("0.5")) })], "leash: owner approves an fUSD invoice");
+    const w = await broadcast(o, [scoped(openEvmWindowMsg({ sender: o.cosmos, blocks: 300, maxTxs: 1, maxValue: String(toUqor("0.5")) }), [d.invoiceDesk])], "leash: owner approves an fUSD invoice");
     if (w.code) throw new Error(`open window REFUSED code ${w.code}: ${w.rawLog}`);
     const tx = await c.pay(...args, { gasLimit: 700_000 }); const rc = await tx.wait();
     console.log(`  owner paid ${inv.ref}: ${rc.status === 1 ? "PAID" : "FAILED"}  evm tx ${tx.hash}`);
@@ -412,10 +416,31 @@ const cmds = {
       JSON.stringify({ version: 2, item: Number(item), ref: inv.ref, fusd: inv.fusd, owner: o.cosmos, windowTx: w.transactionHash, evmTx: tx.hash, status: rc.status }, null, 2) + "\n");
   },
 
+  /**
+   * Treasury on the Cosmos lane, float in ERC-20. The desk pulls fUSD from the company's ERC-20 balance,
+   * which an open EVM window exposes to whoever holds the classical key. So only the float stays there;
+   * the rest is the bank coin, which moves only with an ML-DSA-87 signature (MsgConvertERC20 /
+   * MsgConvertCoin, both hybrid-signed Cosmos messages, no window).  node leash.mjs treasury-v2 [float]
+   */
+  async "treasury-v2"(float = "400") {
+    const { convertErc20 } = await import("./lib/chain.mjs");
+    const o = await account("owner"), want = toFusd(float);
+    const erc = new Contract(FUSD, ERC20, new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID));
+    const have = await erc.balanceOf(o.evmAddr);
+    const coin = (await (await fetch(`${REST}/cosmos/bank/v1beta1/balances/${o.cosmos}`)).json()).balances.find((x) => x.denom.toLowerCase() === `erc20:${FUSD}`.toLowerCase());
+    const bank = BigInt(coin?.amount ?? 0);
+    console.log(`company fUSD: ${fusd(have)} ERC-20 (float), ${fusd(bank)} bank coin (treasury); float wanted ${float}`);
+    let res;
+    if (have > want) res = await broadcast(o, [convertErc20(o.cosmos, o.cosmos, FUSD, have - want)], "leash: float -> treasury (ERC-20 -> bank coin)");
+    else if (have < want && bank > 0n) res = await broadcast(o, [convertCoin(o.cosmos, o.evmAddr, coin.denom, (want - have < bank ? want - have : bank))], "leash: treasury -> float (bank coin -> ERC-20)");
+    else return console.log("nothing to move");
+    console.log(res.code === 0 ? `moved ${fusd(have > want ? have - want : want - have)}  ${EXPLORER}${res.transactionHash}` : `REFUSED code ${res.code}: ${res.rawLog}`);
+  },
+
   /** Owner sets the desk's fUSD allowance (the budget the desk may pull, for agents and in-person payments alike). */
   async "allowance-v2"(amount) {
     const d = v2(), o = await account("owner");
-    const w = await broadcast(o, [openEvmWindowMsg({ sender: o.cosmos, blocks: 300, maxTxs: 1, maxValue: String(toUqor("0.5")) })], "leash: owner window (allowance)");
+    const w = await broadcast(o, [scoped(openEvmWindowMsg({ sender: o.cosmos, blocks: 300, maxTxs: 1, maxValue: String(toUqor("0.5")) }), [FUSD])], "leash: owner window (allowance)");
     if (w.code) throw new Error(`open window REFUSED code ${w.code}: ${w.rawLog}`);
     const tx = await new Contract(FUSD, ERC20, new Wallet(o.privateKey, new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID))).approve(d.invoiceDesk, toFusd(amount));
     await tx.wait();
@@ -442,7 +467,7 @@ const cmds = {
     const note = (s) => { out.steps.push(s); console.log(`  ${s.step.padEnd(34)} ${s.result}${s.tx ? `  ${s.tx}` : ""}`); };
     console.log(`kill switch on ${inv.ref}, ${fusdAmount} fUSD, agent account ${aa.evmAddr}`);
     note({ step: "dry run as the agent", result: await dry() });
-    const w = await broadcast(o, [openEvmWindowMsg({ sender: o.cosmos, blocks: 600, maxTxs: 2, maxValue: String(toUqor("0.5")) })], "leash: owner window (kill switch)");
+    const w = await broadcast(o, [scoped(openEvmWindowMsg({ sender: o.cosmos, blocks: 600, maxTxs: 2, maxValue: String(toUqor("0.5")) }), [d.invoiceDesk])], "leash: owner window (kill switch)");
     if (w.code) throw new Error(`open window REFUSED code ${w.code}: ${w.rawLog}`);
     let tx = await c.setAgent(aa.evmAddr, false); await tx.wait();
     note({ step: "company: setAgent(agent, false)", result: "done", tx: tx.hash });
@@ -463,7 +488,7 @@ const cmds = {
   /** Demo upkeep: a test vendor returns fUSD it was paid to the demo company (keeps the lab's in-person path funded). */
   async "vendor-refund-v2"(role = "vendorB", amount = "150") {
     const v = await account(role), o = await account("owner");
-    const w = await broadcast(v, [openEvmWindowMsg({ sender: v.cosmos, blocks: 300, maxTxs: 1, maxValue: String(toUqor("0.5")) })], "leash: vendor refund window");
+    const w = await broadcast(v, [scoped(openEvmWindowMsg({ sender: v.cosmos, blocks: 300, maxTxs: 1, maxValue: String(toUqor("0.5")) }), [FUSD])], "leash: vendor refund window");
     if (w.code) throw new Error(`open window REFUSED code ${w.code}: ${w.rawLog}`);
     const tx = await new Contract(FUSD, ERC20, new Wallet(v.privateKey, new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID))).transfer(o.evmAddr, toFusd(amount));
     await tx.wait();

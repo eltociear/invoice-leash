@@ -4,19 +4,40 @@
 (secp256k1, ed25519, X25519). Grover's algorithm halves the strength of hashes and symmetric
 ciphers. What still holds?
 
-**Short answer:** the money, the limits and the invoices stay safe. Three parts are classical, and each
-is bounded or confidential-only, never a path to the company's money:
+**Short answer:** the invoices, the limits and the company's treasury stay safe. Three parts are
+classical, and each is bounded:
 - the agent's ed25519 key, bounded like a stolen key;
-- an EVM window while it is open, bounded by its own caps;
+- an EVM window while it is open: one target, a transaction count, a value cap, an expiry. The worst
+  case is a company window whose single slot an attacker wins in a race. That gets one call to one
+  contract, and never the treasury, which is held as a bank coin;
 - a compromised MCP host, which can read sealed invoices.
 
-Below is every piece of cryptography in the system, then a drill we ran on the live testnet to test the
-assumption.
+**Check it yourself:** [Shor's gift](#shors-gift-check-it-yourself) publishes the classical private key of
+an account. Take its QOR if you can.
+
+Below: our drill on the live testnet, the windows, and every piece of cryptography in the system.
+
+## Shor's gift: check it yourself
+
+A drill we ran ourselves proves less than one you can run. [`scripts/qday-public.mjs`](scripts/qday-public.mjs)
+made an account that holds about 5 QOR and registered its ML-DSA-87 key. Then we published its
+**secp256k1 private key** ([`runs/qday-public.json`](runs/qday-public.json)), as if a quantum computer had
+already broken it:
+
+- account `qor1ven5euj4fcu30euzz28a90wfw3qshsy58tc8ah` / `0x66674cf2554e3917e782128fd2bdc974410bc094`
+- secp256k1 private key `0x3c2292aa10562dceb48dd9d74de999b7e093fc0f8eac619690b963c8e3f8085f`
+
+Anyone can sign anything with it. The [attack lab](https://eltociear.github.io/invoice-leash/lab.html#shor)
+signs an EVM transaction in your browser and sends it: *no open EVM authorisation window*. A Cosmos
+`MsgSend` signed with it gets code 20 (*must include* the ML-DSA-87 signature). `npm run verify` checks
+every day that the QOR is still there and that the account has executed exactly one transaction, its
+own key registration ([`4E09315A…`](https://explore.qore.network/tx/4E09315A67FAEF62F51E20CF2ADBB79F96F763C257C7BCBE50EBABA0F451B13E)),
+whoever has tried since.
 
 ## Our own Q-Day drill
 
 [`scripts/qday-drill.mjs`](scripts/qday-drill.mjs) plays the attacker after Q-Day. It holds the
-**secp256k1 key of every account** (company, agent account, relayer, a vendor) and signs with those
+**secp256k1 keys of four accounts** (company, agent account, relayer, a vendor) and signs with those
 keys alone (`signMode: "classical"`), with no ML-DSA-87 key. It sent 16 attacks to `qorechain-diana`:
 
 | Account | Attack, classical key only | The chain's answer |
@@ -62,6 +83,33 @@ account's classical key ([`runs/probes/window-caps.json`](runs/probes/window-cap
 Together with the target list ([`runs/probes/window.json`](runs/probes/window.json): fUSD and
 Mallory refused), the window's count, value, target and expiry all hold.
 
+### The company's own windows
+
+The company opens a window for a single action, such as paying an over-limit invoice in person or the
+kill switch. Each one names one target and admits one or two transactions (`scoped(...)` in
+[`leash.mjs`](leash.mjs)). [`scripts/probe-company-window.mjs`](scripts/probe-company-window.mjs) opened one
+the way `approve-v2` does (InvoiceDeskV2 only, 1 transaction). While it was open, the company's classical
+key alone tried three things ([`runs/probes/company-window.json`](runs/probes/company-window.json)):
+
+| Attack, company's classical key, window open | The chain's answer |
+|---|---|
+| `fUSD.transfer(Mallory, 1)` | refused: the window does not list fUSD |
+| 1 QOR to Mallory | refused: the window does not list Mallory |
+| `MsgSend` of the whole treasury (the bank-coin fUSD, 1,108 fUSD) | code 20: must include an ML-DSA-87 signature |
+
+**The treasury and the float.** The desk pulls fUSD from the company's ERC-20 balance, and an ERC-20
+balance is what a window can reach. So only a float stays there (about 400 fUSD, more than a day of
+agent payments). The rest is the bank coin, which moves only through hybrid-signed Cosmos messages
+(`MsgConvertERC20` / `MsgConvertCoin`, `node leash.mjs treasury-v2`). The float is refilled the same way,
+with no window.
+
+**What is left.** A quantum attacker who watches the chain could try to win the race for the one slot
+of a window the company has just opened. With a desk window, that buys one call to the desk, such as
+`approveVendor(attacker)`. Even then, the attacker's invoices are paid only within the agent's limits
+(250 fUSD a day). The company notices at once, because its own transaction is refused (the slot is
+used). The allowance window (target fUSD) is the widest: one `fUSD.transfer` of the float. The
+allowance is set rarely, so keep the float small when you open it.
+
 ## Every piece of cryptography, and what a quantum computer does to it
 
 | Where | Algorithm | Quantum status | If broken, the attacker gets | Evidence |
@@ -73,7 +121,7 @@ Mallory refused), the window's count, value, target and expiry all hold.
 | **Sealed invoices** | **ML-KEM-1024** (FIPS 203, level 5), `mlkem` mode (no X25519), HKDF with SHA3-256, AES-256-GCM | safe against "harvest now, decrypt later"; AES-256 keeps about 128-bit strength under Grover | — | [`runs/sealed.json`](runs/sealed.json) |
 | **The agent's key** | **ed25519** (QoreChain authenticators accept only ed25519 / secp256k1 today) | **broken** | exactly what a stolen agent key gets: genuine invoices from approved vendors, within the company's limits; nothing else | the compromised-agent run (16 attempts, 3 genuine paid), probes |
 | Hashes: invoice ids, the signed message, EVM | Keccak-256, SHA3-256 | Grover: about 128-bit preimage strength; collisions remain out of reach | — | — |
-| Contract admin (`approveVendor`, `setLimit`, `setAgent`) | `msg.sender` = the company, reachable only through an ML-DSA-87-opened window or a hybrid transaction | inherits the account's protection | — | drill (three EVM admin calls refused) |
+| Contract admin (`approveVendor`, `setLimit`, `setAgent`) | `msg.sender` = the company, reachable only through an ML-DSA-87-opened window, scoped to the desk | while no window is open: safe. While one is: at most the window's one slot, if the attacker wins the race | one admin call, bounded by the agent's limits; the company's own call then fails | drill (three EVM admin calls refused), [`runs/probes/company-window.json`](runs/probes/company-window.json) |
 | `npm run verify`, the lab, the site | reads only; ML-DSA-87 verified in the browser with noble-post-quantum | no secrets | — | — |
 | TLS to the public RPC endpoints | X25519MLKEM768 hybrid key exchange, ECDSA certificates (from the CBOM) | key exchange: post-quantum hybrid; the certificates are classical (the operator's, not ours) | reads only: a forged read cannot move money | [`cbom/`](cbom/invoice-leash.cbom.json) |
 | QoreChain consensus | validators' Ed25519 keys (from the CBOM) | classical | out of this project's scope: chain-level | CBOM |
@@ -84,9 +132,9 @@ Mallory refused), the window's count, value, target and expiry all hold.
    about what a thief can do with it. When QoreChain authenticators accept ML-DSA-87, `link-v2`
    changes one argument.
 2. **An open EVM window.** A quantum attacker with a classical key can act inside a window while it is
-   open. Keep windows short and scoped. The agent account's window is 300 blocks, at most 3
-   transactions and 0.4 QOR, to one target. The company opens windows only for a single action and
-   closes them in the same command (`approve-v2`, `allowance-v2`).
+   open, within its caps. Every window names one target. The agent account's window is 300 blocks, at
+   most 3 transactions and 0.4 QOR, to the desk. The company's windows admit one action and close in
+   the same command. The treasury is a bank coin that no window reaches (above).
 3. **The MCP host.** It holds the agent's ed25519 key and its ML-KEM seed. Losing the host means a
    compromised agent (bounded, see 1) and the ability to read sealed invoices addressed to it. That is a
    loss of confidentiality, not of money.
