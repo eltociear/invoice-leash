@@ -62,12 +62,14 @@ const MALLORY = getAddress(dep.attacker);
 const name = (a) => VENDORS[getAddress(a)] ?? (getAddress(a) === MALLORY ? "Mallory" : a.slice(0, 10) + "…");
 
 let pass = 0, fail = 0;
+const results = []; let currentSection = "";
 const ok = (cond, msg, detail = "") => {
   cond ? pass++ : fail++;
+  results.push({ section: currentSection, ok: !!cond, check: msg, detail: String(detail).trim() || undefined });
   console.log(`  ${cond ? "✓" : "✗"} ${msg}${detail ? `  ${detail}` : ""}`);
   return cond;
 };
-const section = (s) => console.log(`\n${s}`);
+const section = (s) => { currentSection = s; console.log(`\n${s}`); };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function rest(path) {
   for (let i = 0; i < 4; i++) {
@@ -567,6 +569,11 @@ console.log(`\n${fail ? "✗" : "✓"} ${pass} checks passed, ${fail} failed  (q
 console.log("  The agent's linked key is ed25519: QoreChain links only ed25519/secp256k1 keys today. Leash assumes it can be stolen;");
 console.log("  the rule above is what a thief, or a fooled model, gets. The owner's key, which writes and revokes that rule, is hybrid ML-DSA-87.");
 process.exitCode = fail ? 1 : 0;
+// the same run, machine-readable (runs/verify-latest.json when saved; set VERIFY_JSON=<path> to write it)
+if (process.env.VERIFY_JSON) {
+  const { writeFileSync } = await import("node:fs");
+  writeFileSync(process.env.VERIFY_JSON, JSON.stringify({ chain: "qorechain-diana", block: head, at: new Date().toISOString(), passed: pass, failed: fail, checks: results }, null, 1) + "\n");
+}
 // the documents' "N checks" come from runs/verify-latest.txt (test/docs.test.mjs): a run with a different count means they are stale
 const stated = Number(readFileSync(new URL("runs/verify-latest.txt", root), "utf8").match(/✓ (\d+) checks passed/)?.[1]);
 if (stated !== pass + fail) { console.log(`✗ the documents state ${stated} checks (runs/verify-latest.txt), this run has ${pass + fail}: save this run there and update them`); process.exitCode = 1; }

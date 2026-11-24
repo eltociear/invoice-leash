@@ -9,7 +9,7 @@
 **Threat model:** [THREAT_MODEL.md](THREAT_MODEL.md) · **Quantum readiness:** [QUANTUM_READINESS.md](QUANTUM_READINESS.md) (Q-Day drill: 16 attacks with four accounts' classical keys, 16 refused) ·
 **Demo video (2:50, v2 in fUSD, narrated):** https://youtu.be/K3Teb5sO8JU
 
-> **For judges: check every claim here in about two minutes, with no keys and no test QOR.**
+> **For judges: check every claim here in about two minutes, with no keys and no test QOR.** A five-minute route, and the chain's own words for every refusal: [JUDGES.md](JUDGES.md).
 >
 > ```sh
 > git clone --recurse-submodules https://github.com/eltociear/invoice-leash && cd invoice-leash
