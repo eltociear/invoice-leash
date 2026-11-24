@@ -11,7 +11,7 @@ the AI's work was checked, and the mistakes the AI made that those checks caught
 | **AI** | Claude Code (Anthropic), model `claude-opus-5-5`: one main session that writes code, runs the testnet steps and reports, plus sub-agents started for independent reviews and research |
 | **Human** | the team (one person, [@eltociear](https://github.com/eltociear)): goals, product decisions, accounts and wallets, everything that needs a human identity, and the final call on what ships |
 | **Written by the AI** | nearly all code, tests, scripts, documentation, the demo video (slides, narration script, music) and the cover image |
-| **How the AI's work is checked** | not by trusting it: `npm run verify` (91 read-only checks against the live testnet), 59 Foundry tests and 5 invariants, a 14-mutant check, Slither, QoreScan, browser tests, CI daily, and AI reviewers that did not write the code |
+| **How the AI's work is checked** | not by trusting it: `npm run verify` (94 read-only checks against the live testnet), 59 Foundry tests and 5 invariants, a 14-mutant check, Slither, QoreScan, browser tests, CI daily, and AI reviewers that did not write the code |
 
 ## The workflow
 
@@ -102,6 +102,15 @@ Listed because they show why the checks exist.
   fuzzer could call a setup function, and one fixture is genuine on the desk under test), not the contract.
 - **A stale number in a document.** After `verify` grew, this file still gave its old count (82). Fix:
   `test/docs.test.mjs` checks every count the documents state against its source (and catches this one).
+- **A regression from a security fix.** Scoping the company's windows to one target broke `deploy-v2`: it
+  named the desk's address before the desk existed. Caught by an AI reviewer that tried to set the project
+  up from scratch. Fix: the deploy gets its own one-transaction window. `desk.mjs setup` was then run end
+  to end on the testnet.
+- **Tools that misreported.** An independent audit found that the MCP server showed the model an unsigned
+  amount label, accepted any registered signer as "authentic", and could report a payment whose answer was
+  lost as refused. Fix: the signed amount only, the company's signature only, an OUTCOME UNKNOWN state
+  settled by `paid()`, and `test/agent.test.mjs`. The setup run then found two more of the same kind (a
+  network error shown as a refusal, a 404 shown as an error), now fixed.
 - **Numbers stated wrong in conversation** (17 attempts for 16, 11 mutants for 10). The human was given
   the corrected numbers; the README's numbers come from `verify`.
 - **Local metadata in a published log.** An early Claude Code stream log included local paths; it was

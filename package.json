@@ -18,12 +18,14 @@
   },
   "scripts": {
     "compile": "node scripts/compile.mjs",
-    "test": "node test/invoice.test.mjs && node test/pages.test.mjs && node test/docs.test.mjs",
+    "test": "node test/invoice.test.mjs && node test/agent.test.mjs && node test/pages.test.mjs && node test/docs.test.mjs",
     "test:contract": "forge test",
     "fixtures": "node test/fixtures.mjs",
     "verify": "node scripts/verify.mjs",
     "cbom": "qorescan scan --network testnet --address qor1khdfqy8czenz9gstyy8ye2swxpee2xwslh0uzn --address qor1c9nj5336dsxf23geexm8f4d97vnlgajcuvdu8j --address qor1gxx85vm6zws5uja9rlynrczc29tmqzcym6t9aa --address qor13knjy3pnf45pu052w5mhkta0tyfh2mmf33fjah --address qor1hw3k0623e89y7r9r0yjxja3z0r2xvwfqz384up --address qor1xle4mhhmsksk5rqn5ft8mat62pr553sfu97l9t --address qor16fluqkmkgaqq98hkgdyccny93gwsm32c4awtmg --address qor1llw052ph5xqwm2cv2ene8mtqv4lt2epfl5tr3f --address qor1u5a7d3dedcyelktppwa4dwh9vncjmmucrj25ew --tls evm-testnet.qore.host:443 --tls api-testnet.qore.host:443 --solidity ./contracts --out cbom/invoice-leash.cbom.json",
-    "mcp": "node mcp/server.mjs"
+    "mcp": "node mcp/server.mjs",
+    "desk": "node desk.mjs",
+    "vendor": "node vendor.mjs"
   },
   "engines": {
     "node": ">=20"
@@ -34,5 +36,9 @@
   },
   "overrides": {
     "tmp": "0.2.7"
+  },
+  "bin": {
+    "leash-desk": "desk.mjs",
+    "leash-vendor": "vendor.mjs"
   }
 }

@@ -43,7 +43,7 @@ tests (`test/InvoiceDeskV2.t.sol`).
 | …as `fUSD.transferFrom(company, attacker)` | chain: not an allowed call (and only the desk has an allowance) | inbox #2 |
 | Agent reconfigures its leash (`approveVendor`, `setLimit`, `setAgent`) | chain: only `pay` (`0xf19ff4ff`) is allowed; and in the desk, settings are per `msg.sender`, so the agent would only configure its own empty entry | inbox #3, test `test_agent_limits_are_the_payers_alone` |
 | The agent's classical key used directly (EVM transactions) | its account's EVM window: ≤3 txs, ≤0.4 QOR, 300 blocks, target InvoiceDeskV2 only; no window, no transaction. Only the human's hybrid ML-DSA-87 signature opens one | `runs/probes/window.json`, verify §9 |
-| "Approved by the CFO" in an email | instructions count only as QoreSign messages verified against the company's registered ML-DSA-87 key (MCP `verify_message`); a Q-Day forgery (the company's classical key + another ML-DSA-87 key) is refused | `runs/messages.json`, verify §9 |
+| "Approved by the CFO" in an email | instructions count only as QoreSign messages from the company's own account, verified against its registered ML-DSA-87 key, for this chain, with an optional "valid until" (MCP `verify_message`). A Q-Day forgery (the company's classical key + another ML-DSA-87 key), a stranger signing as herself, and an expired instruction are refused | `runs/messages.json`, verify §9 |
 | Reading invoices in transit, now or after Q-Day ("harvest now, decrypt later") | sealed invoices: ML-KEM-1024 to the agent account's key in the chain's KEM registry; only the agent's KEM key opens them, and it gives no spending power | `runs/sealed.json`, verify §9 |
 | A forged invoice sent sealed, to look trustworthy | sealing is not authenticity: once opened it is `BadSignature` | `runs/sealed.json` |
 | An account the company never named calls `pay` for it | `NotPayersAgent` | verify §9, tests |
@@ -59,6 +59,8 @@ tests (`test/InvoiceDeskV2.t.sol`).
 | Vendor key never proven / other algorithm / rotated | `VendorKeyNotProven` / `BadSignature` (the key is read at payment time) | tests (v2 and v1) |
 | A token that returns `false`, or an address with no code | `TransferFailed`, all rolled back | tests |
 | The agent keeps going after it is caught | revoke the key on chain, or `setAgent(agent, false)` in the desk: one company tx either way | v1 run (revoke); v2 live: `kill-switch-v2` (`NotPayersAgent`), verify §9; tests |
+| An email whose text lies about the amount (`fusd: "5"` next to a signed 95) | the agent and the MCP tools are shown the **signed** amount, in the signed token's units; a label that disagrees is flagged as a warning | `test/agent.test.mjs` |
+| A lost answer from the chain (timeout after sending) | reported as OUTCOME UNKNOWN, never as refused or not sent; for a payment, the desk's `paid()` settles it | `lib/agent.mjs` `settle` |
 | A forgotten agent | the link expires (72 h in the v2 demo) | verify §9 reads it |
 | The company's classical key, while a company window is open (after Q-Day) | every company window names one target and admits one action; the treasury is a bank coin no window reaches, and only a ~400 fUSD float is ERC-20. Worst case: one call to the window's target, if the attacker wins the race, and the company's own call then fails | `runs/probes/company-window.json` (fUSD, QOR and the treasury refused inside a desk window); verify |
 

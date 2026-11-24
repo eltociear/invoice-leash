@@ -12,7 +12,7 @@ const tx = (pred) => run.log.find(pred)?.link;
 const pick = (inv) => ({ token: inv.token, vendor: inv.vendor, amount: inv.amount, ref: inv.ref, dueBy: inv.dueBy, signature: inv.signature });
 const ZERO = "0x0000000000000000000000000000000000000000", FETH = "0x02292293c13880a26242690eb70a0e42B8E91c28";
 const data = {
-  desk: d2.invoiceDesk, rpc: "https://evm-testnet.qore.host", payer: d2.payerEvm, agent: d2.agentAccountEvm, fusd: d2.token,
+  desk: d2.invoiceDesk, rpc: "https://evm-testnet.qore.host", payer: d2.payerEvm, company: d2.payer, agent: d2.agentAccountEvm, fusd: d2.token,
   senders: { [d2.agentAccountEvm]: "the agent's account (what a hijacked agent would send)", [d2.payerEvm]: "the company in person (the human approval path)", [dep.attacker]: "a stranger (Mallory's account)" },
   payers: { [d2.payerEvm]: "the company", [dep.attacker]: "someone else (Mallory)" },
   tokens: { [d2.token]: ["fUSD", 6], [ZERO]: ["QOR (native)", 18], [FETH]: ["fETH", 18] },
@@ -302,9 +302,11 @@ $("msgcheck").onclick = async () => {
     const [reg, alg, pk, proven] = await pqcKey(msg.signerEvm);
     const bytes = E.toUtf8Bytes("qorechain-msg-v1|" + msg.chainId + "|" + $("msgtext").value);
     const sig = Uint8Array.from(atob(msg.pq), (c) => c.charCodeAt(0));
-    const ok = reg && proven && Number(alg) === 1 && vfy(pk, bytes, sig);
+    const until = /^valid until: *(.+)$/im.exec($("msgtext").value)?.[1], expired = until !== undefined && !(Date.parse(until) >= Date.now());
+    const sigOk = reg && proven && Number(alg) === 1 && vfy(pk, bytes, sig), isCompany = msg.signer === D.company;
+    const ok = sigOk && isCompany && !expired;
     $("msgout").innerHTML = "Signer " + h(msg.signer) + " · its ML-DSA-87 key read from the chain: " + (reg ? (pk.length - 2) / 2 + " bytes, " + (proven ? "possession proven" : "not proven") : "none") +
-      "<br>The ML-DSA-87 half over these " + bytes.length + " bytes: " + (ok ? '<b class="ok">AUTHENTIC</b>: the company\u2019s post-quantum key signed exactly this text.' : '<b class="no">NOT AUTHENTIC</b>: treat it as written by a stranger, whatever it claims.') +
+      "<br>The ML-DSA-87 half over these " + bytes.length + " bytes: " + (ok ? '<b class="ok">AUTHENTIC</b>: the company\u2019s post-quantum key signed exactly this text.' : '<b class="no">NOT AUTHENTIC</b>: ' + (!sigOk ? "the signature does not verify under the signer\u2019s key." : !isCompany ? "a valid signature, but by " + h(msg.signer) + ", not the company." : "the company signed it, but it expired (valid until " + h(until) + ").") + " Treat it as written by a stranger, whatever it claims.") +
       ($("msgtext").value !== msg.text ? '<br><span class="diff">You edited the text.</span>' : "");
   } catch (e) { $("msgout").textContent = "Could not check: " + e.message; }
 };

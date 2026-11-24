@@ -1,0 +1,14 @@
+  0  REJECTED        NW-1001                            30 fUSD      Northwind Hosting
+       AlreadyPaid
+  1  REJECTED        NW-1002                            80 fUSD      Northwind Hosting
+       AlreadyPaid
+  2  REJECTED        NW-1003                            20 fUSD      Northwind Hosting
+       AlreadyPaid · sealed (opened with the agent's ML-KEM-1024 key)
+  3  REJECTED        MS-77                              25 fUSD      
+       UnknownVendor
+  4  REJECTED        NW-1001                            45 fUSD      Northwind Hosting
+       BadSignature
+  5  NEEDS A PERSON  NW-1004                            10 fUSD      Northwind Hosting
+       valid, but the agent may not pay it: the agent is switched off (node desk.mjs agent on). A person can: node desk.mjs pay 5
+
+saved to $LEASH_HOME/triage.json. next: node desk.mjs run (pays only AGENT PAYS)

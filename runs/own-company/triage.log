@@ -1,0 +1,12 @@
+  0  AGENT PAYS      NW-1001                            30 fUSD      Northwind Hosting
+       approved vendor, valid ML-DSA-87 signature, unpaid, not past due, within the agent's limits
+  1  NEEDS A PERSON  NW-1002                            80 fUSD      Northwind Hosting
+       valid, but the agent may not pay it (OverPerPaymentLimit): over its limits. Approve with node desk.mjs pay 1
+  2  AGENT PAYS      NW-1003                            20 fUSD      Northwind Hosting
+       approved vendor, valid ML-DSA-87 signature, unpaid, not past due, within the agent's limits · sealed (opened with the agent's ML-KEM-1024 key)
+  3  REJECTED        MS-77                              25 fUSD      
+       UnknownVendor
+  4  REJECTED        NW-1001                            45 fUSD      Northwind Hosting
+       BadSignature
+
+saved to $LEASH_HOME/triage.json. next: node desk.mjs run (pays only AGENT PAYS)

@@ -208,9 +208,9 @@ const cmds = {
       const m = inbox[step.item];
       if (step.action === "skip") { console.log(`- [${step.item}] ${m.subject}\n    agent: skip${step.why ? ` (${step.why})` : ""}`); log.push({ ...step, result: "skipped" }); continue; }
       const r = await execute(step, inbox, deskAddr);
-      const verdict = r.ok ? `PAID${r.hybrid ? "  hybrid ML-DSA-87: verified" : ""}` : r.infra ? `NOT SENT (our side, not the chain): ${r.why}` : `REFUSED BY THE CHAIN: ${r.why}`;
+      const verdict = r.ok ? `PAID${r.hybrid ? "  hybrid ML-DSA-87: verified" : ""}` : r.unknown ? `OUTCOME UNKNOWN (do not resend; check paid()): ${r.why}` : r.infra ? `NOT SENT (our side, not the chain): ${r.why}` : `REFUSED BY THE CHAIN: ${r.why}`;
       console.log(`- [${step.item}] ${m.subject}\n    agent: ${describe(step, inbox)}${step.why ? `  (${step.why})` : ""}\n    chain: ${verdict}${r.link ? `\n           ${r.link}` : ""}`);
-      log.push({ ...step, ok: r.ok, infra: r.infra, why: r.why, link: r.link });
+      log.push({ ...step, ok: r.ok, infra: r.infra, unknown: r.unknown, settled: r.settled, why: r.why, link: r.link });
     }
     const after = await balance(o.cosmos);
     console.log(`\nowner balance ${fmt(before)} -> ${fmt(after)}  (moved ${fmt(BigInt(before) - BigInt(after))})`);
@@ -328,13 +328,19 @@ const cmds = {
     }
     await cmds.register("agentacct");
     // 2. the desk
-    const w = await broadcast(o, [scoped(openEvmWindowMsg({ sender: o.cosmos, blocks: 600, maxTxs: 8, maxValue: String(toUqor("3")) }), [d.invoiceDesk, FUSD])], "leash: owner window (v2)");
+    // a contract creation has no target to name, so the deploy gets its own one-transaction window;
+    // the configuration that follows runs in a second window scoped to the new desk and the token
+    const w = await broadcast(o, [openEvmWindowMsg({ sender: o.cosmos, blocks: 300, maxTxs: 1, maxValue: String(toUqor("2")) })], "leash: owner window (deploy, 1 tx)");
     if (w.code) throw new Error(`open window REFUSED code ${w.code}: ${w.rawLog}`);
     const wallet = new Wallet(o.privateKey, new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID));
     const c = await new ContractFactory(ART2.abi, ART2.bytecode, wallet).deploy();
     await c.waitForDeployment();
     const deskAddr = await c.getAddress(), txs = { window: w.transactionHash, deploy: c.deploymentTransaction().hash };
     console.log(`InvoiceDeskV2 deployed at ${deskAddr}`);
+    await broadcast(o, [closeEvmWindowMsg(o.cosmos)], "leash: close the deploy window").catch(() => {}); // usually already exhausted
+    const w2 = await broadcast(o, [scoped(openEvmWindowMsg({ sender: o.cosmos, blocks: 600, maxTxs: 5, maxValue: String(toUqor("3")) }), [deskAddr, FUSD])], "leash: owner window (v2 setup, desk + fUSD)");
+    if (w2.code) throw new Error(`open window REFUSED code ${w2.code}: ${w2.rawLog}`);
+    txs.setupWindow = w2.transactionHash;
     const step = async (label, p) => { const tx = await p; await tx.wait(); txs[label] = tx.hash; console.log(`  ${label.padEnd(18)} ${tx.hash}`); };
     await step("approve_hostline", c.approveVendor(a.evmAddr));
     await step("approve_tokenwell", c.approveVendor(b.evmAddr));
@@ -386,10 +392,10 @@ const cmds = {
       const m = inbox[step.item];
       if (step.action === "skip") { console.log(`- [${step.item}] ${m.subject}\n    agent: skip${step.why ? ` (${step.why})` : ""}`); log.push({ ...step, result: "skipped" }); continue; }
       const r = await executeV2(step, inbox, d);
-      const verdict = r.ok ? `PAID${r.hybrid ? "  hybrid ML-DSA-87: verified" : ""}` : r.infra ? `NOT SENT (our side): ${r.why}` : `REFUSED BY THE CHAIN: ${r.why}`;
+      const verdict = r.ok ? `PAID${r.hybrid ? "  hybrid ML-DSA-87: verified" : ""}` : r.unknown ? `OUTCOME UNKNOWN (do not resend; check paid()): ${r.why}` : r.infra ? `NOT SENT (our side): ${r.why}` : `REFUSED BY THE CHAIN: ${r.why}`;
       console.log(`- [${step.item}] ${m.subject}\n    agent: ${describeV2(step, inbox)}${step.why ? `  (${step.why})` : ""}\n    chain: ${verdict}${r.link ? `\n           ${r.link}` : ""}`);
       const { invoice, ...rest } = step;
-      log.push({ ...rest, ref: (invoice ?? m.invoice)?.ref, ok: r.ok, infra: r.infra, why: r.why, link: r.link });
+      log.push({ ...rest, ref: (invoice ?? m.invoice)?.ref, ok: r.ok, infra: r.infra, unknown: r.unknown, settled: r.settled, why: r.why, link: r.link });
     }
     const after = await token.balanceOf(o.evmAddr), afterQ = await balance(o.cosmos);
     console.log(`\nowner ${fusd(before)} -> ${fusd(after)}  (moved ${fusd(before - after)});  QOR ${fmt(beforeQ)} -> ${fmt(afterQ)}`);
@@ -515,7 +521,7 @@ const cmds = {
     const inbox = loadInbox();
     const step = { item: 9, action: "pay" }; // an honest, unpaid, in-limit invoice: only the revocation can stop it
     const r = await execute(step, inbox, deskAddr);
-    console.log(`agent: ${describe(step, inbox)}\nchain: ${r.ok ? "PAID" : r.infra ? `NOT SENT (our side): ${r.why}` : `REFUSED BY THE CHAIN: ${r.why}`}${r.link ? `\n       ${r.link}` : ""}`);
+    console.log(`agent: ${describe(step, inbox)}\nchain: ${r.ok ? "PAID" : r.unknown ? `OUTCOME UNKNOWN (do not resend): ${r.why}` : r.infra ? `NOT SENT (our side): ${r.why}` : `REFUSED BY THE CHAIN: ${r.why}`}${r.link ? `\n       ${r.link}` : ""}`);
   },
 };
 

@@ -1,0 +1,32 @@
+{
+  "v2": {
+    "invoiceDesk": "0x8efcB1Ea49c2e2544080d188D5F179a1DD7CA74b",
+    "token": "0x97143B771D34ddb9130b807b135Ae675A5a963CA",
+    "payer": "qor1vvxphjk3gw8y425qmumr5l42d5eyzux7ynd0c7",
+    "payerEvm": "0x630c1bcad1438e4aaa80df363a7eaa6d324170de",
+    "agentAccount": "qor13mz90c8y8fm2uxdf2k479lhjs73kyaqr44ceyv",
+    "agentAccountEvm": "0x8ec457e0e43a76ae19a955abe2fef287a3627403",
+    "gas": "qor135ehg2zg3yqypxtcqwkm9a4qzvjlz4ndrnc6sp",
+    "deployedAt": "2026-11-24T04:24:27.496Z",
+    "deployBlock": 10647056,
+    "deployTx": "0x4dbb4bede49a3d51c1e8e978bf8bf07cc8866811cc3de2c0811b0530effac9ef",
+    "vendors": {
+      "0x8BB12d258F65fbbaAd6Bc674F7BDEbf783dC8993": "Northwind Hosting"
+    },
+    "limits": {
+      "perPayment": "50",
+      "daily": "120",
+      "allowance": "1000"
+    },
+    "agentRule": {
+      "allowedDenoms": [
+        "erc20/0x4604e7e45b2ecdbfbdc157103f5b2b62cb16451a"
+      ],
+      "allowedEvmCalls": [
+        "0x8efcB1Ea49c2e2544080d188D5F179a1DD7CA74b/0xf19ff4ff"
+      ],
+      "hours": "168",
+      "linkTx": "35A531CDA215C3E303C4FA61F2336A9870F38BAF65A49439249E5FBD05F5E79F"
+    }
+  }
+}

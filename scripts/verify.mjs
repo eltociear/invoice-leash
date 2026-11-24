@@ -32,6 +32,17 @@ async function retry(fn) {
   }
 }
 
+// A public testnet stops answering now and then. If it does, say so instead of printing a stack trace.
+const offline = (e) => {
+  const t = `${e?.code ?? ""} ${e?.message ?? e}`;
+  if (/timeout|ETIMEDOUT|ECONNRESET|ENETUNREACH|ECONNREFUSED|EAI_AGAIN|fetch failed|TIMEOUT|socket hang up|SERVER_ERROR|429/.test(t)) {
+    console.error(`\n✗ the testnet did not answer (${t.trim().slice(0, 120)}). Nothing was checked wrong: run npm run verify again in a minute.`);
+    process.exit(2);
+  }
+  throw e;
+};
+process.on("uncaughtException", offline);
+process.on("unhandledRejection", offline);
 const REST = process.env.QORE_REST ?? "https://api-testnet.qore.host";
 const EVM_RPC = process.env.QORE_EVM_RPC ?? "https://evm-testnet.qore.host";
 const root = new URL("../", import.meta.url);
@@ -352,8 +363,28 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
       && /does not list 0x97143B771D34ddb9130b807b135Ae675A5a963CA/.test(cw[1].result) && cw[2].result.includes(`does not list ${MALLORY}`) && /code 20/.test(cw[3].result) && cwSlot?.status === 1,
       "inside the company's own window (InvoiceDeskV2 only, 1 tx), its classical key could not move fUSD or QOR, nor the treasury (code 20)", `(${cw[0].tx.slice(0, 8)}…)`);
     const coin = ((await rest(`/cosmos/bank/v1beta1/balances/${dep.v2.payer}`))?.balances ?? []).find((b) => /0x97143b77/i.test(b.denom));
-    ok(BigInt(coin?.amount ?? 0) >= 1_000_000_000n, "the company's fUSD treasury is a bank coin (moves only with ML-DSA-87); the desk's ERC-20 float is what a window could ever expose",
-      `(treasury ${formatUnits(coin?.amount ?? 0, 6)} fUSD, float ${formatUnits(await bal(payer2), 6)} fUSD)`);
+    const floatNow = await bal(payer2);
+    ok(BigInt(coin?.amount ?? 0) > floatNow, "most of the company's fUSD is the bank coin (moves only with ML-DSA-87); the desk's ERC-20 float, the smaller part, is what a window could ever expose",
+      `(treasury ${formatUnits(coin?.amount ?? 0, 6)} fUSD, float ${formatUnits(floatNow, 6)} fUSD)`);
+  }
+
+  // a second company, set up from scratch with desk.mjs and vendor.mjs (runs/own-company/)
+  {
+    const oc = json("runs/own-company/desk.json").v2, ocDesk = getAddress(oc.invoiceDesk), ocPayer = getAddress(oc.payerEvm);
+    const csv = readFileSync(new URL("runs/own-company/payments.csv", root), "utf8").trim().split("\n").slice(1).map((l) => l.split(","));
+    const ocCall = async (fn, args) => desk2.decodeFunctionResult(fn, await provider.call({ to: ocDesk, data: desk2.encodeFunctionData(fn, args) }))[0];
+    const [codeOwn, codeDemo] = await Promise.all([provider.getCode(ocDesk), provider.getCode(DESK2)]);
+    let rowsOk = 0;
+    for (const [, , , , id, , , by, tx] of csv) {
+      const paidOk = await ocCall("paid", [ocPayer, id]);
+      const txOk = by === "agent" ? (await rest(`/cosmos/tx/v1beta1/txs/${tx}`))?.tx_response?.code === 0 : (await provider.getTransactionReceipt(tx))?.status === 1;
+      if (paidOk && txOk) rowsOk++;
+    }
+    const ms = json("runs/own-company/invoices/MS-77.json").invoice;
+    const [vOk, msApproved, msPaid] = await Promise.all([ocCall("approved", [ocPayer, Object.keys(oc.vendors)[0]]), ocCall("approved", [ocPayer, ms.vendor]), ocCall("paid", [ocPayer, ms.id])]);
+    ok(codeOwn === codeDemo && csv.length === 4 && rowsOk === 4 && csv.filter((r) => r[7] === "agent").length === 3 && vOk && !msApproved && !msPaid,
+      "a second company, set up from scratch with desk.mjs / vendor.mjs: same desk bytecode; its export's 4 payments (3 by the agent, 1 by a person) are each paid() and in a successful tx; the unapproved vendor's invoice unpaid",
+      `(${ocDesk.slice(0, 10)}…, ${Object.values(oc.vendors)[0]})`);
   }
 
   // Shor's gift: an account whose secp256k1 private key is public (runs/qday-public.json)
@@ -370,7 +401,7 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
   {
     const { verifyCompanyMessage } = await import("../lib/messages.mjs");
     for (const m of json("runs/messages.json")) {
-      const r = await retry(() => verifyCompanyMessage(m));
+      const r = await retry(async () => { const x = await verifyCompanyMessage(m, { company: d2.payer }); if (x.network) throw new Error(`fetch failed: ${x.why}`); return x; });
       ok(r.ok === m.expect, `company message, ${m.name} -> ${r.ok ? "AUTHENTIC" : "REFUSED"}`, r.ok ? "(secp256k1 + ML-DSA-87, key read from chain)" : `(${r.why.slice(0, 80)})`);
     }
   }

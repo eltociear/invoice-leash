@@ -1,0 +1,71 @@
+{
+  "at": "2026-11-24T04:32:41.544Z",
+  "items": [
+    {
+      "i": 0,
+      "ref": "NW-1001",
+      "id": "0x590ce94998d3548dec8192d2355e894800389a8c21f30eebe816a0723a17b7cf",
+      "vendor": "0x8bb12d258f65fbbaad6bc674f7bdebf783dc8993",
+      "vendorName": "Northwind Hosting",
+      "amount": "30 fUSD",
+      "verdict": "ALREADY PAID",
+      "why": "the desk has paid this invoice id for you (node desk.mjs export)",
+      "note": ""
+    },
+    {
+      "i": 1,
+      "ref": "NW-1002",
+      "id": "0x31ca9cbf0ef25f7d2993cd531aad785a9fbd6bdce888280382a298204a70f186",
+      "vendor": "0x8bb12d258f65fbbaad6bc674f7bdebf783dc8993",
+      "vendorName": "Northwind Hosting",
+      "amount": "80 fUSD",
+      "verdict": "ALREADY PAID",
+      "why": "the desk has paid this invoice id for you (node desk.mjs export)",
+      "note": ""
+    },
+    {
+      "i": 2,
+      "ref": "NW-1003",
+      "id": "0xf7f66211e499e7ede32667bdffda63e826fac90188fc736818101e8eee8bf31d",
+      "vendor": "0x8bb12d258f65fbbaad6bc674f7bdebf783dc8993",
+      "vendorName": "Northwind Hosting",
+      "amount": "20 fUSD",
+      "verdict": "ALREADY PAID",
+      "why": "the desk has paid this invoice id for you (node desk.mjs export)",
+      "note": "sealed (opened with the agent's ML-KEM-1024 key)"
+    },
+    {
+      "i": 3,
+      "ref": "MS-77",
+      "id": "0x4853a458e153680e01eb2b1650d23104e769191b63c22f90da361e59b1bfba28",
+      "vendor": "0xf6dc1219cd8719a40ca2048bdc5464ebd8add0a8",
+      "vendorName": null,
+      "amount": "25 fUSD",
+      "verdict": "REJECTED",
+      "why": "UnknownVendor",
+      "note": ""
+    },
+    {
+      "i": 4,
+      "ref": "NW-1001",
+      "id": "0x590ce94998d3548dec8192d2355e894800389a8c21f30eebe816a0723a17b7cf",
+      "vendor": "0x8bb12d258f65fbbaad6bc674f7bdebf783dc8993",
+      "vendorName": "Northwind Hosting",
+      "amount": "45 fUSD",
+      "verdict": "REJECTED",
+      "why": "BadSignature",
+      "note": ""
+    },
+    {
+      "i": 5,
+      "ref": "NW-1004",
+      "id": "0x5f8e9532e7b49a73095ce20435ca409e1205cf4c16a6076eb8692436ef1705de",
+      "vendor": "0x8bb12d258f65fbbaad6bc674f7bdebf783dc8993",
+      "vendorName": "Northwind Hosting",
+      "amount": "10 fUSD",
+      "verdict": "AGENT PAYS",
+      "why": "approved vendor, valid ML-DSA-87 signature, unpaid, not past due, within the agent's limits",
+      "note": ""
+    }
+  ]
+}

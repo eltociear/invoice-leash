@@ -1,0 +1,37 @@
+1. the company's ML-DSA-87 key
+  owner ML-DSA-87 key registered        C8960E0DB90DEFB4D36E21B029D71AB5B090A2D1EDE87DBB87A171CBE47A549A
+2. fee money: the fee wallet (relays the agent's requests) and the agent account (its own setup)
+  sent 3 QOR to qor135ehg2zg3yqypxtcqwkm9a4qzvjlz4ndrnc6sp  FCABC3A897AE8F4FFBA3DF607D3176C8B261B09A3EF92EF8892DBFA130B8DA94
+  sent 1 QOR to qor13mz90c8y8fm2uxdf2k479lhjs73kyaqr44ceyv  08D47F6194462C1ABB7E9E60119249E00C4177D9C727D3B5F9ED9DCA175F1834
+3. ML-DSA-87 keys for the fee wallet and the agent account
+  gas ML-DSA-87 key registered        BC23DD1550F8577FAEFB80C145B53BE0005A7989F40ED55E93EADB0448EBD5F3
+  agentacct ML-DSA-87 key registered        62859A961B730A4347083F0D028398747861C5F242860013BCDAD1468D2A6DE4
+4. your InvoiceDeskV2 (a contract creation has no target, so it gets its own one-transaction window)
+  deployed                   0x4dbb4bede49a3d51c1e8e978bf8bf07cc8866811cc3de2c0811b0530effac9ef
+  InvoiceDeskV2 at 0x8efcB1Ea49c2e2544080d188D5F179a1DD7CA74b
+5. the desk's settings, in one window scoped to the desk and fUSD
+  setAgent(agent account)    0x92f412e0e80bc7e88b4c89c05f471dee7f7621f121d3e3b59d38e82648bbe418
+  setLimit(50, 120)          0x119f47d2d02164a85a3331c52483e4e9ca0f55e2afec6ddbe6215a21da79d420
+  fUSD.approve(desk, 1000)   0x59b1628c46c18206ab80a478ab62c58bdad9e8efe5bf5ed2321d765b4f045dee
+6. the agent's key, linked to the agent account: no denom it holds, one call (InvoiceDeskV2.pay)
+
+abstractaccount query failed: HTTP 404 from https://api-testnet.qore.host/qorechain/abstractaccount/v1/accounts/qor13mz90c8y8fm2uxdf2k479lhjs73kyaqr44ceyv/authenticators: account qor13mz90c8y8fm2uxdf2k479lhjs73kyaqr44ceyv not found
+1. the company's ML-DSA-87 key
+  already registered
+2. fee money: the fee wallet (relays the agent's requests) and the agent account (its own setup)
+  qor135ehg2zg3yqypxtcqwkm9a4qzvjlz4ndrnc6sp has enough
+  qor13mz90c8y8fm2uxdf2k479lhjs73kyaqr44ceyv has enough
+3. ML-DSA-87 keys for the fee wallet and the agent account
+  gas already registered
+  agentacct already registered
+4. desk already deployed at 0x8efcB1Ea49c2e2544080d188D5F179a1DD7CA74b
+5. the desk's settings, in one window scoped to the desk and fUSD
+  already set
+6. the agent's key, linked to the agent account: no denom it holds, one call (InvoiceDeskV2.pay)
+  agent key linked for 168 h: only 0x8efcB1Ea49c2e2544080d188D5F179a1DD7CA74b.pay  35A531CDA215C3E303C4FA61F2336A9870F38BAF65A49439249E5FBD05F5E79F
+7. the agent account's ML-KEM-1024 key, so vendors can seal invoices to it
+  registered                 182171A4896D353B03E602719FAF49D46DDF5B7632498CE3B5B6C1425FDEA27A
+8. treasury and float
+  float 200 fUSD (ERC-20, the desk pays from it), treasury 100 fUSD (bank coin, moves only with ML-DSA-87)  61E1E852EFB00AC1D1D2FEEEECEE0CA7DD0831BDB6D5C7A84E9A2C165D78777F
+
+done. next: approve your vendors (node desk.mjs vendor add <address> <name>), then node desk.mjs status

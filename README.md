@@ -9,14 +9,14 @@
 **Threat model:** [THREAT_MODEL.md](THREAT_MODEL.md) · **Quantum readiness:** [QUANTUM_READINESS.md](QUANTUM_READINESS.md) (Q-Day drill: 16 attacks with four accounts' classical keys, 16 refused) ·
 **Demo video (2:50, v2 in fUSD, narrated):** https://youtu.be/K3Teb5sO8JU
 
-> **For judges: check every claim here in about a minute, with no keys and no test QOR.**
+> **For judges: check every claim here in about two minutes, with no keys and no test QOR.**
 >
 > ```sh
 > git clone --recurse-submodules https://github.com/eltociear/invoice-leash && cd invoice-leash
 > npm install && npm run verify
 > ```
 >
-> 91 checks against the live testnet: both deployed contracts are byte-for-byte this source, the
+> 94 checks against the live testnet: both deployed contracts are byte-for-byte this source, the
 > agent's rule is what the chain stores, every attack replayed against the real contracts, where
 > every QOR and fUSD went, every recorded transaction re-read (runs, MCP sessions, the probes below).
 > Last run: [`runs/verify-latest.txt`](runs/verify-latest.txt). CI runs it daily, with 59 Foundry tests and 5 invariants.
@@ -39,12 +39,15 @@
   ([lab §6](https://eltociear.github.io/invoice-leash/lab.html#shor)).
 - Claude Code runs the same agent through [our MCP server](#use-it-from-any-agent-the-mcp-server),
   including invoices sealed with ML-KEM-1024.
+- **Use it for your own company:** [GETTING_STARTED.md](GETTING_STARTED.md). `desk.mjs` sets up your desk,
+  vendors run `vendor.mjs` to sign, and you get triage, payments, an approval path and a CSV for
+  accounting. A second company was set up from scratch this way on the testnet ([`runs/own-company/`](runs/own-company/)).
 
 **Contents:** [requirements → evidence](#the-tracks-requirements-and-where-each-one-is-shown-on-chain) ·
 [how it works](#how-it-works) · [the finding](#what-we-found-a-spending-rule-bounds-amounts-not-destinations) ·
 [demo inbox](#the-demo-inbox-v2-fusd) · [tests](#tests) · [attack lab](#attack-lab-try-it-in-your-browser) ·
 [MCP](#use-it-from-any-agent-the-mcp-server) · [run it](#run-it) · [v1](#v1-the-first-design-qor-the-agent-acting-as-the-company) ·
-[addresses](#testnet-addresses) · [threat model](THREAT_MODEL.md) · [quantum readiness](QUANTUM_READINESS.md) · [AI usage](AI_USAGE.md)
+[addresses](#testnet-addresses) · **[your own company](GETTING_STARTED.md)** · [threat model](THREAT_MODEL.md) · [quantum readiness](QUANTUM_READINESS.md) · [AI usage](AI_USAGE.md)
 
 ### The track's requirements, and where each one is shown on chain
 
@@ -144,8 +147,13 @@ limits, skipping the vendor and signature checks. v1's limits still bounded the 
 payment, 2.5 a day), but "the agent can only call `pay`" was not true. v2 is the fix: the agent's own
 account holds no fUSD and its key may move nothing; the company's money moves only through the desk.
 
-**For other builders on QoreChain:** if your agent acts as an account that holds funds, its spending
-rule's limits are what bounds it, not its call list.
+**For other builders on QoreChain:**
+- If your agent acts as an account that holds funds, its spending rule's limits are what bounds it, not
+  its call list.
+- An EVM call relayed through an authenticator (`MsgExecuteEVM`) leaves no log that `eth_getLogs`
+  returns: the block holds no EVM transaction (measured on diana, [D7D404F7…](https://explore.qore.network/tx/D7D404F7155E96952746F75A0D3FD83423CA8C5FF37D4CDD01DFE70CA977AFD4)).
+  An indexer that reads events misses every agent payment. `desk.mjs export` reads the relayer's
+  transactions and the contract's own state instead.
 
 ## The demo inbox (v2, fUSD)
 
@@ -193,9 +201,9 @@ transaction stops the agent, without touching the chain link or the money.
 |---|---|---|
 | Contracts | **59 Foundry tests** (6 fuzzed, 512 runs each) and **5 invariants** ([`test/InvoiceDeskV2.invariant.t.sol`](test/InvoiceDeskV2.invariant.t.sol): 256,000 random calls of every fixture invoice, as the agent, the payer, Mallory or a stranger, across UTC days: only genuine invoices from approved vendors are paid, nobody else pays, each invoice at most once, the agent within its daily limit, and fUSD only ever moves company → approved vendor, never to Mallory, the agent or the desk). **Slither** ([`runs/slither.txt`](runs/slither.txt)): no high, medium or low findings; 5 informational, each intended (the due date compares `block.timestamp`; `pay` is one function with every check in order; low-level calls whose results are checked). v2: the agent/payer split (unnamed account, kill switch, the agent configuring only its own entry, no limits = pays nothing, per-payment and daily limits with the UTC day reset, refused payments not counted, no native QOR for agents, the company in person not bound by agent limits), the currency in the signature, allowance as a cap, no-code and false-returning tokens. v1: every revert path in `pay` and its order, per-payer state, live key reads (unregistered, unproven, other algorithm, rotated), another chain / desk / payer, reverting and re-entrant vendors. **Mutation-checked** ([`scripts/mutate.mjs`](scripts/mutate.mjs), output in [`runs/mutation.txt`](runs/mutation.txt)): each of 14 bugs injected into InvoiceDeskV2 fails the suite (signature check removed, replay check moved before it, proof of possession or the algorithm not checked, currency unsigned, ERC-20 return value ignored, a token without code accepted, QOR accepted with an fUSD invoice, any account paying for any payer, daily spend not recorded or counted on a shifted day, per-payment limit ignored, agents paying native, invoice not marked paid). | `forge test` |
 | PQC stand-in | Local EVMs have no QoreChain precompile, so `0x…0a01` is a stand-in that answers from [`test/fixtures/`](test/fixtures/): 27 (key, signature, message) tuples checked with **real ML-DSA-87** by `test/fixtures.mjs`; unknown tuples fail closed. Keys come from fixed seeds and signing is deterministic, so CI regenerates the files and requires them byte-identical. | `npm run fixtures` |
-| Off chain | the v1 demo inbox and six tamperings, with real ML-DSA-87 and throwaway keys | `npm test` |
+| Off chain | the v1 demo inbox and six tamperings, with real ML-DSA-87 and throwaway keys; what the agent and MCP tools are shown and trust (signed amounts, malformed sealed invoices, the company-only message check, expiry, chain id) | `npm test` |
 | Documents | every count the documents state (checks, drill attacks, tests, invariants, mutants) against its source; `verify` fails if its own count drifts from the documents | `npm test` |
-| On chain | 91 read-only checks against the live testnet | `npm run verify` |
+| On chain | 94 read-only checks against the live testnet | `npm run verify` |
 
 ### Cryptography inventory (QoreScan)
 
@@ -259,6 +267,7 @@ answer that this server holds no key. Nothing is written to your disk.
 ```sh
 claude --mcp-config mcp/judge.mcp.json --strict-mcp-config
 # then ask: "Check every invoice in the inbox and tell me which ones the desk would pay, and why."
+# any other MCP client: LEASH_READONLY=1 LEASH_INBOX2=inbox/inbox-v2-MCP.json npm run mcp   (stdio)
 ```
 
 [`.mcp.json`](.mcp.json) also wires QoreChain's own read-only MCP server
@@ -307,6 +316,9 @@ claude --mcp-config mcp/judge.mcp.json --strict-mcp-config
 
 ## Run it
 
+To run it **for your own company**, follow [GETTING_STARTED.md](GETTING_STARTED.md) (`desk.mjs`,
+`vendor.mjs`). The commands below replay **this demo**, with the demo's roles (`leash.mjs`).
+
 Needs Node.js 20+ (and Foundry for `forge test`). To only check the recorded results,
 `npm install && npm run verify` is enough.
 
@@ -354,7 +366,9 @@ finding above. The v1 commands (`deploy`, `link`, `inbox`, `run [--compromised|-
 ```
 contracts/InvoiceDeskV2.sol v2: fUSD/QOR invoices, the payer/agent split, per-token limits, ML-DSA-87 check
 contracts/InvoiceDesk.sol   v1: QOR invoices, the agent acting as the payer (see "What we found")
-leash.mjs                   the CLI: keys, funding, deploy, link, inbox, run, approve, revoke (v1 and v2)
+desk.mjs                    for your own company: setup, vendors, limits, triage, run, pay, export (GETTING_STARTED.md)
+vendor.mjs                  for a vendor: its own ML-DSA-87 key, register, sign (and seal) invoices
+leash.mjs                   the demo's CLI: keys, funding, deploy, link, inbox, run, approve, revoke (v1 and v2)
 lib/chain.mjs               keys, hybrid (secp256k1 + ML-DSA-87) signing and broadcasting, MsgConvertCoin
 lib/invoices.mjs            invoice encoding and ML-DSA-87 signing (v1, v2); the demo inboxes
 lib/agent.mjs               the deciders (compromised, LLM) and the executors, which have no checks of their own
@@ -366,7 +380,7 @@ scripts/probe-*.mjs         the probes of what a spending-rule-bound key can mov
 scripts/site.mjs, lab.mjs   build docs/index.html and docs/lab.html for GitHub Pages
 THREAT_MODEL.md             who holds which key, every attack and what stops it, what is NOT stopped
 deployment.json             public addresses of this deployment (v1 at the top level, v2 under "v2")
-runs/                       recorded runs with explorer links; runs/probes/; verify-latest.txt
+runs/                       recorded runs with explorer links; runs/probes/; runs/own-company/; verify-latest.txt
 ```
 
 ## v1: the first design (QOR, the agent acting as the company)
