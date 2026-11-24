@@ -1,0 +1,16 @@
+Halmos halmos 0.3.3 on test/InvoiceDeskV3.halmos.t.sol, 2026-11-24.
+Re-run: FOUNDRY_OUT=out halmos --contract InvoiceDeskV3Halmos   (with out/contracts -> out symlinked; see README)
+
+The PQC precompiles are stubbed to accept every key and every signature: the properties hold even for an attacker with a valid ML-DSA-87 signature.
+
+[PASS] check_agent_daily_limit(uint256,uint256,bytes32,bytes32,uint32) (paths: 16, time: 0.27s, bounds: [])
+[PASS] check_agent_never_pays_late(uint256,bytes32,uint64,uint32) (paths: 5, time: 0.22s, bounds: [])
+[PASS] check_agent_per_payment_limit(uint256,bytes32,uint64) (paths: 3, time: 0.02s, bounds: [])
+[PASS] check_exact_amount_moves(bool,uint256,bytes32) (paths: 8, time: 0.11s, bounds: [])
+[PASS] check_paid_at_most_once(bool,bool,uint256,bytes32) (paths: 16, time: 0.35s, bounds: [])
+[PASS] check_settings_are_the_payers_alone(address,address,uint256,uint256) (paths: 4, time: 0.05s, bounds: [])
+[PASS] check_strangers_never_pay(address,uint256,bytes32,uint64) (paths: 3, time: 0.02s, bounds: [])
+[PASS] check_unapproved_vendor_never_paid(address,bool,uint256,bytes32,uint64) (paths: 5, time: 0.02s, bounds: [])
+Symbolic test result: 8 passed; 0 failed; time: 1.14s
+
+Sanity check, the same day: with the per-payment check and the agent's due-date check removed from the contract, Halmos fails exactly those two properties, with counterexamples (amount = 0x8000000 > the 100e6 limit; paid 0x80000000 s after the due date). The contract was restored.

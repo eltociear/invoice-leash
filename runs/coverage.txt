@@ -1,0 +1,7 @@
+forge coverage --report summary, 2026-11-24 (the contracts; the rest of the full table is test stand-ins)
+
+| File | % Lines | % Statements | % Branches | % Funcs |
+|---|---|---|---|---|
+| contracts/InvoiceDesk.sol          | 100.00% (25/25)  | 100.00% (33/33)  | 100.00% (7/7)   | 100.00% (5/5)   |
+| contracts/InvoiceDeskV2.sol        | 100.00% (45/45)  | 100.00% (67/67)  | 100.00% (20/20) | 100.00% (9/9)   |
+| contracts/InvoiceDeskV3.sol        | 100.00% (53/53)  | 100.00% (83/83)  | 100.00% (23/23) | 100.00% (10/10) |

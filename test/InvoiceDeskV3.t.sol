@@ -454,4 +454,35 @@ contract InvoiceDeskV3Test is Test {
         _agentPays(c);
         assertEq(fusd.balanceOf(hostline), c.amount <= perPayment && c.amount <= daily ? c.amount : 0);
     }
+
+    // ------------------------------------------------------------------ coverage: the remaining paths
+
+    function test_removed_vendor_is_refused() public {
+        vm.prank(payer);
+        desk.removeVendor(hostline);
+        assertFalse(desk.approved(payer, hostline));
+        vm.expectRevert(abi.encodeWithSelector(InvoiceDeskV3.UnknownVendor.selector, hostline));
+        _pay(_named("genuine_fusd"), 0);
+    }
+
+    function test_remaining_today_is_zero_once_the_daily_limit_is_used() public {
+        vm.startPrank(payer);
+        desk.setAgent(agent, true);
+        desk.setLimit(address(fusd), 100e6, 80e6); // exactly one 80 fUSD invoice a day
+        vm.stopPrank();
+        _agentPays(_named("genuine_fusd"));
+        assertEq(desk.remainingToday(payer, address(fusd)), 0);
+        vm.prank(payer);
+        desk.setLimit(address(fusd), 100e6, 50e6); // the company lowers the limit below what was spent
+        assertEq(desk.remainingToday(payer, address(fusd)), 0);
+    }
+
+    function test_native_payment_to_a_vendor_that_refuses_funds_rolls_back() public {
+        Case memory c = _named("genuine_native_qor");
+        vm.etch(hostline, hex"60006000fd"); // revert(0, 0) on any call, including a plain value transfer
+        vm.expectRevert(InvoiceDeskV3.TransferFailed.selector);
+        _pay(c, c.amount);
+        assertFalse(desk.paid(payer, hostline, c.id), "rolled back");
+        assertEq(payer.balance, 10 ether);
+    }
 }
