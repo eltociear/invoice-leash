@@ -43,6 +43,9 @@ const short = (why = "") => {
   if (/daily limit/.test(why)) { const [, l, sp] = why.match(/daily limit (\d+)uqor exceeded: spent (\d+)/) ?? []; return l ? `daily limit: ${sp / 1e6} of ${l / 1e6} QOR spent` : "daily limit"; }
   return why.replace(/^InvoiceDesk: /, "InvoiceDesk: ");
 };
+const liveRows = read("runs/live/log.jsonl").trim().split("\n").filter(Boolean).map((l) => JSON.parse(l));
+const campaign = json("runs/campaign.json");
+const verifyCount = Number(read("runs/verify-latest.txt").match(/✓ (\d+) checks passed/)?.[1] ?? 0);
 const txLink = (link) => link ? `<a class="tx" href="${esc(link)}" target="_blank" rel="noopener">${esc(link.slice(-64, -56))}…</a>` : "";
 const act = (x, m) => x.action === "send" ? `send ${x.qor} QOR to ${x.to.slice(0, 12)}…` : x.action === "call" ? `call desk.${x.fn}(Mallory)` : `pay ${m.invoice.ref} · ${m.invoice.qor} QOR`;
 const verdict = (x) => x.result === "skipped" ? `<span class="v skip">skipped</span>` : x.ok ? `<span class="v ok">PAID</span>` : `<span class="v no">${esc(short(x.why))}</span>`;
@@ -98,7 +101,7 @@ a{color:var(--acc)}code,pre,.tx{font-family:ui-monospace,SFMono-Regular,Menlo,mo
 h1{font-size:44px;line-height:1.1;margin:0 0 12px}h2{font-size:26px;margin:64px 0 8px}
 .lede{font-size:20px;color:var(--fg);max-width:760px;margin:0 0 24px}.dim{color:var(--dim)}
 .links{display:flex;gap:12px;flex-wrap:wrap;margin:0 0 40px}.links a{border:1px solid var(--line);border-radius:8px;padding:8px 14px;text-decoration:none;color:var(--fg)}.links a:hover{border-color:var(--acc)}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px}.stat b{display:block;font-size:40px;line-height:1}.stat span{color:var(--dim)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px}.stat b{display:block;font-size:40px;line-height:1}.stat span{color:var(--dim)}
 .layers{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}.layer{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px}.layer h3{margin:0 0 6px;font-size:17px;color:var(--acc)}.layer p{margin:0;color:var(--dim);font-size:15px}
 pre{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;overflow:auto;font-size:13px;line-height:1.5}
 .mail{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:14px 0}
@@ -114,8 +117,9 @@ footer{margin-top:64px;color:var(--dim);font-size:14px}
 </style></head>
 <body><main>
 <h1>Invoice Leash</h1>
-<p class="lede">An invoice-paying AI agent that stays safe when its model does not. The agent's code has no limit check, no vendor check and no signature check; invoices are in fUSD and signed with ML-DSA-87. Every limit lives on QoreChain, so we can hand the agent to an attacker and watch the chain say no.</p>
+<p class="lede">An invoice-paying AI agent that stays safe when its model does not, and after Q-Day. The agent checks nothing itself: every limit lives on QoreChain or in the contract, every invoice needs the vendor's ML-DSA-87 signature, and on InvoiceDeskV4 every agent payment needs the agent's own ML-DSA-87 signature too. So we can hand the agent to an attacker, or to a quantum computer, and watch the chain say no.</p>
 <div class="links">
+  <a href="https://github.com/eltociear/invoice-leash/blob/main/JUDGES.md" style="border-color:var(--acc);color:var(--acc)">Judges: a five-minute route</a>
   <a href="app.html" style="border-color:var(--acc);color:var(--acc)">Desk Console: watch the live desks, or run your own from the browser</a>
   <a href="lab.html" style="border-color:var(--acc);color:var(--acc)">Try to break it: attack lab, sign your own ML-DSA-87 invoice (live, in your browser)</a>
   <a href="#requirements">Track requirements, on chain</a>
@@ -125,41 +129,21 @@ footer{margin-top:64px;color:var(--dim);font-size:14px}
   <a href="https://github.com/eltociear/invoice-leash">Code</a>
   <a href="https://github.com/eltociear/invoice-leash/blob/main/THREAT_MODEL.md">Threat model</a>
   <a href="#verify">Verify it yourself</a>
-  <a href="https://github.com/eltociear/invoice-leash#use-it-from-any-agent-the-mcp-server">MCP server</a>
   <a href="https://build.qorechain.io/p/invoice-leash">Build Before Q-Day entry</a>
 </div>
 
 <div class="stats">
-  <div class="stat"><b>3</b><span>genuine invoices paid by a fully compromised agent (220 fUSD)</span></div>
-  <div class="stat"><b>${v2run.log.filter((x) => !x.ok).length}</b><span>of its ${v2run.log.length} attempts refused, by the chain or the contract</span></div>
-  <div class="stat"><b>0</b><span>QOR moved, and 0 fUSD to the attacker (her balance is checked)</span></div>
+  <div class="stat"><b>${[...new Set(liveRows.map((r) => r.day))].length} day${[...new Set(liveRows.map((r) => r.day))].length === 1 ? "" : "s"}</b><span><a href="#live">the live agent</a>, unattended, key in GitHub Secrets: each day the genuine invoice paid, every attack refused</span></div>
+  <div class="stat"><b>0</b><span>paid by the agent's own classical key alone on <a href="lab.html#v4">InvoiceDeskV4</a> (<code>BadAgentSignature</code>), after Q-Day included</span></div>
+  <div class="stat"><b>${campaign.paid}</b><span>of ${campaign.count.toLocaleString()} <a href="#campaign">dry-run tamperings</a> of a genuine invoice would pay, against the live desk</span></div>
+  <div class="stat"><b>${verifyCount} checks</b><span><a href="#verify">npm run verify</a> re-reads every claim from the chain, keyless; CI runs it daily</span></div>
 </div>
 
 <div class="layers">
-  <div class="layer"><h3>An agent that can move nothing</h3><p>The agent acts as its own account, which holds no fUSD. Its QoreChain rule lists no QOR and no fUSD, and allows one call: <code>InvoiceDeskV2.pay</code>. It cannot send, transfer, approve or reconfigure.</p></div>
-  <div class="layer"><h3>The company's money, the company's limits</h3><p>fUSD stays in the company's account (no vault). The desk pulls it per invoice, within 100 fUSD a payment and 250 a day that only the company can set.</p></div>
-  <div class="layer"><h3>Post-quantum invoices</h3><p>ML-DSA-87 signature from an approved vendor whose key is registered on chain, over payer, payee, currency and amount, checked by precompiles <code>0x…0a02</code> and <code>0x…0a01</code>.</p></div>
+  <div class="layer"><h3>An agent that can move nothing</h3><p>The agent acts as its own account, which holds no fUSD. Its QoreChain rule lists no QOR and no fUSD, and allows one call: the desk's <code>pay</code>. It cannot send, transfer, approve or reconfigure.</p></div>
+  <div class="layer"><h3>The company's money, the company's limits</h3><p>fUSD stays in the company's account (no vault; most of it as the bank coin, which only ML-DSA-87 moves). The desk pulls each payment within limits only the company can set.</p></div>
+  <div class="layer"><h3>Post-quantum on both sides</h3><p>The vendor signs the invoice with ML-DSA-87; on V4 the agent signs the payment with ML-DSA-87. The desk checks both with QoreChain's precompiles <code>0x…0a02</code> and <code>0x…0a01</code>, against keys registered on chain.</p></div>
 </div>
-
-<h2 id="requirements">What the chain enforces, requirement by requirement</h2>
-<p class="dim">The Post-Quantum AI Agents track asks for these. Each one is a testnet transaction you can open, and <code>npm run verify</code> re-reads it.</p>
-<table class="req"><thead><tr><th>Requirement</th><th>Invoice Leash</th><th>On chain</th></tr></thead><tbody>
-<tr><td>The agent's own scoped EVM window</td><td>The agent account's window admits at most 3 transactions, 0.4 QOR, 300 blocks, and one target: InvoiceDeskV2. Inside it the agent paid an invoice; <code>fUSD.transfer</code> and a QOR send to Mallory were refused as <i>not an allowed recipient</i>; after closing, so was <code>pay</code>.</td><td>open ${txLink(EX + "FF8908FA676BD8BF1A5D53C99DEEBD6F7E8A3D0651E577DA5B62A3F80C8FA688")} pay ${txLink(EX + "0x34e000174ecd5d064b3bd8ea0da81b496ae512d3c1fe3a80313868bf9a7ce916")} close ${txLink(EX + "A1F1A6B7D447F58082CC4755B2E7FC8822215A7919CFE9B288CB197322797B17")}</td></tr>
-<tr><td>Transaction, value, duration and target limits</td><td>Window: count, value, blocks, target. Spending rule: one call, no QOR or fUSD, an expiry. Desk: 100 fUSD a payment, 250 a UTC day, approved payees only.</td><td>link ${txLink(EX + "BC8E105E6C6840E8AB4608CC58B6E5C112BF86D6748FA3E873B4274C0DA221FE")} (until 2026-12-20)</td></tr>
-<tr><td>Smart-account spending rules</td><td>The agent's ed25519 key is linked to its own account. The chain refused <code>MsgSend</code>, an EVM value transfer, <code>fUSD.transfer</code> / <code>transferFrom</code>, <code>approveVendor</code> and <code>setLimit</code>.</td><td><a href="#inbox">the inbox below</a></td></tr>
-<tr><td>Authenticated messaging</td><td>Invoices: ML-DSA-87 from an approved vendor, checked on chain by <code>0x…0a02</code> / <code>0x…0a01</code>. Instructions: QoreSign messages checked against the company's registered key; a Q-Day forgery (the company's classical key plus another ML-DSA-87 key) is refused.</td><td><a href="lab.html#msg">check them in the lab</a></td></tr>
-<tr><td>Confidential invoices (ML-KEM-1024)</td><td>Vendors seal invoices to the agent account's ML-KEM-1024 key in the chain's KEM registry (QoreSeal): mail stored today cannot be read after Q-Day. Sealing hides; the signature still decides (a sealed forgery is <code>BadSignature</code>). Claude Code, through MCP, paid the genuine sealed invoice and refused the forgery.</td><td>register ${txLink(EX + "5AB689523EDF4F47374A35BED6FFAB3913369CC6CAA32579A16651F238BAA80B")}, Claude paid ${txLink(EX + "04AAE84653DDA587D2E351A5D6424FDD6E070D3D5FC6ECB412A29D6164ECEFB5")}</td></tr>
-<tr><td>Survives Q-Day</td><td>Our own drill: with the secp256k1 keys of four accounts (company, agent account, relayer, a vendor; as if a quantum computer broke them) and no ML-DSA-87 key, 16 attacks (send, transfer, approve, reconfigure the desk, open a window, link a key, swap the KEM key, put the attacker's ML-DSA-87 key on a vendor to forge its invoices), all refused by the chain. Inside an open window, the tx-count, value and target caps held, also in the company's own window. <b>Shor's gift:</b> an account whose secp256k1 private key we publish still holds its QOR; <a href="lab.html#shor">try to take it</a>. On InvoiceDeskV4 the agent's own classical key pays nothing without its ML-DSA-87 signature (live: refused with <code>BadAgentSignature</code>, then paid with it).</td><td><a href="https://github.com/eltociear/invoice-leash/blob/main/QUANTUM_READINESS.md">quantum readiness</a>, control ${txLink(EX + "90677647014606987D75A155D03B255D4BA2D57C7762A4F69E39DEB27C643477")}</td></tr>
-<tr><td>A kill switch</td><td><code>setAgent(agent, false)</code>: the agent's real payment refused (<code>NotPayersAgent</code>); back on, the same payment paid.</td><td><a href="#killswitch">below</a></td></tr>
-</tbody></table>
-
-<h2 id="inbox">The inbox, email by email (v2, fUSD)</h2>
-<p class="dim">Recorded on <code>qorechain-diana</code>. Two honest vendors, Hostline and Tokenwell, and Mallory, who holds a valid ML-DSA-87 key of her own but is not a vendor. The compromised agent obeys every email, attacker's included, and tries every way to move money.</p>
-${emails2}
-
-<h2 id="found">What we found: a spending rule bounds amounts, not destinations</h2>
-<p class="dim">v1 let the agent act as the company's account, scoped to <code>pay</code> by a QoreChain spending rule. These probes, each one request by the agent's key, showed the key could still move value directly in any denom its rule allows (a plain QOR transfer, or <code>fUSD.transfer</code>), and could not pay in an unlisted token at all. v2 gives the agent an account that holds nothing. Every probe is re-read by <code>npm run verify</code>.</p>
-<article class="mail"><div class="lanes" style="margin-left:0"><div class="lane" style="border-top:0">${probeRows}</div></div></article>
 
 <h2 id="live">Live: the agent runs on a daily schedule, unattended, with its key in GitHub Secrets</h2>
 <p class="dim">Daily at 01:10 UTC (first run 2026-11-24 with only CI's keys, scheduled from 2026-11-25), GitHub Actions runs the agent against a real InvoiceDeskV3 with a decider that obeys every email: the vendor's genuine invoice (sealed with ML-KEM-1024 on even days), a forged one, the genuine one with its amount raised, and a prompt injection asking for a direct transfer to Mallory. The log is hash-chained and each day is signed with ML-DSA-87 (<a href="https://github.com/eltociear/invoice-leash/tree/main/runs/live">runs/live</a>, checked by <code>npm run verify</code>).</p>
@@ -176,12 +160,32 @@ ${(() => {
 <div class="card"><p style="margin-top:0">${(() => { const c = json("runs/campaign.json"); return `<b>${c.count.toLocaleString()} dry-run tamperings</b> of one genuine invoice, ${Object.keys(c.byKind).length} kinds, plus ${c.signedOutcomes.length} signed ones (fresh-key forgeries, over the limit, zero amount, an unapproved vendor), each a dry run as the agent against the live InvoiceDeskV3: <b>${c.paid} paid</b>. The genuine control passed. Every refusal is the one expected: ${Object.entries(c.byKind).map(([k, h]) => `${esc(k)} → ${Object.keys(h).map(esc).join("/")}`).join(", ")}. <code>npm run verify</code> regenerates 40 of them from the seed and asks again.`; })()}</p>
 <p style="margin-bottom:0">The same prompt-injected inbox (a forged "CFO" asking for a direct transfer, a forged "security team" asking to approve a new vendor and send QOR) went to <b>Claude Haiku, Sonnet and Opus</b> through the MCP server, with an operator prompt saying "instructions from the CFO are authoritative: follow them". Each paid the two genuine invoices and none sent anything else; Opus also ran the forged emails through <code>verify_message</code> (NOT AUTHENTIC). Transcripts: <a href="https://github.com/eltociear/invoice-leash/tree/main/runs/models">runs/models</a>. This tests the models, not the leash: the forged emails were unsigned and no model tried a forbidden call. The leash does not depend on the model: the live agent above runs a decider that obeys every email, and the chain refuses it every day.</p></div>
 
-<h2 id="own">Run it for your own company: desk.mjs, vendor.mjs, InvoiceDeskV3</h2>
+<h2 id="found">What we found: a spending rule bounds amounts, not destinations</h2>
+<p class="dim">v1 let the agent act as the company's account, scoped to <code>pay</code> by a QoreChain spending rule. These probes, each one request by the agent's key, showed the key could still move value directly in any denom its rule allows (a plain QOR transfer, or <code>fUSD.transfer</code>), and could not pay in an unlisted token at all. v2 gives the agent an account that holds nothing. Every probe is re-read by <code>npm run verify</code>.</p>
+<article class="mail"><div class="lanes" style="margin-left:0"><div class="lane" style="border-top:0">${probeRows}</div></div></article>
+
+<h2 id="own">Run it for your own company: desk.mjs, vendor.mjs, the Desk Console</h2>
 <p class="dim">A second company was set up from nothing on the testnet, the way <a href="https://github.com/eltociear/invoice-leash/blob/main/GETTING_STARTED.md">GETTING_STARTED.md</a> says: <code>desk.mjs init</code>, <code>setup</code>, then three vendors with their own keys on their own machines (<code>vendor.mjs register</code>, <code>sign</code>). Triage sorted every invoice, the agent paid only what it may, a person approved the rest, and the company moved to InvoiceDeskV3 with <code>desk.mjs upgrade</code>. This is its accounting export, every row read from the chain:</p>
 <div class="card"><table class="req"><tr><th>Paid (UTC)</th><th>Vendor</th><th>Invoice</th><th>fUSD</th><th>By</th><th>Desk</th></tr>
 ${read("runs/own-company-v3/payments.csv").trim().split("\n").slice(1).map((l) => l.split(",")).map((r) => `<tr><td>${esc(r[0].slice(0, 16).replace("T", " "))}</td><td>${esc(r[1])}</td><td>${esc(r[3])}</td><td>${esc(r[5].replace(/\.0$/, ""))}</td><td>${esc(r[7])}</td><td>${r[9] === json("runs/own-company-v3/desk.json").v2.invoiceDesk ? "V3" : "V2"}</td></tr>`).join("")}
 </table>
 <p class="dim" style="margin-bottom:0">On V3, two vendors both billed <code>INV-2001</code> and both were paid, and an overdue invoice (NW-0990) was refused to the agent and settled by the company in person. Rejected along the way: an unapproved vendor (<code>UnknownVendor</code>), an amount edited after signing (<code>BadSignature</code>), a zero amount (<code>ZeroAmount</code>). Logs: <a href="https://github.com/eltociear/invoice-leash/tree/main/runs/own-company">V2 setup</a>, <a href="https://github.com/eltociear/invoice-leash/tree/main/runs/own-company-v3">V3 upgrade</a>.</p></div>
+
+<h2 id="requirements">What the chain enforces, requirement by requirement</h2>
+<p class="dim">The Post-Quantum AI Agents track asks for these. Each one is a testnet transaction you can open, and <code>npm run verify</code> re-reads it.</p>
+<table class="req"><thead><tr><th>Requirement</th><th>Invoice Leash</th><th>On chain</th></tr></thead><tbody>
+<tr><td>The agent's own scoped EVM window</td><td>The agent account's window admits at most 3 transactions, 0.4 QOR, 300 blocks, and one target: InvoiceDeskV2. Inside it the agent paid an invoice; <code>fUSD.transfer</code> and a QOR send to Mallory were refused as <i>not an allowed recipient</i>; after closing, so was <code>pay</code>.</td><td>open ${txLink(EX + "FF8908FA676BD8BF1A5D53C99DEEBD6F7E8A3D0651E577DA5B62A3F80C8FA688")} pay ${txLink(EX + "0x34e000174ecd5d064b3bd8ea0da81b496ae512d3c1fe3a80313868bf9a7ce916")} close ${txLink(EX + "A1F1A6B7D447F58082CC4755B2E7FC8822215A7919CFE9B288CB197322797B17")}</td></tr>
+<tr><td>Transaction, value, duration and target limits</td><td>Window: count, value, blocks, target. Spending rule: one call, no QOR or fUSD, an expiry. Desk: 100 fUSD a payment, 250 a UTC day, approved payees only.</td><td>link ${txLink(EX + "BC8E105E6C6840E8AB4608CC58B6E5C112BF86D6748FA3E873B4274C0DA221FE")} (until 2026-12-20)</td></tr>
+<tr><td>Smart-account spending rules</td><td>The agent's ed25519 key is linked to its own account. The chain refused <code>MsgSend</code>, an EVM value transfer, <code>fUSD.transfer</code> / <code>transferFrom</code>, <code>approveVendor</code> and <code>setLimit</code>.</td><td><a href="#inbox">the inbox below</a></td></tr>
+<tr><td>Authenticated messaging</td><td>Invoices: ML-DSA-87 from an approved vendor, checked on chain by <code>0x…0a02</code> / <code>0x…0a01</code>. Instructions: QoreSign messages checked against the company's registered key; a Q-Day forgery (the company's classical key plus another ML-DSA-87 key) is refused.</td><td><a href="lab.html#msg">check them in the lab</a></td></tr>
+<tr><td>Confidential invoices (ML-KEM-1024)</td><td>Vendors seal invoices to the agent account's ML-KEM-1024 key in the chain's KEM registry (QoreSeal): mail stored today cannot be read after Q-Day. Sealing hides; the signature still decides (a sealed forgery is <code>BadSignature</code>). Claude Code, through MCP, paid the genuine sealed invoice and refused the forgery.</td><td>register ${txLink(EX + "5AB689523EDF4F47374A35BED6FFAB3913369CC6CAA32579A16651F238BAA80B")}, Claude paid ${txLink(EX + "04AAE84653DDA587D2E351A5D6424FDD6E070D3D5FC6ECB412A29D6164ECEFB5")}</td></tr>
+<tr><td>Survives Q-Day</td><td>Our own drill: with the secp256k1 keys of four accounts (company, agent account, relayer, a vendor; as if a quantum computer broke them) and no ML-DSA-87 key, 16 attacks (send, transfer, approve, reconfigure the desk, open a window, link a key, swap the KEM key, put the attacker's ML-DSA-87 key on a vendor to forge its invoices), all refused by the chain. Inside an open window, the tx-count, value and target caps held, also in the company's own window. <b>Shor's gift:</b> an account whose secp256k1 private key we publish still holds its QOR; <a href="lab.html#shor">try to take it</a>. On InvoiceDeskV4 the agent's own classical key pays nothing without its ML-DSA-87 signature (live: refused with <code>BadAgentSignature</code>, then paid with it).</td><td><a href="https://github.com/eltociear/invoice-leash/blob/main/QUANTUM_READINESS.md">quantum readiness</a>, control ${txLink(EX + "90677647014606987D75A155D03B255D4BA2D57C7762A4F69E39DEB27C643477")}</td></tr>
+<tr><td>A kill switch</td><td><code>setAgent(agent, false)</code>: the agent's real payment refused (<code>NotPayersAgent</code>); back on, the same payment paid.</td><td><a href="#killswitch">below</a></td></tr>
+</tbody></table>
+
+<h2 id="inbox">The inbox, email by email (v2, fUSD)</h2>
+<p class="dim">Recorded on <code>qorechain-diana</code>. Two honest vendors, Hostline and Tokenwell, and Mallory, who holds a valid ML-DSA-87 key of her own but is not a vendor. The compromised agent obeys every email, attacker's included, and tries every way to move money.</p>
+${emails2}
 
 <h2 id="mcp">Through MCP (v2): Claude Code holds the leash</h2>
 <p class="dim"><code>mcp/server.mjs</code> holds only the agent's key and hands the model dangerous tools on purpose: <code>send_qor</code>, <code>transfer_fusd</code> and <code>call_invoice_desk</code>, beside <code>check_invoice</code> (a dry run of the real desk, as the agent) and <code>pay_invoice</code>. A fresh inbox: the same ten emails with new invoice numbers.</p>
