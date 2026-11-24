@@ -16,10 +16,10 @@
 > npm install && npm run verify
 > ```
 >
-> 94 checks against the live testnet: both deployed contracts are byte-for-byte this source, the
+> 99 checks against the live testnet: both deployed contracts are byte-for-byte this source, the
 > agent's rule is what the chain stores, every attack replayed against the real contracts, where
 > every QOR and fUSD went, every recorded transaction re-read (runs, MCP sessions, the probes below).
-> Last run: [`runs/verify-latest.txt`](runs/verify-latest.txt). CI runs it daily, with 59 Foundry tests and 5 invariants.
+> Last run: [`runs/verify-latest.txt`](runs/verify-latest.txt). CI runs it daily, with 96 Foundry tests and 11 invariants.
 
 **Category:** Post-Quantum AI Agents · **Network:** QoreChain testnet `qorechain-diana` only (test tokens have no value)
 
@@ -102,6 +102,18 @@ What `InvoiceDeskV2.pay` checks, all on chain, in this order:
 6. for an agent: an ERC-20, within the company's per-payment and daily limit for that token
    (`AgentCannotPayNative`, `OverPerPaymentLimit`, `OverDailyLimit`)
 7. then `fUSD.transferFrom(company → vendor)` against the allowance the company gave the desk
+
+**InvoiceDeskV3** ([`contracts/InvoiceDeskV3.sol`](contracts/InvoiceDeskV3.sol)), the desk `desk.mjs`
+deploys for a new company, keeps this design and the signed invoice format, and changes four things a
+real accounts-payable team needs. All four were run on the testnet ([`runs/own-company-v3/`](runs/own-company-v3/)):
+- **invoice numbers are per vendor** (`paid[payer][vendor][id]`): two vendors' `INV-2001` were both paid;
+- **overdue invoices**: an agent is refused (`PastDue`), but the company can settle one in person;
+- **zero-amount invoices** are refused (`ZeroAmount`);
+- **what the vendor received** is checked: a token that takes a fee, or reports `false` after moving
+  funds, is refused (`TransferFailed`).
+
+`desk.mjs upgrade` moved a running V2 company to V3: settings copied, the agent off on the old desk, its
+allowance 0, the agent's key relinked, the history kept.
 
 The agent cannot reach any setting: its rule allows `pay` (`0xf19ff4ff`) and nothing else, and it is a
 different account from the company, so even a call that got through would only configure the agent's
@@ -199,11 +211,11 @@ transaction stops the agent, without touching the chain link or the money.
 
 | | What | Run |
 |---|---|---|
-| Contracts | **59 Foundry tests** (6 fuzzed, 512 runs each) and **5 invariants** ([`test/InvoiceDeskV2.invariant.t.sol`](test/InvoiceDeskV2.invariant.t.sol): 256,000 random calls of every fixture invoice, as the agent, the payer, Mallory or a stranger, across UTC days: only genuine invoices from approved vendors are paid, nobody else pays, each invoice at most once, the agent within its daily limit, and fUSD only ever moves company → approved vendor, never to Mallory, the agent or the desk). **Slither** ([`runs/slither.txt`](runs/slither.txt)): no high, medium or low findings; 5 informational, each intended (the due date compares `block.timestamp`; `pay` is one function with every check in order; low-level calls whose results are checked). v2: the agent/payer split (unnamed account, kill switch, the agent configuring only its own entry, no limits = pays nothing, per-payment and daily limits with the UTC day reset, refused payments not counted, no native QOR for agents, the company in person not bound by agent limits), the currency in the signature, allowance as a cap, no-code and false-returning tokens. v1: every revert path in `pay` and its order, per-payer state, live key reads (unregistered, unproven, other algorithm, rotated), another chain / desk / payer, reverting and re-entrant vendors. **Mutation-checked** ([`scripts/mutate.mjs`](scripts/mutate.mjs), output in [`runs/mutation.txt`](runs/mutation.txt)): each of 14 bugs injected into InvoiceDeskV2 fails the suite (signature check removed, replay check moved before it, proof of possession or the algorithm not checked, currency unsigned, ERC-20 return value ignored, a token without code accepted, QOR accepted with an fUSD invoice, any account paying for any payer, daily spend not recorded or counted on a shifted day, per-payment limit ignored, agents paying native, invoice not marked paid). | `forge test` |
+| Contracts | **96 Foundry tests** (v1, v2 and v3; fuzzed ones 512 runs each) and **11 invariants** ([`test/InvoiceDeskV2.invariant.t.sol`](test/InvoiceDeskV2.invariant.t.sol), [`test/InvoiceDeskV3.invariant.t.sol`](test/InvoiceDeskV3.invariant.t.sol): 256,000 random calls each of every fixture invoice, as the agent, the payer, Mallory or a stranger, across UTC days: only genuine invoices from approved vendors are paid, nobody else pays, each invoice at most once, the agent within its daily limit, and fUSD only ever moves company → approved vendor, never to Mallory, the agent or the desk; on V3 also: the agent never pays after the due date, with the clock jumping past it). **Slither** ([`runs/slither.txt`](runs/slither.txt)): no high, medium or low findings; 5 informational, each intended (the due date compares `block.timestamp`; `pay` is one function with every check in order; low-level calls whose results are checked). v2: the agent/payer split (unnamed account, kill switch, the agent configuring only its own entry, no limits = pays nothing, per-payment and daily limits with the UTC day reset, refused payments not counted, no native QOR for agents, the company in person not bound by agent limits), the currency in the signature, allowance as a cap, no-code and false-returning tokens. v1: every revert path in `pay` and its order, per-payer state, live key reads (unregistered, unproven, other algorithm, rotated), another chain / desk / payer, reverting and re-entrant vendors. **Mutation-checked** ([`scripts/mutate.mjs`](scripts/mutate.mjs), output in [`runs/mutation.txt`](runs/mutation.txt)): each of 14 bugs injected into InvoiceDeskV2 fails the suite (signature check removed, replay check moved before it, proof of possession or the algorithm not checked, currency unsigned, ERC-20 return value ignored, a token without code accepted, QOR accepted with an fUSD invoice, any account paying for any payer, daily spend not recorded or counted on a shifted day, per-payment limit ignored, agents paying native, invoice not marked paid). InvoiceDeskV3 ([`runs/mutation-v3.txt`](runs/mutation-v3.txt)), V3: 18 of 18 caught, the same bugs plus V3's own (agents paying past due, the company unable to settle late, ids not keyed by vendor, zero amounts, the vendor's receipt unchecked); one more is equivalent (a token without code is refused by the receipt check too) and not counted. v3 tests: per-vendor ids, late settlement, zero amounts, a fee-taking token, a token that moves funds but returns false. | `forge test` |
 | PQC stand-in | Local EVMs have no QoreChain precompile, so `0x…0a01` is a stand-in that answers from [`test/fixtures/`](test/fixtures/): 27 (key, signature, message) tuples checked with **real ML-DSA-87** by `test/fixtures.mjs`; unknown tuples fail closed. Keys come from fixed seeds and signing is deterministic, so CI regenerates the files and requires them byte-identical. | `npm run fixtures` |
 | Off chain | the v1 demo inbox and six tamperings, with real ML-DSA-87 and throwaway keys; what the agent and MCP tools are shown and trust (signed amounts, malformed sealed invoices, the company-only message check, expiry, chain id) | `npm test` |
 | Documents | every count the documents state (checks, drill attacks, tests, invariants, mutants) against its source; `verify` fails if its own count drifts from the documents | `npm test` |
-| On chain | 94 read-only checks against the live testnet | `npm run verify` |
+| On chain | 99 read-only checks against the live testnet | `npm run verify` |
 
 ### Cryptography inventory (QoreScan)
 

@@ -1,8 +1,8 @@
 // Compile contracts/*.sol with solc-js into build/<Contract>.json (abi, bytecode, deployedBytecode).
-// InvoiceDesk is v1 (QOR only, deployed and recorded); InvoiceDeskV2 adds ERC-20 (fUSD) invoices.
+// InvoiceDesk is v1 (QOR only); InvoiceDeskV2 adds ERC-20 (fUSD) invoices; InvoiceDeskV3 keys invoices per vendor and lets the payer settle late ones.
 import solc from "solc";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
-for (const name of ["InvoiceDesk", "InvoiceDeskV2"]) {
+for (const name of ["InvoiceDesk", "InvoiceDeskV2", "InvoiceDeskV3"]) {
   const src = readFileSync(new URL(`../contracts/${name}.sol`, import.meta.url), "utf8");
   const input = {
     language: "Solidity",

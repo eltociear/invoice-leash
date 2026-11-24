@@ -1,0 +1,49 @@
+{
+  "at": "2026-11-24T05:07:34.536Z",
+  "items": [
+    {
+      "i": 0,
+      "ref": "INV-2001",
+      "id": "0x3cf73f04c97ab5a1d7bd0fffdc3f6dc35daade3c34c66e724a69b0d0b4a2787e",
+      "vendor": "0x8bb12d258f65fbbaad6bc674f7bdebf783dc8993",
+      "vendorName": "Northwind Hosting",
+      "amount": "15 fUSD",
+      "verdict": "AGENT PAYS",
+      "why": "approved vendor, valid ML-DSA-87 signature, unpaid, not past due, within the agent's limits",
+      "note": ""
+    },
+    {
+      "i": 1,
+      "ref": "INV-2001",
+      "id": "0x3cf73f04c97ab5a1d7bd0fffdc3f6dc35daade3c34c66e724a69b0d0b4a2787e",
+      "vendor": "0xe7a23c9352882638f50593f2111a27376630b3c2",
+      "vendorName": "Contoso Supplies",
+      "amount": "25 fUSD",
+      "verdict": "AGENT PAYS",
+      "why": "approved vendor, valid ML-DSA-87 signature, unpaid, not past due, within the agent's limits",
+      "note": ""
+    },
+    {
+      "i": 2,
+      "ref": "NW-0990",
+      "id": "0x3266d72a740348a5326ab0ec7843817d90b6ff262844af18f48d02b3ebe252b2",
+      "vendor": "0x8bb12d258f65fbbaad6bc674f7bdebf783dc8993",
+      "vendorName": "Northwind Hosting",
+      "amount": "12 fUSD",
+      "verdict": "NEEDS A PERSON",
+      "why": "valid, but the agent may not pay it: it is past due; an agent may not pay late, the company may settle it. A person can: node desk.mjs pay 2",
+      "note": ""
+    },
+    {
+      "i": 3,
+      "ref": "NW-ZERO",
+      "id": "0xb79a33bc31b2c70abcfae92d7a5caec7a6dfaaa037ff5f6e5bab708de39296df",
+      "vendor": "0x8bb12d258f65fbbaad6bc674f7bdebf783dc8993",
+      "vendorName": "Northwind Hosting",
+      "amount": "0 fUSD",
+      "verdict": "REJECTED",
+      "why": "ZeroAmount",
+      "note": ""
+    }
+  ]
+}

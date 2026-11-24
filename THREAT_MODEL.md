@@ -85,8 +85,9 @@ Said plainly, because a judge, an auditor or a customer will ask.
   agent pays it, the real invoice with that number is refused as `AlreadyPaid`. Nobody is paid wrongly
   and the payer can still pay the blocked vendor in person, but it is a nuisance an approved vendor can
   cause. Remedy today: `removeVendor`, and vendor-prefixed numbers (every invoice in this repo has one).
-  Next version: key by `keccak256(vendor, id)`. (Changing the deployed desk would invalidate the
-  recorded runs, so we document it rather than redeploy during judging.)
+  **Fixed in InvoiceDeskV3**, which keys `paid[payer][vendor][id]`: two vendors' INV-2001 were both paid
+  on the testnet (`runs/own-company-v3/`). The demo's V2 desk stays as recorded, so its runs remain
+  checkable; new desks (`desk.mjs setup`) are V3, and `desk.mjs upgrade` moves a V2 company.
 - **A compromised company key.** The company can do anything; that is what an owner is. It is a
   hybrid ML-DSA-87 key, so a quantum computer alone does not get it.
 - **Paying a genuine invoice the company did not want.** Within the limits, the agent decides. The

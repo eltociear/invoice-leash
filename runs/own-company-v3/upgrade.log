@@ -1,0 +1,15 @@
+upgrading 0x8efcB1Ea49c2e2544080d188D5F179a1DD7CA74b (V2): 1 vendor(s), limits 50 fUSD/120 fUSD, allowance 860 fUSD
+1. deploy InvoiceDeskV3 (its own one-transaction window)
+  deployed at 0x86d08B3CA3B27dD8627D963519B6efC733E24960           0x0743580d946fb2c642784f0130218c41b6b2d2259719f9c32cb7e62e656f2603
+2. the same settings on the new desk (a window scoped to it and fUSD)
+  approveVendor(Northwind Hosting) 0xa5d4e2e78365f1124450a2ffe031b0adefd04778e657cd22efdfa1442ab55683
+  setAgent(agent account)    0x9bf76807dd85a3fa2a3837fd6dce73481c983b96e5dba49a4852fea2c16e5a30
+  setLimit(50.0, 120.0)      0xfbc0cc4cac57c01a931a6b404bce7f03d4abd88b78cd7213587863510fa5c350
+  fUSD.approve(new desk, 860.0) 0x615c761bd0c1d4020006479b6840e836ecebd6956d521296e0f87acc2937c7f1
+3. the old desk: the agent off, its allowance to zero (a window scoped to it and fUSD)
+  old desk: setAgent(agent, false) 0xf8f28bbd5638cdfdd6fa6fe0d9f83b9185fac8e34177ece07eecfd412369c55d
+  fUSD.approve(old desk, 0)  0x64410bb70221b099a11b12ebb313b8ee3c58e4e91333ba895fda5ab43213fa50
+4. relink the agent's key to the new desk's pay
+  agent key linked for 168 h: only 0x86d08B3CA3B27dD8627D963519B6efC733E24960.pay  C77B64E109D833CA3C8ECCB3966E0AD66D02CDD2B4B756E76D2B5E011C17BBB3
+
+done: InvoiceDeskV3 at 0x86d08B3CA3B27dD8627D963519B6efC733E24960. Tell your vendors the new desk address: invoices name the desk they are for.

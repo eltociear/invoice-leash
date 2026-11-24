@@ -1,0 +1,10 @@
+  0  AGENT PAYS      INV-2001                           15 fUSD      Northwind Hosting
+       approved vendor, valid ML-DSA-87 signature, unpaid, not past due, within the agent's limits
+  1  AGENT PAYS      INV-2001                           25 fUSD      Contoso Supplies
+       approved vendor, valid ML-DSA-87 signature, unpaid, not past due, within the agent's limits
+  2  NEEDS A PERSON  NW-0990                            12 fUSD      Northwind Hosting
+       valid, but the agent may not pay it: it is past due; an agent may not pay late, the company may settle it. A person can: node desk.mjs pay 2
+  3  REJECTED        NW-ZERO                            0 fUSD       Northwind Hosting
+       ZeroAmount
+
+saved to $LEASH_HOME/triage.json. next: node desk.mjs run (pays only AGENT PAYS)

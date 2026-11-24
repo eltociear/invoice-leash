@@ -39,7 +39,7 @@ again: it skips what is done.
 2. Sends fee money: 3 QOR to the **fee wallet**, which relays the agent's requests, and 1 QOR to the
    **agent account**.
 3. Registers their ML-DSA-87 keys.
-4. Deploys **your InvoiceDeskV2**, in a window that admits one transaction.
+4. Deploys **your InvoiceDeskV3**, in a window that admits one transaction.
 5. In a window scoped to the desk and fUSD, it names the agent account as your agent, sets its limits
    (`--per-payment`, `--daily`, in fUSD) and gives the desk an fUSD allowance (`--allowance`, the total it
    may ever pull).
@@ -132,6 +132,23 @@ Every row comes from the chain, not from a local log. The company's own payments
 `paid()` record: an authenticator-relayed EVM call leaves no log that `eth_getLogs` returns (measured on
 diana). A payment with no matching invoice in your inbox is flagged.
 
+## Late invoices, and vendors that use the same invoice numbers
+
+Your desk is an **InvoiceDeskV3**:
+- **Invoice numbers are per vendor.** Two vendors may both send `INV-2001`, and both are paid, each once.
+- **Overdue invoices.** The agent never pays after the due date (`PastDue`), but the company can settle
+  an overdue invoice in person: `triage` marks it NEEDS A PERSON, then run `node desk.mjs pay <n>`. A
+  vendor re-issues an overdue invoice with `vendor.mjs sign ... --overdue`.
+- A zero-amount invoice is refused (`ZeroAmount`). The desk also checks that the vendor received exactly
+  the invoiced amount.
+
+All of this was run on the testnet: [`runs/own-company-v3/`](runs/own-company-v3/).
+
+**Set up before V3?** `node desk.mjs upgrade` deploys a V3 desk and copies your vendors, agent, limits
+and allowance. It switches the agent off on the old desk, sets the old allowance to 0, and relinks the
+agent's key. `export` keeps the old desk's history. Then run `node desk.mjs inbox archive`, and ask
+vendors to re-sign any open invoices for the new desk address.
+
 ## Day to day
 
 | Task | Command |
@@ -150,12 +167,6 @@ Be clear about these before relying on it:
 
 - **Testnet only, fUSD only.** Your vendors must also be on QoreChain, with a registered ML-DSA-87 key.
   There is no bank or fiat rail, and no way to pay a vendor that is not on chain.
-- **Late invoices.** The desk refuses past-due invoices for everyone, the company included (`PastDue`).
-  Ask the vendor to re-sign with a new due date.
-- **Invoice numbers are global per company.** `paid[company][id]`, where `id` comes from the invoice
-  number, does not include the vendor. Two vendors using the same number collide, and the second gets
-  `AlreadyPaid`. Vendors should prefix their invoice numbers. A next desk version would key by
-  vendor and id.
 - **Exact amounts.** No partial payments and no credit notes. The amount paid is the amount signed.
 - **One company key.** There is no multi-signature approval. `pay` by a person is one key holder.
 - **Inbox from files.** Invoices arrive as files (`inbox add`). Reading them from a mailbox is up to you.

@@ -10,7 +10,7 @@
 //   node vendor.mjs register                 register your ML-DSA-87 key on chain (with proof of possession)
 //   node vendor.mjs status                   your address and key, as the chain sees them
 //   node vendor.mjs sign --desk <0x…> --payer <0x…|qor1…> --amount <fUSD> --ref <invoice number> --due <YYYY-MM-DD>
-//                        [--seal-to <qor1… of the payer's agent account>] [--subject "…"] [--out invoice.json]
+//                        [--seal-to <qor1… of the payer's agent account>] [--subject "…"] [--out invoice.json] [--overdue]
 //                                            sign an invoice; with --seal-to it is sealed with ML-KEM-1024 so only
 //                                            the payer's agent can read it. Send the file to the customer.
 import { homedir } from "node:os";
@@ -55,8 +55,12 @@ const cmds = {
     const desk = evmOf(opt(args, "desk") ?? fail("--desk <the customer's InvoiceDeskV2 address>"));
     const payer = evmOf(opt(args, "payer") ?? fail("--payer <the customer's company address>"));
     const amount = opt(args, "amount") ?? fail("--amount <fUSD>"), ref = opt(args, "ref") ?? fail("--ref <your invoice number>");
+    if (!(Number(amount) > 0) && !args.includes("--allow-zero")) fail("--amount must be more than 0 (a desk refuses a zero invoice: ZeroAmount)");
     const due = opt(args, "due") ?? fail("--due <YYYY-MM-DD>"), dueBy = Math.floor(Date.parse(`${due}T23:59:59Z`) / 1000);
-    if (!Number.isSafeInteger(dueBy) || dueBy * 1000 < Date.now()) fail(`--due must be a date in the future (got ${due})`);
+    if (!Number.isSafeInteger(dueBy)) fail(`--due must be a date, YYYY-MM-DD (got ${due})`);
+    // Re-issuing an invoice that is already overdue is legitimate, but must be deliberate: an agent will
+    // never pay it (PastDue); only the customer, in person, can settle it (InvoiceDeskV3).
+    if (dueBy * 1000 < Date.now() && !args.includes("--overdue")) fail(`--due ${due} is in the past. To re-issue an overdue invoice, add --overdue (only the customer can pay it, in person)`);
     if (!(await sdk.fetchPqcStatus({ rest: REST, address: v.cosmos })).registered) fail("register your key first: node vendor.mjs register (otherwise no desk can check your signature)");
     const invoice = signInvoiceV2(v, { desk, payer, vendor: v.evmAddr, token: FUSD, fusd: amount, ref, dueBy });
     const subject = opt(args, "subject", `Invoice ${ref}`), sealTo = opt(args, "seal-to");

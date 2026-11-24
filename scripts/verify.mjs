@@ -387,6 +387,37 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
       `(${ocDesk.slice(0, 10)}…, ${Object.values(oc.vendors)[0]})`);
   }
 
+  // InvoiceDeskV3: the same company, upgraded with `desk.mjs upgrade` (runs/own-company-v3/)
+  {
+    const v3 = json("runs/own-company-v3/desk.json").v2, D3 = getAddress(v3.invoiceDesk), P3 = getAddress(v3.payerEvm), A3 = getAddress(v3.agentAccountEvm);
+    const out3 = JSON.parse(solc.compile(JSON.stringify({ language: "Solidity", sources: { "InvoiceDeskV3.sol": { content: readFileSync(new URL("contracts/InvoiceDeskV3.sol", root), "utf8") } },
+      settings: { optimizer: { enabled: true, runs: 200 }, evmVersion: "paris", outputSelection: { "*": { InvoiceDeskV3: ["abi", "evm.deployedBytecode.object"] } } } })));
+    const c3 = out3.contracts["InvoiceDeskV3.sol"].InvoiceDeskV3, desk3 = new Interface(c3.abi);
+    ok((await provider.getCode(D3)).slice(2) === c3.evm.deployedBytecode.object, `InvoiceDeskV3: bytecode at ${D3} == contracts/InvoiceDeskV3.sol`);
+    const call3 = async (fn, args) => desk3.decodeFunctionResult(fn, await provider.call({ to: D3, data: desk3.encodeFunctionData(fn, args) }));
+    const ask3 = async (from, v) => { try { await provider.call({ from, to: D3, data: desk3.encodeFunctionData("pay", [P3, v.token, v.vendor, v.amount, v.id, v.dueBy, v.signature]) }); return "WOULD PAY"; } catch (e) { return desk3.parseError(e.data ?? e.info?.error?.data)?.name ?? "?"; } };
+    const inv = (f) => json(`runs/own-company-v3/invoices/${f}.json`).invoice;
+    const nw = inv("northwind-INV-2001"), co = inv("contoso-INV-2001"), late = inv("NW-0990"), open = inv("NW-0991-unpaid"), zero = inv("NW-ZERO");
+    const [[pNw], [pCo]] = await Promise.all([call3("paid", [P3, nw.vendor, nw.id]), call3("paid", [P3, co.vendor, co.id])]);
+    ok(nw.id === co.id && getAddress(nw.vendor) !== getAddress(co.vendor) && pNw && pCo,
+      "V3: two vendors' invoices with the same number (INV-2001) were both paid: invoice ids are per vendor", "(V2 answers the second one AlreadyPaid)");
+    const csv3 = readFileSync(new URL("runs/own-company-v3/payments.csv", root), "utf8").trim().split("\n").slice(1).map((l) => l.split(","));
+    const lateRow = csv3.find((r) => r[4] === late.id), lateRc = lateRow && await provider.getTransactionReceipt(lateRow[8]), lateBlk = lateRc && await provider.getBlock(lateRc.blockNumber);
+    const [[pLate]] = await Promise.all([call3("paid", [P3, late.vendor, late.id])]);
+    ok(pLate && lateRow?.[7] === "company" && lateRc?.status === 1 && getAddress(lateRc.from) === P3 && lateBlk.timestamp > late.dueBy,
+      `V3: an overdue invoice (due ${new Date(late.dueBy * 1000).toISOString().slice(0, 10)}) was settled by the company in person`, `(${lateRow?.[8].slice(0, 10)}…, paid ${new Date((lateBlk?.timestamp ?? 0) * 1000).toISOString().slice(0, 10)})`);
+    const [asAgent, asCompany, z] = [await ask3(A3, open), await ask3(P3, open), await ask3(P3, zero)];
+    ok(asAgent === "PastDue" && asCompany === "WOULD PAY" && z === "ZeroAmount",
+      "V3, asked live: an unpaid overdue invoice is PastDue for the agent and payable by the company; a zero-amount invoice is ZeroAmount", "(NW-0991, kept unpaid on purpose)");
+    const old = getAddress(v3.previous[0].invoiceDesk);
+    const oldDesk = new Interface(JSON.parse(readFileSync(new URL("build/InvoiceDeskV2.json", root), "utf8")).abi);
+    const [[oldAgent]] = [oldDesk.decodeFunctionResult("isAgent", await provider.call({ to: old, data: oldDesk.encodeFunctionData("isAgent", [P3, A3]) }))];
+    const [oldAllow] = erc.decodeFunctionResult("allowance", await provider.call({ to: FUSD, data: erc.encodeFunctionData("allowance", [P3, old]) }));
+    const [[newAgent], [v1ok], [v3ok]] = await Promise.all([call3("isAgent", [P3, A3]), call3("approved", [P3, nw.vendor]), call3("approved", [P3, co.vendor])]);
+    ok(!oldAgent && oldAllow === 0n && newAgent && v1ok && v3ok,
+      "V3 upgrade (desk.mjs upgrade): on the old V2 desk the agent is off and the allowance is 0; the new desk has the agent and the vendors", `(${old.slice(0, 10)}… -> ${D3.slice(0, 10)}…)`);
+  }
+
   // Shor's gift: an account whose secp256k1 private key is public (runs/qday-public.json)
   {
     const g = json("runs/qday-public.json"), gEvm = getAddress(g.evmAddress);

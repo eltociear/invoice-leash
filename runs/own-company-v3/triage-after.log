@@ -1,0 +1,12 @@
+  0  ALREADY PAID    INV-2001                           15 fUSD      Northwind Hosting
+       the desk has paid this invoice id for you (node desk.mjs export)
+  1  ALREADY PAID    INV-2001                           25 fUSD      Contoso Supplies
+       the desk has paid this invoice id for you (node desk.mjs export)
+  2  ALREADY PAID    NW-0990                            12 fUSD      Northwind Hosting
+       the desk has paid this invoice id for you (node desk.mjs export)
+  3  REJECTED        NW-ZERO                            0 fUSD       Northwind Hosting
+       ZeroAmount
+  4  NEEDS A PERSON  NW-0991                            9 fUSD       Northwind Hosting
+       valid, but the agent may not pay it: it is past due; an agent may not pay late, the company may settle it. A person can: node desk.mjs pay 4
+
+saved to $LEASH_HOME/triage.json. next: node desk.mjs run (pays only AGENT PAYS)

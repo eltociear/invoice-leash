@@ -1,14 +1,19 @@
-// Mutation check for InvoiceDeskV2: inject one bug at a time and confirm `forge test` fails.
-//   node scripts/mutate.mjs > runs/mutation.txt
+// Mutation check: inject one bug at a time into a desk contract and confirm `forge test` fails.
+//   node scripts/mutate.mjs      > runs/mutation.txt      (InvoiceDeskV2)
+//   node scripts/mutate.mjs v3   > runs/mutation-v3.txt   (InvoiceDeskV3: V2's mutants, adapted, plus V3's own)
 // Restores the contract after every mutant (and on any error). Needs Foundry (forge on PATH or ~/.foundry/bin).
+// Never run it while `npm run verify` runs: it edits the contract in place.
 import { readFileSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 
-const FILE = new URL("../contracts/InvoiceDeskV2.sol", import.meta.url);
+const V3 = process.argv[2] === "v3";
+const NAME = V3 ? "InvoiceDeskV3" : "InvoiceDeskV2";
+const FILE = new URL(`../contracts/${NAME}.sol`, import.meta.url);
 const ORIGINAL = readFileSync(FILE, "utf8");
 const forge = spawnSync("sh", ["-c", "command -v forge || echo ~/.foundry/bin/forge"]).stdout.toString().trim();
 
-const PAID_CHECK = "        if (paid[payer][id]) revert AlreadyPaid(id);\n";
+const PAID = V3 ? "paid[payer][vendor][id]" : "paid[payer][id]";
+const PAID_CHECK = `        if (${PAID}) revert AlreadyPaid(id);\n`;
 const MUTANTS = [
   ["signature check removed", (s) => s.replace("if (!PQC_VERIFY.pqcVerify(", "if (false && !PQC_VERIFY.pqcVerify(")],
   ["replay check moved before the signature", (s) => s.replace(PAID_CHECK, "").replace("        if (!approved[payer][vendor])", PAID_CHECK + "        if (!approved[payer][vendor])")],
@@ -22,34 +27,46 @@ const MUTANTS = [
   ["per-payment limit ignored", (s) => s.replace("if (amount > l.perPayment)", "if (false && amount > l.perPayment)")],
   ["agents may pay in native QOR", (s) => s.replace("if (token == address(0)) revert AgentCannotPayNative();", "")],
   ["daily limit on a shifted day (not the UTC calendar day)", (s) => s.replace("uint256 day = block.timestamp / 1 days;", "uint256 day = (block.timestamp + 1 hours) / 1 days;")],
-  ["invoice not marked paid", (s) => s.replace("paid[payer][id] = true;", "paid[payer][id] = false;")],
-  ["token without code accepted", (s) => s.replace("if (token.code.length == 0) revert TransferFailed();", "")],
+  ["invoice not marked paid", (s) => s.replace(`${PAID} = true;`, `${PAID} = false;`)],
+  // In V3 this mutant is equivalent: reading the vendor's balance from an address without code fails the
+  // same way (TransferFailed), so no test can tell them apart. Kept, and reported as such, not counted.
+  ["token without code accepted", (s) => s.replace("if (token.code.length == 0) revert TransferFailed();", ""), V3 && "the vendor-balance check refuses it the same way (TransferFailed)"],
+  ...(V3 ? [
+    ["V3: agents may pay past due", (s) => s.replace("if (block.timestamp > dueBy) revert PastDue(dueBy);", "")],
+    ["V3: past due refused for the payer too (no late settlement)", (s) => s.replace("        if (byAgent) {\n            if (block.timestamp > dueBy) revert PastDue(dueBy);", "        if (block.timestamp > dueBy) revert PastDue(dueBy);\n        if (byAgent) {")],
+    ["V3: invoice ids not keyed by vendor (V2's collision)", (s) => s.replaceAll("paid[payer][vendor][id]", "paid[payer][address(0)][id]")],
+    ["V3: zero-amount invoice accepted", (s) => s.replace("if (amount == 0) revert ZeroAmount();", "")],
+    ["V3: what the vendor received not checked", (s) => s.replace("if (_balanceOf(token, vendor) != before + amount) revert TransferFailed();", "")],
+  ] : []),
 ];
 
 const test = () => {
-  const r = spawnSync(forge, ["test", "--match-contract", "InvoiceDeskV2Test"], { encoding: "utf8", cwd: new URL("..", import.meta.url).pathname });
+  const r = spawnSync(forge, ["test", "--match-contract", `${NAME}Test`], { encoding: "utf8", cwd: new URL("..", import.meta.url).pathname });
   const out = r.stdout + r.stderr;
-  return { failed: r.status !== 0, failing: [...new Set([...out.matchAll(/\[FAIL.*?\] (test\w+)\(/g)].map((m) => m[1]))], compiled: !/Compiler run failed|Error \(/.test(out) };
+  return { failed: r.status !== 0, failing: [...new Set([...out.matchAll(/\[FAIL.*?\] (\w+)\(/g)].map((m) => m[1]))], compiled: !/Compiler run failed|Error \(/.test(out) };
 };
 
-let caught = 0;
+let caught = 0, counted = 0;
 try {
   const base = test();
   if (base.failed) throw new Error("the unmutated suite fails; fix that first");
-  console.log(`InvoiceDeskV2 mutation check (forge test --match-contract InvoiceDeskV2Test), ${new Date().toISOString().slice(0, 10)}`);
+  console.log(`${NAME} mutation check (forge test --match-contract ${NAME}Test), ${new Date().toISOString().slice(0, 10)}`);
   console.log("unmutated: all tests pass\n");
-  for (const [name, f] of MUTANTS) {
+  for (const [name, f, equivalent] of MUTANTS) {
     const m = f(ORIGINAL);
     if (m === ORIGINAL) throw new Error(`mutant "${name}" did not change the source`);
     writeFileSync(FILE, m);
     const r = test();
     writeFileSync(FILE, ORIGINAL);
     const ok = r.failed && r.compiled;
+    if (equivalent && !ok) { console.log(`EQUIV.  ${name}\n         not counted: ${equivalent}`); continue; }
     if (ok) caught++;
+    counted++;
     console.log(`${ok ? "CAUGHT " : "MISSED "} ${name}${r.compiled ? "" : " (did not compile)"}\n         failing: ${r.failing.join(", ") || "-"}`);
   }
 } finally {
   writeFileSync(FILE, ORIGINAL);
 }
-console.log(`\n${caught} of ${MUTANTS.length} mutants caught`);
-process.exitCode = caught === MUTANTS.length ? 0 : 1;
+const eq = MUTANTS.length - counted;
+console.log(`\n${caught} of ${counted} mutants caught${eq ? ` (${eq} equivalent, not counted)` : ""}`);
+process.exitCode = caught === counted ? 0 : 1;

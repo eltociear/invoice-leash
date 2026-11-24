@@ -1,0 +1,42 @@
+{
+  "v2": {
+    "invoiceDesk": "0x86d08B3CA3B27dD8627D963519B6efC733E24960",
+    "token": "0x97143B771D34ddb9130b807b135Ae675A5a963CA",
+    "payer": "qor1vvxphjk3gw8y425qmumr5l42d5eyzux7ynd0c7",
+    "payerEvm": "0x630c1bcad1438e4aaa80df363a7eaa6d324170de",
+    "agentAccount": "qor13mz90c8y8fm2uxdf2k479lhjs73kyaqr44ceyv",
+    "agentAccountEvm": "0x8ec457e0e43a76ae19a955abe2fef287a3627403",
+    "gas": "qor135ehg2zg3yqypxtcqwkm9a4qzvjlz4ndrnc6sp",
+    "deployedAt": "2026-11-24T04:24:27.496Z",
+    "deployBlock": 10648748,
+    "deployTx": "0x0743580d946fb2c642784f0130218c41b6b2d2259719f9c32cb7e62e656f2603",
+    "vendors": {
+      "0x8BB12d258F65fbbaAd6Bc674F7BDEbf783dC8993": "Northwind Hosting",
+      "0xe7A23c9352882638F50593F2111a27376630B3C2": "Contoso Supplies"
+    },
+    "limits": {
+      "perPayment": "50",
+      "daily": "120",
+      "allowance": "1000"
+    },
+    "agentRule": {
+      "allowedDenoms": [
+        "erc20/0x4604e7e45b2ecdbfbdc157103f5b2b62cb16451a"
+      ],
+      "allowedEvmCalls": [
+        "0x86d08B3CA3B27dD8627D963519B6efC733E24960/0xf19ff4ff"
+      ],
+      "hours": "168",
+      "linkTx": "C77B64E109D833CA3C8ECCB3966E0AD66D02CDD2B4B756E76D2B5E011C17BBB3"
+    },
+    "previous": [
+      {
+        "version": 2,
+        "invoiceDesk": "0x8efcB1Ea49c2e2544080d188D5F179a1DD7CA74b",
+        "deployBlock": 10647056
+      }
+    ],
+    "version": 3,
+    "upgradedAt": "2026-11-24T05:04:54.188Z"
+  }
+}

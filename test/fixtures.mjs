@@ -94,4 +94,19 @@ console.log(`test/fixtures/mldsa.json: ${cases.length} cases, ${cases.filter((c)
   for (const c of cases2) if (c.valid !== valid2.has(c.name)) throw new Error(`v2 fixture ${c.name}: real ML-DSA-87 says ${c.valid}`);
   writeFileSync(new URL("./fixtures/mldsa-v2.json", import.meta.url), JSON.stringify({ note: out.note, chainId: 9800, addresses: A, tokens: T, keys: out.keys, cases: cases2 }, null, 1) + "\n");
   console.log(`test/fixtures/mldsa-v2.json: ${cases2.length} cases, ${cases2.filter((c) => c.valid).length} valid under real ML-DSA-87`);
+
+  // ---------------------------------------------------------------- v3 (same signed format; V3-only cases added)
+  // Every v2 case, plus invoices that exercise what V3 changes. All are genuinely signed: V3 refuses some
+  // of them (zero amount, a fee-taking token) for reasons other than the signature.
+  const T3 = { ...T, fee: "0x000000000000000000000000000000000000FEE0" };
+  const sameId = { vendor: A.tokenwell, amount: 50000000n }; // Tokenwell, using Hostline's invoice number
+  add2("tokenwell_same_id_as_hostline", "tokenwell", s2("tokenwell", sameId), sameId);
+  const zero = { amount: 0n, id: keccak256(toUtf8Bytes("HOSTLINE-V3-ZERO")) };
+  add2("zero_amount", "hostline", s2("hostline", zero), zero);
+  const feeTok = { token: T3.fee, id: keccak256(toUtf8Bytes("HOSTLINE-V3-FEE")) };
+  add2("fee_taking_token", "hostline", s2("hostline", feeTok), feeTok);
+  const valid3 = new Set([...valid2, "tokenwell_same_id_as_hostline", "zero_amount", "fee_taking_token"]);
+  for (const c of cases2) if (c.valid !== valid3.has(c.name)) throw new Error(`v3 fixture ${c.name}: real ML-DSA-87 says ${c.valid}`);
+  writeFileSync(new URL("./fixtures/mldsa-v3.json", import.meta.url), JSON.stringify({ note: out.note, chainId: 9800, addresses: A, tokens: T3, keys: out.keys, cases: cases2 }, null, 1) + "\n");
+  console.log(`test/fixtures/mldsa-v3.json: ${cases2.length} cases, ${cases2.filter((c) => c.valid).length} valid under real ML-DSA-87`);
 }

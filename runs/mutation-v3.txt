@@ -1,0 +1,43 @@
+InvoiceDeskV3 mutation check (forge test --match-contract InvoiceDeskV3Test), 2026-11-24
+unmutated: all tests pass
+
+CAUGHT  signature check removed
+         failing: testFuzz_any_other_amount_is_refused, testFuzz_any_other_token_is_refused, test_late_payment_still_needs_a_genuine_signature, test_refused_agent_payments_do_not_count, test_refuses_every_tampering, test_refuses_on_another_desk, test_refuses_other_payer, test_refuses_replay_and_edited_copy_is_still_a_forgery, test_the_currency_is_signed, test_vendor_key_must_be_proven_ml_dsa_87, test_vendor_key_of_another_algorithm_or_unregistered_is_refused, test_vendor_key_rotated_old_invoices_no_longer_verify
+CAUGHT  replay check moved before the signature
+         failing: test_refuses_replay_and_edited_copy_is_still_a_forgery
+CAUGHT  vendor key: proof of possession not required
+         failing: test_vendor_key_must_be_proven_ml_dsa_87
+CAUGHT  vendor key: algorithm not checked
+         failing: test_vendor_key_of_another_algorithm_or_unregistered_is_refused
+CAUGHT  currency left out of the signed bytes
+         failing: testFuzz_agent_limits_decide_exactly, test_a_token_that_moves_funds_but_returns_false_is_refused, test_a_token_that_takes_a_fee_is_refused, test_agent_cannot_pay_native_qor, test_agent_daily_limit_and_utc_day_reset, test_agent_pays_from_the_payers_balance_and_holds_nothing, test_agent_per_payment_limit, test_agent_without_limits_pays_nothing, test_allowance_is_a_cap, test_insufficient_balance_rolls_back, test_invoiceMessage_matches_offchain_encoding, test_invoice_numbers_are_per_vendor, test_past_due_agent_refused_payer_in_person_may_settle, test_payer_in_person_is_not_bound_by_agent_limits, test_pays_fusd_invoice_from_the_payers_balance, test_pays_native_qor_invoice, test_refused_agent_payments_do_not_count, test_refuses_qor_sent_with_an_fusd_invoice, test_refuses_replay_and_edited_copy_is_still_a_forgery, test_token_returning_false_is_refused, test_token_without_code_is_refused, test_zero_amount_is_refused
+CAUGHT  ERC-20 return value ignored
+         failing: test_a_token_that_moves_funds_but_returns_false_is_refused
+CAUGHT  QOR sent along with an fUSD invoice accepted
+         failing: test_refuses_qor_sent_with_an_fusd_invoice
+CAUGHT  any account may pay for any payer
+         failing: test_removing_the_agent_is_a_kill_switch, test_unnamed_account_cannot_pay_for_the_payer
+CAUGHT  agents' daily spend not recorded
+         failing: test_agent_daily_limit_and_utc_day_reset, test_agent_pays_from_the_payers_balance_and_holds_nothing, test_refused_agent_payments_do_not_count
+CAUGHT  per-payment limit ignored
+         failing: testFuzz_agent_limits_decide_exactly, test_agent_per_payment_limit, test_agent_without_limits_pays_nothing
+CAUGHT  agents may pay in native QOR
+         failing: test_agent_cannot_pay_native_qor
+CAUGHT  daily limit on a shifted day (not the UTC calendar day)
+         failing: test_agent_daily_limit_and_utc_day_reset
+CAUGHT  invoice not marked paid
+         failing: test_invoice_numbers_are_per_vendor, test_past_due_agent_refused_payer_in_person_may_settle, test_refuses_replay_and_edited_copy_is_still_a_forgery
+EQUIV.  token without code accepted
+         not counted: the vendor-balance check refuses it the same way (TransferFailed)
+CAUGHT  V3: agents may pay past due
+         failing: test_past_due_agent_refused_payer_in_person_may_settle
+CAUGHT  V3: past due refused for the payer too (no late settlement)
+         failing: test_past_due_agent_refused_payer_in_person_may_settle
+CAUGHT  V3: invoice ids not keyed by vendor (V2's collision)
+         failing: test_invoice_numbers_are_per_vendor, test_past_due_agent_refused_payer_in_person_may_settle
+CAUGHT  V3: zero-amount invoice accepted
+         failing: test_zero_amount_is_refused
+CAUGHT  V3: what the vendor received not checked
+         failing: test_a_token_that_takes_a_fee_is_refused
+
+18 of 18 mutants caught (1 equivalent, not counted)
