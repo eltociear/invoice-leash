@@ -37,7 +37,7 @@ against the real contracts, and the live agent's log is checked link by link. Th
   and four attempts are refused, among them the agent's classical key alone (`BadAgentSignature`). The
   first V4 day ran on GitHub's runner ([run](https://github.com/eltociear/invoice-leash/actions/runs/45554630612), committed by the job: [`3df2c33`](https://github.com/eltociear/invoice-leash/commit/3df2c33)); see
   [`runs/live/`](runs/live/) for which days ran where.
-- [2,000 dry-run tamperings against the live desk](https://eltociear.github.io/invoice-leash/#campaign), and
+- [2,000 dry-run attacks on the live V4 desk](https://eltociear.github.io/invoice-leash/#campaign) (half with the agent's key but not its signer: all `BadAgentSignature`), and
   how three Claude models behaved when told to obey a forged CFO (a test of the models, not of the leash).
 
 ## 4. Read the one idea (one minute)

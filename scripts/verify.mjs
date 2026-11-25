@@ -452,6 +452,18 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
         `the agent account's own EVM window on InvoiceDeskV4 (one target: the desk): inside it, its classical key alone was reverted on chain (asked again now: ${aloneWhy}), the same invoice with the agent's ML-DSA-87 signature paid; fUSD and QOR to Mallory refused by the window; after closing, refused`,
         `(open ${opened.tx.slice(0, 8)}…, receipts re-read)`);
     }
+    // the V4 campaign (runs/campaign-v4.json): 0 of its attacks would pay; a sample, kept as full calldata,
+    // is asked again now, with no keys; the signed genuine control still clears both ML-DSA-87 checks
+    {
+      const c4 = json("runs/campaign-v4.json"), s4 = json("runs/campaign-v4-sample.json");
+      const ask4 = async (from, data, value = "0") => { try { await provider.call({ from, to: s4.desk, data, value: BigInt(value) }); return "PAID"; } catch (e) { try { return desk4.parseError(e.data ?? e.info?.error?.data)?.name ?? "Reverted"; } catch { return "Reverted"; } } };
+      let same = 0;
+      for (const x of s4.sample) if ((await ask4(x.from, x.data, x.value)) === x.outcome) same++;
+      const ctl = await ask4(s4.control.from, s4.control.data);
+      ok(s4.desk === liveRec.invoiceDesk && c4.paid === 0 && c4.network === 0 && c4.control === "PAID" && c4.agentsig.badAgentSignature === c4.agentsig.count && same === s4.sample.length && ["PAID", "OverDailyLimit"].includes(ctl),
+        `${c4.count.toLocaleString()} dry-run attacks on the live InvoiceDeskV4: 0 would pay. A compromised agent with its signer (invoice tamperings): refused by the vendor's signature and the desk's rules. The agent's key without its signer: ${c4.agentsig.badAgentSignature} of ${c4.agentsig.count} BadAgentSignature. ${same} of ${s4.sample.length} sampled attacks asked again now: same answers`,
+        `(control now: ${ctl === "PAID" ? "would pay" : "past both signature checks, today's limit used"})`);
+    }
     const lab4 = json("runs/live/v4-lab-invoice.json"), li = lab4.invoice;
     const ask4 = async (from) => { try { await provider.call({ from, to: DL4, data: desk4.encodeFunctionData("pay", [lab4.payer, li.token, li.vendor, li.amount, li.id, li.dueBy, li.signature, "0x"]) }); return "WOULD PAY"; } catch (e) { return desk4.parseError(e.data ?? e.info?.error?.data)?.name ?? "?"; } };
     const [labAgent, labCompany] = [await ask4(lab4.agent), await ask4(lab4.payer)];
