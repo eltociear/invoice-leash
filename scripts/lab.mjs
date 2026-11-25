@@ -57,6 +57,7 @@ const html = `<!doctype html>
 <title>Invoice Leash · attack lab (fUSD)</title>
 <meta name="description" content="Tamper with a real ML-DSA-87 signed fUSD invoice and ask the real contract on the QoreChain testnet whether it would pay. In your browser, no keys.">
 <style>
+p, li, td, code, .mono { overflow-wrap: anywhere; }
 :root{--bg:#0d1117;--panel:#161b22;--line:#30363d;--fg:#e6edf3;--dim:#8b949e;--ok:#3ddc97;--no:#ff7b72;--warn:#e3b341}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
 main{max-width:1040px;margin:0 auto;padding:48px 24px 96px}a{color:var(--ok)}code,input,select,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
@@ -78,7 +79,8 @@ ol.log{font-size:13px;color:var(--dim);padding-left:20px;margin:0}ol.log li{marg
 </style></head>
 <body><main>
 <div class="top"><h1>Attack lab: make Invoice Leash pay</h1><a href="./">← the recorded runs</a></div>
-<p>Pick a real fUSD invoice, change anything, choose who sends it, and ask the <b>real InvoiceDeskV2 on the QoreChain testnet</b> whether it would pay. Your browser sends an <code>eth_call</code> to <code>${data.rpc}</code>; the ML-DSA-87 check is the chain's own precompile. Nothing is sent and nothing is spent, so try as much as you like. You can also <a href="#you">be the vendor</a>: make an ML-DSA-87 key in this tab and sign an invoice yourself, or <a href="#msg">check a company instruction</a>, including a Q-Day forgery.</p>
+<div class="card" style="border-color:var(--acc);margin-bottom:14px"><b>Start here (two clicks):</b> <a href="#v4">§7, the live InvoiceDeskV4</a>. Press "As the agent: classical key only" and the live desk answers <code>BadAgentSignature</code>, what a key derived after Q-Day gets; press "As the company" and the same invoice would pay.</div>
+<p>Then try to break the rest. Pick a real fUSD invoice, change anything, choose who sends it, and ask the <b>legacy InvoiceDeskV2 on the QoreChain testnet</b> (the demo's recorded desk; V4 keeps all its checks) whether it would pay. Your browser sends an <code>eth_call</code> to <code>${data.rpc}</code>; the ML-DSA-87 check is the chain's own precompile. Nothing is sent and nothing is spent, so try as much as you like. You can also <a href="#you">be the vendor</a>: make an ML-DSA-87 key in this tab and sign an invoice yourself, or <a href="#msg">check a company instruction</a>, including a Q-Day forgery.</p>
 <p class="live"><span class="dot" id="dot"></span><span id="live">connecting to qorechain-diana…</span></p>
 
 <div class="card" style="font-size:14px;margin-bottom:18px"><b>Which desk is which.</b> §1–5 and the lists at the end use <b>InvoiceDeskV2</b>, the demo's recorded desk (<a href="https://explore.qore.network/address/${data.desk}">${data.desk.slice(0, 10)}…</a>). §6 is an ordinary account. §7 asks <b>InvoiceDeskV4</b>, the live agent's desk now (<a href="https://explore.qore.network/address/${json("runs/live/desk.json").v2.invoiceDesk}">${json("runs/live/desk.json").v2.invoiceDesk.slice(0, 10)}…</a>). V3 and V4 keep V2's checks and add per-vendor invoice ids and late settlement (V3) and the agent's own ML-DSA-87 signature (V4).</div>
@@ -115,7 +117,7 @@ ol.log{font-size:13px;color:var(--dim);padding-left:20px;margin:0}ol.log li{marg
 <div class="card you">
 <p style="margin-top:0">The company signs instructions to its agent as <b>QoreSign</b> messages (the format QoreX's <code>signArbitrary</code> makes): secp256k1 plus <b>ML-DSA-87</b> over <code>"qorechain-msg-v1|qorechain-diana|" + text</code>. Pick one; your browser reads the company's registered ML-DSA-87 key from the chain (precompile <code>0x…0a02</code>) and verifies the post-quantum half itself. The <b>Q-Day forgery</b> carries a valid signature from the company's classical key (as if a quantum computer had broken it) and an ML-DSA-87 signature from another key. Edit the text and check again.</p>
 <div class="presets" id="msgs"></div>
-<label for="msgtext">Message text</label><input id="msgtext">
+<label for="msgtext">Message text</label><textarea id="msgtext" rows="3" style="width:100%;font:inherit"></textarea>
 <div class="btns"><button type="button" class="main" id="msgcheck">Check the ML-DSA-87 signature</button></div>
 <div class="local" id="msgout">Pick a message.</div>
 <div style="border-top:1px solid var(--line);margin-top:14px;padding-top:12px">
@@ -175,7 +177,20 @@ const message = (c, amount) => E.getBytes(E.AbiCoder.defaultAbiCoder().encode(["
   [DOMAIN, 9800, D.desk, c.payer, c.vendor, c.token, amount, E.keccak256(E.toUtf8Bytes(c.ref)), c.dueBy]));
 const pqcKey = async (a) => { const r = await rpc("eth_call", [{ to: "0x0000000000000000000000000000000000000a02", data: status.encodeFunctionData("pqcKeyStatus", [a]) }, "latest"]); return status.decodeFunctionResult("pqcKeyStatus", r.result); };
 const vfy = (pk, msg, sig) => { try { return window.mldsa.verify(E.getBytes(sig), msg, E.getBytes(pk)); } catch { return false; } };
-async function rpc(method, params) { const r = await fetch(D.rpc, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) }); if (!r.ok) throw new Error("the testnet RPC answered HTTP " + r.status); return r.json(); }
+// the testnet RPC, retried on a network failure (a blip must not leave the page broken); any answer marks the page live
+async function rpc(method, params) {
+  for (let i = 0; ; i++) {
+    try {
+      const r = await fetch(D.rpc, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) });
+      if (!r.ok) throw new Error("the testnet RPC answered HTTP " + r.status);
+      const j = await r.json(); markLive(); return j;
+    } catch (e) { if (i >= 3 || !(e instanceof TypeError)) throw e; await new Promise((res) => setTimeout(res, 1000 * 2 ** i)); }
+  }
+}
+let liveShown = false;
+function markLive() { if (liveShown) return; liveShown = true; $("dot").classList.add("on"); fetch(D.rpc, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_blockNumber", params: [] }) }).then((r) => r.json()).then((r) => { $("live").textContent = "live: qorechain-diana, block " + parseInt(r.result, 16).toLocaleString(); }).catch(() => { $("live").textContent = "live: qorechain-diana"; }); }
+// a first read that fails offers a retry instead of a dead end
+function load(id, fn) { fn().catch((e) => { $(id).innerHTML = "could not read the chain: " + h(e.message) + ' <a href="#" data-retry>retry</a>'; $(id).querySelector("[data-retry]").onclick = (ev) => { ev.preventDefault(); $(id).textContent = "reading the chain\u2026"; load(id, fn); }; }); }
 const h = (x) => String(x ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const noPQ = () => new Promise((r, j) => { if (window.mldsa) return r(); document.addEventListener("mldsa", r, { once: true }); setTimeout(() => j(new Error("the ML-DSA-87 module did not load")), 15000); });
 const call = async (to, i, fn, args) => i.decodeFunctionResult(fn, (await rpc("eth_call", [{ to, data: i.encodeFunctionData(fn, args) }, "latest"])).result);
@@ -359,7 +374,7 @@ $("pubgo").onclick = async () => {
   } catch (e) { $("pubout").textContent = "Could not send: " + e.message; }
   finally { $("pubgo").disabled = false; pubState().catch(() => {}); }
 };
-pubState().catch((e) => { $("pubstate").textContent = "could not read the chain: " + e.message; });
+load("pubstate", pubState);
 // §7: InvoiceDeskV4, asked as the agent without (or with a wrong) ML-DSA-87 signature, and as the company
 const desk4 = new E.Interface(["function pay(address,address,address,uint256,bytes32,uint64,bytes,bytes) payable",
   "error NotPayersAgent(address)", "error AgentSignerNotSet(address)", "error AgentKeyNotProven(address)", "error BadAgentSignature()", "error UnknownVendor(address)", "error BadSignature()", "error AlreadyPaid(bytes32)", "error PastDue(uint64)", "error OverPerPaymentLimit(uint256,uint256)", "error OverDailyLimit(uint256,uint256,uint256)", "error TransferFailed()", "error ZeroAmount()", "error WrongAmount(uint256,uint256)", "error AgentCannotPayNative()", "error VendorKeyNotProven(address)"]);
@@ -382,8 +397,8 @@ $("v4-mine").onclick = async () => {
 };
 $("v4-company").onclick = () => v4ask("as the company, in person (no agent signature needed)", D.v4.payer, "0x").catch((e) => { $("v4out").textContent = e.message; });
 load(D.presets[0]);
-rpc("eth_blockNumber", []).then((r) => { $("dot").classList.add("on"); $("live").textContent = "live: qorechain-diana, block " + parseInt(r.result, 16).toLocaleString(); }).catch(() => { $("live").textContent = "could not reach the testnet RPC"; });
-state().catch((e) => { $("state").textContent = "could not read the chain: " + e.message; });
+rpc("eth_blockNumber", []).catch(() => { if (!liveShown) $("live").textContent = "could not reach the testnet RPC yet (each button retries)"; });
+load("state", state);
 </script>
 </body></html>
 `;

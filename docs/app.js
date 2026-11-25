@@ -38,13 +38,17 @@
     return r.error.message;
   }
   async function logs(address, topics, from, to) {
-    const out = [];
-    for (let b = from; b <= to; b += 10000) {
-      const r = await rpc("eth_getLogs", [{ address, topics, fromBlock: E.toQuantity(b), toBlock: E.toQuantity(Math.min(b + 9999, to)) }]);
-      if (r.error) throw new Error(r.error.message);
-      out.push(...r.result);
-    }
-    return out;
+    // 10,000-block windows (the RPC's limit), four at a time
+    const starts = []; for (let b = from; b <= to; b += 10000) starts.push(b);
+    const parts = new Array(starts.length); let next = 0;
+    await Promise.all(Array.from({ length: 4 }, async () => {
+      for (let i; (i = next++) < starts.length;) {
+        const r = await rpc("eth_getLogs", [{ address, topics, fromBlock: E.toQuantity(starts[i]), toBlock: E.toQuantity(Math.min(starts[i] + 9999, to)) }]);
+        if (r.error) throw new Error(r.error.message);
+        parts[i] = r.result;
+      }
+    }));
+    return parts.flat();
   }
   // qor1… for an 0x address (bech32), so the faucet can be pointed at a wallet's account
   const CH = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
@@ -67,7 +71,9 @@
     b.onclick = () => { [...$("desks").children].forEach((x) => x.setAttribute("aria-pressed", "false")); b.setAttribute("aria-pressed", "true"); watch(k).catch((e) => { $("watch").innerHTML = `<span class="no">Could not read the chain: ${h(e.message)}</span>`; }); };
     $("desks").appendChild(b);
   });
+  let watching = null; // the desk last picked: a slower answer for an earlier pick is dropped
   async function watch(k) {
+    watching = k;
     const d = D.desks[k], iface = d.version === 4 ? i4 : d.version === 3 ? i3 : i2;
     $("watch").innerHTML = `<span class="dim">reading ${h(d.desk)} from the chain…</span>`;
     let from = d.deployBlock;
@@ -76,18 +82,8 @@
     const [[on], lim, [left], [bal], [allow]] = await Promise.all([
       call(d.desk, iface, "isAgent", [d.payer, d.agent]), call(d.desk, iface, "limits", [d.payer, D.fusd]), call(d.desk, iface, "remainingToday", [d.payer, D.fusd]),
       call(D.fusd, erc, "balanceOf", [d.payer]), call(D.fusd, erc, "allowance", [d.payer, d.desk])]);
-    const payerTopic = E.zeroPadValue(d.payer, 32);
-    const [va, paidLogs] = await Promise.all([logs(d.desk, [iface.getEvent("VendorApproved").topicHash, payerTopic], from, head), logs(d.desk, [iface.getEvent("InvoicePaid").topicHash, payerTopic], from, head)]);
-    const vendors = new Map();
-    for (const l of va) { const e = iface.parseLog(l); vendors.set(E.getAddress(e.args.vendor), e.args.approved); }
-    const name = (a) => d.vendors[E.getAddress(a)] ?? d.vendors[a] ?? (E.getAddress(a) === E.getAddress(D.publicVendor.evm) ? "public test vendor" : "");
-    const rows = [];
-    for (const l of paidLogs) {
-      const e = iface.parseLog(l), blk = (await rpc("eth_getBlockByNumber", [l.blockNumber, false])).result;
-      rows.push({ at: new Date(parseInt(blk.timestamp, 16) * 1000).toISOString(), what: `${name(e.args.vendor) || h(e.args.vendor.slice(0, 10))}: ${e.args.token === ZERO ? qor(e.args.amount) : fusd(e.args.amount)}`, by: E.getAddress(e.args.by) === E.getAddress(d.payer) ? "the company, in person" : "agent", tx: l.transactionHash });
-    }
-    for (const p of d.agentPayments ?? []) rows.push({ at: p.at, what: h(p.label), by: "the agent (relayed)", tx: p.link.slice(-64) });
-    rows.sort((a, b) => b.at.localeCompare(a.at));
+    // the desk's state first; its event history (slower: log scans and block times) fills in below
+    if (watching !== k) return;
     $("watch").innerHTML =
       `<p class="dim small" style="margin-top:0">${h(d.note)} Desk <a class="mono" href="https://explore.qore.network/address/${h(d.desk)}">${h(d.desk)}</a> (InvoiceDeskV${d.version}).</p>
       <div class="grid">
@@ -97,7 +93,21 @@
         <div class="stat"><b>${fusd(bal)}</b><span>company's fUSD float (ERC-20)</span></div>
         <div class="stat"><b>${fusd(allow)}</b><span>what the desk may still pull</span></div>
       </div>
-      <h3 style="margin-top:18px">Approved vendors (from the desk's own events)</h3>
+      <div id="wtables"><p class="dim small">reading the desk's vendors and payments from its events…</p></div>`;
+    const payerTopic = E.zeroPadValue(d.payer, 32);
+    const [va, paidLogs] = await Promise.all([logs(d.desk, [iface.getEvent("VendorApproved").topicHash, payerTopic], from, head), logs(d.desk, [iface.getEvent("InvoicePaid").topicHash, payerTopic], from, head)]);
+    const vendors = new Map();
+    for (const l of va) { const e = iface.parseLog(l); vendors.set(E.getAddress(e.args.vendor), e.args.approved); }
+    const name = (a) => d.vendors[E.getAddress(a)] ?? d.vendors[a] ?? (E.getAddress(a) === E.getAddress(D.publicVendor.evm) ? "public test vendor" : "");
+    const rows = await Promise.all(paidLogs.map(async (l) => {
+      const e = iface.parseLog(l), blk = (await rpc("eth_getBlockByNumber", [l.blockNumber, false])).result;
+      return { at: new Date(parseInt(blk.timestamp, 16) * 1000).toISOString(), what: `${name(e.args.vendor) || h(e.args.vendor.slice(0, 10))}: ${e.args.token === ZERO ? qor(e.args.amount) : fusd(e.args.amount)}`, by: E.getAddress(e.args.by) === E.getAddress(d.payer) ? "the company, in person" : "agent", tx: l.transactionHash };
+    }));
+    for (const p of d.agentPayments ?? []) rows.push({ at: p.at, what: h(p.label), by: "the agent (relayed)", tx: p.link.slice(-64) });
+    rows.sort((a, b) => b.at.localeCompare(a.at));
+    if (watching !== k) return;
+    $("wtables").innerHTML =
+      `<h3 style="margin-top:18px">Approved vendors (from the desk's own events)</h3>
       <table><tr><th>Vendor</th><th>Address</th><th>Approved</th></tr>${[...vendors].map(([a, ok]) => `<tr><td>${h(name(a))}</td><td class="mono small">${h(a)}</td><td class="${ok ? "ok" : "no"}">${ok ? "yes" : "removed"}</td></tr>`).join("") || `<tr><td colspan="3" class="dim">none</td></tr>`}</table>
       <h3 style="margin-top:18px">Payments (newest first)</h3>
       <table><tr><th>Paid (UTC)</th><th>Invoice</th><th>By</th><th>Tx</th></tr>${rows.slice(0, 20).map((r) => `<tr><td class="small">${h(r.at.slice(0, 16).replace("T", " "))}</td><td>${r.what}</td><td>${h(r.by)}</td><td>${txl(r.tx)}</td></tr>`).join("") || `<tr><td colspan="4" class="dim">none yet</td></tr>`}</table>

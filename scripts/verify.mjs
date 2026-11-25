@@ -572,7 +572,7 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
     const orderOk = firstDays.every((dd) => { const r = rows.filter((x) => x.day === dd); return r[4].unpaidBefore === true && height[r[4].link] < height[r[0].link]; });
     const lateDays = days.filter((dd) => dd >= "2026-11-26" && rows.filter((x) => x.day === dd).length === 5);
     ok(orderOk && lateDays.every((dd) => firstDays.includes(dd)),
-      `live agent, V4 days: the classical-key-alone attempt is sent before the genuine invoice is paid (block heights), so only the missing ML-DSA-87 signature can refuse it: ${firstDays.length} day(s)`,
+      `live agent, V4 days: the classical-key-alone attempt is sent before the genuine invoice is paid (block heights), so only the missing ML-DSA-87 signature can refuse it: ${firstDays.length ? `${firstDays.length} day(s)` : "none yet, pending the first day in this order (2026-11-26)"}`,
       firstDays.length ? `(${firstDays.join(", ")})` : "(from 2026-11-26; on 2026-11-25 it was sent after the payment)");
     const last = Date.parse(rows.at(-1).at);
     ok(withTx > 0 && txOk === withTx && Date.now() - last < 3 * 86400e3, `live agent: each of its ${withTx} logged transactions re-read from the chain agrees; it last ran ${((Date.now() - last) / 3600e3).toFixed(0)} h ago (must be < 72 h)`,

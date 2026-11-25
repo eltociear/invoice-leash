@@ -138,7 +138,7 @@ server.registerTool("check_invoice", {
   // answer with or without the signer's key, and no signature handed to the RPC node.
   for (let i = 0; D.version === 4; i++) {
     try { const n = await wouldRefuse(D, v); if (n) verdict = `WOULD REFUSE: ${n}`; break; }
-    catch (e) { if (i < 3) { await new Promise((r) => setTimeout(r, 1500 * (i + 1))); continue; } verdict = `COULD NOT ASK (a network problem, not a decision by the desk): ${e.shortMessage ?? e.message}`; break; }
+    catch (e) { if (i < 3) { await new Promise((r) => setTimeout(r, 1500 * (i + 1))); continue; } verdict = `COULD NOT ASK (a network problem, not a decision by the desk): ${e.shortMessage || e.message || e.code || String(e)}. Ask again: nothing was sent.`; break; }
   }
   for (let i = 0; D.version !== 4; i++) {
     try { await provider.call({ from: acct.evmAddr, to: D.invoiceDesk, data: await payData(D, v, { asAgent: !RO }) }); break; }
@@ -146,7 +146,7 @@ server.registerTool("check_invoice", {
       const d = e.data ?? e.info?.error?.data; let n = null; try { n = deskV4.parseError(d).name; } catch { /* not a desk error */ }
       if (n) { verdict = `WOULD REFUSE: ${n}${n === "BadAgentSignature" && RO ? " (this read-only server holds no agent signer key; with it, the agent signs each payment)" : ""}`; break; }
       if (i < 3) { await new Promise((r) => setTimeout(r, 1500 * (i + 1))); continue; }
-      verdict = `COULD NOT ASK (a network problem, not a decision by the desk): ${e.shortMessage ?? e.message}`; break;
+      verdict = `COULD NOT ASK (a network problem, not a decision by the desk): ${e.shortMessage || e.message || e.code || String(e)}. Ask again: nothing was sent.`; break;
     }
   }
   const auths = await fetchAuthenticators({ rest: REST, address: acct.cosmos }).catch(() => []);
@@ -208,5 +208,7 @@ server.registerTool("action_log", {
 });
 
 await server.connect(new StdioServerTransport());
+// warm the connections in the background, so a client's first question does not wait on a cold RPC
+provider.getBlockNumber().catch(() => {}); fetch(`${REST}/cosmos/base/tendermint/v1beta1/blocks/latest`).catch(() => {});
 if (RO) console.error("invoice-leash MCP server: READ-ONLY (no keys file or LEASH_READONLY=1): reads and dry runs only");
 console.error(`invoice-leash MCP server (v2): inbox ${INBOX.pathname}, desk ${D.invoiceDesk}, log ${LOG.pathname}`);
