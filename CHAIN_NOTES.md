@@ -39,6 +39,14 @@ indexer that reads contract events misses every agent payment.
 - Evidence: [D7D404F7…](https://explore.qore.network/tx/D7D404F7155E96952746F75A0D3FD83423CA8C5FF37D4CDD01DFE70CA977AFD4).
 - What to do: read the relayer's Cosmos transactions (`message.sender`) and confirm against contract
   state. `desk.mjs export` does both.
+- Which transactions name the agent's account: a **refused** relay names it in its
+  `abstractaccount_execution_failed` event (attribute `account`), so
+  `query=abstractaccount_execution_failed.account='qor1…'` finds every refused call for that account, whoever
+  relayed it ([6E88AC52…](https://explore.qore.network/tx/6E88AC529A07BBAFE53CF695D5CF7A86C813C31376A476D6160E5675C5572A42)).
+  A **successful** relay names it in no event; only the message body holds it
+  ([2ED77180…](https://explore.qore.network/tx/2ED771805A73B521EA2248A694723710EDA7072F21E9AC58C0103F672B3F3004)).
+  To find every call made for an account, you must know its relayers. (`scripts/signature-sweep.mjs` uses both
+  queries.)
 
 **6. The relaying transaction must provision at least the gas the linked key signed.** Otherwise it is
 refused before the spending rule is asked: *"the transaction provisions 808336 gas for the call, less than

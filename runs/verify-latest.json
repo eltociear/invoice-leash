@@ -1,7 +1,7 @@
 {
  "chain": "qorechain-diana",
- "block": 10738735,
- "at": "2026-11-25T16:52:42.468Z",
+ "block": 10742073,
+ "at": "2026-11-25T18:12:17.122Z",
  "passed": 117,
  "failed": 0,
  "checks": [
@@ -468,8 +468,8 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "CHAIN_NOTES.md's records re-read: a MsgSend spelling the token erc20/… (the rules' spelling) is an empty denom, refused; erc20:… (the bank's) went through; 4 relayed calls refused for provisioning less gas than signed",
-   "detail": "(notes 6, 9)"
+   "check": "CHAIN_NOTES.md's records re-read: a MsgSend spelling the token erc20/… (the rules' spelling) is an empty denom, refused; erc20:… (the bank's) went through; 4 relayed calls refused for provisioning less gas than signed; a refused relay names the agent account in one event, a successful one in none",
+   "detail": "(notes 5, 6, 9)"
   },
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
@@ -516,13 +516,13 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "live agent, V4 days: the classical-key-alone attempt is sent before the genuine invoice is paid (block heights), so only the missing ML-DSA-87 signature can refuse it: 0 day(s)",
+   "check": "live agent, V4 days: the classical-key-alone attempt is sent before the genuine invoice is paid (block heights), so only the missing ML-DSA-87 signature can refuse it: none yet, pending the first day in this order (2026-11-26)",
    "detail": "(from 2026-11-26; on 2026-11-25 it was sent after the payment)"
   },
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "live agent: each of its 9 logged transactions re-read from the chain agrees; it last ran 11 h ago (must be < 72 h)",
+   "check": "live agent: each of its 9 logged transactions re-read from the chain agrees; it last ran 13 h ago (must be < 72 h)",
    "detail": "(desk 0x235dA591…, .github/workflows/live.yml)"
   },
   {

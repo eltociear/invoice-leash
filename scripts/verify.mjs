@@ -507,8 +507,13 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
       const [wrong, right] = [await tx(dn.wrongSpellingSend.tx), await tx(dn.rightSpellingSend.tx)];
       let gmOk = 0;
       for (const r of gm.rows) { const t = await tx(r.link.slice(-64)); if (t && t.code !== 0 && /provisions \d+ gas for the call, less than the signed gas_limit/.test(t.raw_log)) gmOk++; }
-      ok(wrong?.code === 5 && /0erc20\/0x97143B/.test(wrong.raw_log) && right?.code === 0 && gm.rows.length > 0 && gmOk === gm.rows.length,
-        `CHAIN_NOTES.md's records re-read: a MsgSend spelling the token erc20/… (the rules' spelling) is an empty denom, refused; erc20:… (the bank's) went through; ${gmOk} relayed calls refused for provisioning less gas than signed`, "(notes 6, 9)");
+      // note 5: a refused relay names the agent account in an event, a successful one names it nowhere
+      const AGENT = "qor1fedluhureaezx79ychmnlmvm736vf94sv5rp0k";
+      const [refused, paidRelay] = [await tx("6E88AC529A07BBAFE53CF695D5CF7A86C813C31376A476D6160E5675C5572A42"), await tx("2ED771805A73B521EA2248A694723710EDA7072F21E9AC58C0103F672B3F3004")];
+      const names = (t) => t?.events?.filter((e) => e.attributes.some((a) => a.value === AGENT)).map((e) => e.type) ?? [];
+      const n5 = names(refused).join() === "abstractaccount_execution_failed" && paidRelay?.code === 0 && names(paidRelay).length === 0;
+      ok(wrong?.code === 5 && /0erc20\/0x97143B/.test(wrong.raw_log) && right?.code === 0 && gm.rows.length > 0 && gmOk === gm.rows.length && n5,
+        `CHAIN_NOTES.md's records re-read: a MsgSend spelling the token erc20/… (the rules' spelling) is an empty denom, refused; erc20:… (the bank's) went through; ${gmOk} relayed calls refused for provisioning less gas than signed; a refused relay names the agent account in one event, a successful one in none`, "(notes 5, 6, 9)");
     }
     const lab4 = json("runs/live/v4-lab-invoice.json"), li = lab4.invoice;
     const ask4 = async (from) => { try { await provider.call({ from, to: DL4, data: desk4.encodeFunctionData("pay", [lab4.payer, li.token, li.vendor, li.amount, li.id, li.dueBy, li.signature, "0x"]) }); return "WOULD PAY"; } catch (e) { return desk4.parseError(e.data ?? e.info?.error?.data)?.name ?? "?"; } };
