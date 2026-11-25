@@ -42,7 +42,11 @@ again: it skips what is done.
 3. Registers their ML-DSA-87 keys.
 4. Deploys **your InvoiceDeskV4**, in a window that admits one transaction. On V4 every agent payment
    also needs the agent's own ML-DSA-87 signature: `setup` registers an **agent signer** account's
-   ML-DSA-87 key and names it to the desk, so the agent's classical key alone pays nothing.
+   ML-DSA-87 key and names it to the desk, so the agent's classical key alone pays nothing its signer did
+   not sign. The signer signs only what the desk would pay right then. Here it lives in the same
+   `LEASH_HOME` as the agent's key; to keep a thief of the agent's machine from it too, run the signer
+   elsewhere, as the live agent does (`.github/workflows/live.yml`). `node desk.mjs signer rotate` names a
+   new signer and voids every signature the old one made.
 5. In a window scoped to the desk and fUSD, it names the agent account as your agent, sets its limits
    (`--per-payment`, `--daily`, in fUSD) and gives the desk an fUSD allowance (`--allowance`, the total it
    may ever pull).

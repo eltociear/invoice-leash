@@ -1,0 +1,782 @@
+{
+ "what": "every public agent ML-DSA-87 signature on an InvoiceDeskV4 (relayed calldata, EVM-lane calldata, calldata in this repository), dry-run again as its agent: could the agent's classical key alone get it paid now?",
+ "at": "2026-11-25T16:37:30.194Z",
+ "desks": [
+  "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+  "0xd8a723c91Af58A885d8E87509E7B770559c0C353"
+ ],
+ "signatures": 57,
+ "now": {
+  "AlreadyPaid": 10,
+  "UnknownVendor": 4,
+  "BadSignature": 22,
+  "OverPerPaymentLimit": 1,
+  "BadAgentSignature": 17,
+  "NotPayersAgent": 3
+ },
+ "wouldPay": 0,
+ "dormant": [
+  {
+   "id": "0x976c8d9f1d8709b26bfeaac35327886bddb1a46302a18371a2ed8a786b04d468",
+   "amount": "6000000",
+   "vendor": "0x37F35dDeFb85A16A0c13A2567DF57a50474a4609",
+   "later": "only if the company approves vendor 0x37F35dDeFb85A16A0c13A2567DF57a50474a4609 before 2026-12-24"
+  },
+  {
+   "id": "0xd4fd8152c09dc93f81cb17fcf98223f35c1ca507869cc1496b5aeb566db79c61",
+   "amount": "15000000",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "later": "only if the company raises the agent's per-payment limit to 15 fUSD before 2026-12-24"
+  }
+ ],
+ "rows": [
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0x4a5c0a26ffbbf7135d7695ae878a8a44ee4772d2eca7c2066ba681c911e2b83f",
+   "dueBy": 1798104830,
+   "now": "AlreadyPaid",
+   "where": [
+    "tx DDF9344404EDB336157EA0E63DFD52DA968A200EC3DF6A750366CC3DA295A659"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0x9832c5836f656c675a6a76934a79fde6100bc0821661a9c22889eb1072aa5ef7",
+   "dueBy": 1798106834,
+   "now": "AlreadyPaid",
+   "where": [
+    "tx 2ED771805A73B521EA2248A694723710EDA7072F21E9AC58C0103F672B3F3004"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "4000000",
+   "id": "0xe3fba6693a7b16416d39a097bdb1c91009e06cf73ab3f6caafb655a7f4057298",
+   "dueBy": 1798130046,
+   "now": "AlreadyPaid",
+   "where": [
+    "tx FC6ABF71C6F0C456928D493C8B0A94F0B9F47B2AEF32DF002C4998387D503CDB",
+    "tx 90D7A8C089153D464BDD4650A6674B5856AFD969B901B623F52B44A138CA3C44"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xe69d974CE24175FF89ebf5a5F016380cE143e0Eb",
+   "amount": "3000000",
+   "id": "0xd0a45eac1cfc84536fe9b40c44773aaa525ff1990400f029dbf6448223ccc2f5",
+   "dueBy": 1798130046,
+   "now": "UnknownVendor",
+   "where": [
+    "tx 717089590975F47121F4E80D070DB8B756C4270C9645BEE5C49094BBF7010947"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0x37F35dDeFb85A16A0c13A2567DF57a50474a4609",
+   "amount": "6000000",
+   "id": "0x976c8d9f1d8709b26bfeaac35327886bddb1a46302a18371a2ed8a786b04d468",
+   "dueBy": 1798130046,
+   "now": "UnknownVendor",
+   "where": [
+    "tx 3582D4B64D198E3A654F72EF92666B4F48F7981C124508AB6AF6C39B31D497D1"
+   ],
+   "later": "only if the company approves vendor 0x37F35dDeFb85A16A0c13A2567DF57a50474a4609 before 2026-12-24"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "7000000",
+   "id": "0x432a017a7b50345b0400343b6ac721a26603df089fd230f476a4e5ad61a1983f",
+   "dueBy": 1798130046,
+   "now": "BadSignature",
+   "where": [
+    "tx 919B998CC2F13B411607A8DE1A4918DD9BF833D76A78AD481122AB80316E01CB"
+   ],
+   "later": "never: BadSignature"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "9000000",
+   "id": "0xe3fba6693a7b16416d39a097bdb1c91009e06cf73ab3f6caafb655a7f4057298",
+   "dueBy": 1798130046,
+   "now": "BadSignature",
+   "where": [
+    "tx CE0A1E9F263514D5E26153E738EE393C2FFDE2F8AE876F92B308F87F5557E894"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "4000000",
+   "id": "0xe3fba6693a7b16416d39a097bdb1c91009e06cf73ab3f6caafb655a7f4057298",
+   "dueBy": 1798130046,
+   "now": "BadSignature",
+   "where": [
+    "tx 59D75D4B14A8220729950CADD9ED868014E0DDBFEF6E480D379AD4BBA49785BE"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "15000000",
+   "id": "0xd4fd8152c09dc93f81cb17fcf98223f35c1ca507869cc1496b5aeb566db79c61",
+   "dueBy": 1798130046,
+   "now": "OverPerPaymentLimit",
+   "where": [
+    "tx EB088875D58FBF474D8A186EDC6C3A08A620D8A26EEDF1092707434F7D02F004"
+   ],
+   "later": "only if the company raises the agent's per-payment limit to 15 fUSD before 2026-12-24"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "10000000",
+   "id": "0x028da47d4c56f88c661baa1035c5673bf2c78194e289aa5c40564eb579d4bb24",
+   "dueBy": 1798130046,
+   "now": "AlreadyPaid",
+   "where": [
+    "tx E3C3699EB5752484906997182E693350584FA584238691A96C1C50E72D200017"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "10000000",
+   "id": "0x5de55c69e687fea127d1c580108d5f3db2b75e4774a80e87c814d8503541984f",
+   "dueBy": 1798130046,
+   "now": "AlreadyPaid",
+   "where": [
+    "tx 6E88AC529A07BBAFE53CF695D5CF7A86C813C31376A476D6160E5675C5572A42"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "3000000",
+   "id": "0x4c3b956bf397c82825c0f0dbb51d47f4f89841dacd4e930aa5329d2ee9431b93",
+   "dueBy": 1798176942,
+   "now": "AlreadyPaid",
+   "where": [
+    "tx 953A89D65707A29E124E802D78549987281774D32975E581993DB2CED16E7B4E"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "9000000",
+   "id": "0xb8ab7040cfeaf9e5bb11c4785024753b77a3977bba4cf638c3c41a5aafe66800",
+   "dueBy": 1798176942,
+   "now": "BadSignature",
+   "where": [
+    "tx C2FFAC711015C81A22D3C5D0872D2A2B93F645697E6E61DC6F8207CE9AD44AC0"
+   ],
+   "later": "never: BadSignature"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "9000000",
+   "id": "0x4c3b956bf397c82825c0f0dbb51d47f4f89841dacd4e930aa5329d2ee9431b93",
+   "dueBy": 1798176942,
+   "now": "BadSignature",
+   "where": [
+    "tx 6D4BCD9CEC819B54009CDC1E99BA91F08DCF55970655C3834EA3C98ABDB57EE2"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "3000000",
+   "id": "0x7a3a21705de3f36bea029c542fa51eb399ce4053da0f4d8c9e71f51bfd706118",
+   "dueBy": 1798181396,
+   "now": "AlreadyPaid",
+   "where": [
+    "tx 3B4C3321F1D3B9EEEBFF658BF52F58737A4BECB5E12B25B3B031E93CF11E9C2A"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "9000000",
+   "id": "0xdfcfbea3c2d090387f7e91960dccf9cf1663c917d982c801209665c35de9f85b",
+   "dueBy": 1798181396,
+   "now": "BadSignature",
+   "where": [
+    "tx 54C12EA23C8598FE6B2C5A1065630A4C294303F4FF0E99A1927665EA59933687"
+   ],
+   "later": "never: BadSignature"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "9000000",
+   "id": "0x7a3a21705de3f36bea029c542fa51eb399ce4053da0f4d8c9e71f51bfd706118",
+   "dueBy": 1798181396,
+   "now": "BadSignature",
+   "where": [
+    "tx 5C9967B6CA2D41706AC0364C99EC0A3491ECBF8E07AFD6ABBE8A6A6BA4CF0FC3"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0xd8a723c91Af58A885d8E87509E7B770559c0C353",
+   "from": "0xf6a78b7EeFB2C84EC39869df6CC3F3eb843659F8",
+   "vendor": "0xD63f7EFf477a055609908d5AEB1E2079EB1c1965",
+   "amount": "20000000",
+   "id": "0x97b49e532ec9012c7e01394c89a3aeae06882ddf2a455c71bd6379e2fc7e585e",
+   "dueBy": 1801439999,
+   "now": "BadAgentSignature",
+   "where": [
+    "tx 5091582A591EF6959333409ADB4351F053554A0A55BD50C40B7687A60A225ACC"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0xd8a723c91Af58A885d8E87509E7B770559c0C353",
+   "from": "0xf6a78b7EeFB2C84EC39869df6CC3F3eb843659F8",
+   "vendor": "0xD63f7EFf477a055609908d5AEB1E2079EB1c1965",
+   "amount": "15000000",
+   "id": "0x86252bc59d5eec3333945a633ceec2b949e482fb2f3e19a2c49921d8feb83f2a",
+   "dueBy": 1801439999,
+   "now": "BadAgentSignature",
+   "where": [
+    "tx 653874C4ADF442B5A5084107C229386B3E96BA9BCB90AF20BEECC22C92E6792B"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0xd8a723c91Af58A885d8E87509E7B770559c0C353",
+   "from": "0xf6a78b7EeFB2C84EC39869df6CC3F3eb843659F8",
+   "vendor": "0xe69d974CE24175FF89ebf5a5F016380cE143e0Eb",
+   "amount": "2000000",
+   "id": "0x39f94f74edae65781ac03e34991ccec9a5c866c9c3c021118184cce13e389895",
+   "dueBy": 1798207959,
+   "now": "BadAgentSignature",
+   "where": [
+    "tx 0958BB245BEE9238A8A453FB12F92F921B107E378176E4AA6FBCA5F89640B5EB"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0xd8a723c91Af58A885d8E87509E7B770559c0C353",
+   "from": "0xf6a78b7EeFB2C84EC39869df6CC3F3eb843659F8",
+   "vendor": "0xe69d974CE24175FF89ebf5a5F016380cE143e0Eb",
+   "amount": "2000000",
+   "id": "0x18a6917a04ebffd163e3e80b1da034b407809e8d04294ee21bc91c7818442024",
+   "dueBy": 1798208280,
+   "now": "BadAgentSignature",
+   "where": [
+    "tx ECAAB15A2FAD0B37935826B9C1462BF5466EC0DE57A486280A59C17E728FBD11"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0xd8a723c91Af58A885d8E87509E7B770559c0C353",
+   "from": "0xf6a78b7EeFB2C84EC39869df6CC3F3eb843659F8",
+   "vendor": "0xe69d974CE24175FF89ebf5a5F016380cE143e0Eb",
+   "amount": "2000000",
+   "id": "0xa4cf7e913ff00f9eb6a0130a410cbfa338a4b075d0c08a75f009ec382925c675",
+   "dueBy": 1798208363,
+   "now": "BadAgentSignature",
+   "where": [
+    "tx A83FE269EA0CC883351BB4F02C2355B94397908FCC8A78008521895DD5DC1C67"
+   ],
+   "later": "never: BadAgentSignature"
+  },
+  {
+   "desk": "0xd8a723c91Af58A885d8E87509E7B770559c0C353",
+   "from": "0xf6a78b7EeFB2C84EC39869df6CC3F3eb843659F8",
+   "vendor": "0xD63f7EFf477a055609908d5AEB1E2079EB1c1965",
+   "amount": "4000000",
+   "id": "0x8585bf1ab296688ac14f9bbceaddeb60f1792d8387328fc09f922c7fedc4e9e7",
+   "dueBy": 1797811199,
+   "now": "AlreadyPaid",
+   "where": [
+    "tx F65D3ED270DE2A8E9228AF38829B39E00822930851AC048B7AC55427430238CA"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0x2de543d64ed791cc08b617c59e800cea31b4803b954ece749c7ab72209436a04",
+   "dueBy": 1798178917,
+   "now": "AlreadyPaid",
+   "where": [
+    "evm 0x5de63315712239ef3cf03832680e863e31713e4054fa30bc658c1bb69dd926dd"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1814399999,
+   "now": "AlreadyPaid",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0xE0e02B6C1C46dF076B49483e8D9d11092cc7bd36",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1814399999,
+   "now": "NotPayersAgent",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1814399999,
+   "now": "BadSignature",
+   "where": [
+    "file runs/campaign-v4-sample.json",
+    "file runs/campaign-v4-sample.json",
+    "file runs/campaign-v4-sample.json",
+    "file runs/campaign-v4-sample.json",
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1814399999,
+   "now": "BadSignature",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1814399999,
+   "now": "BadAgentSignature",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1814399999,
+   "now": "BadAgentSignature",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xA72bF4BFcd4CF4ED0e64b31daC008Fc59219e374",
+   "amount": "1000000",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1814399999,
+   "now": "UnknownVendor",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the vendor has no proven ML-DSA-87 key"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0x82ebB7DeF48bc972213d2e459bD1052a7D3267Cb",
+   "amount": "1000000",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1814399999,
+   "now": "UnknownVendor",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the vendor has no proven ML-DSA-87 key"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1814399999,
+   "now": "BadAgentSignature",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0xd6171fbab9B2dd5eB111348D58Ae437Ec52F12EB",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1814399999,
+   "now": "NotPayersAgent",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1816374863,
+   "now": "BadSignature",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1814399999,
+   "now": "BadSignature",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1821825278,
+   "now": "BadSignature",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1814399999,
+   "now": "BadAgentSignature",
+   "where": [
+    "file runs/campaign-v4-sample.json",
+    "file runs/campaign-v4-sample.json",
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1814399999,
+   "now": "BadSignature",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1814399999,
+   "now": "BadAgentSignature",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1814399999,
+   "now": "BadAgentSignature",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1814399999,
+   "now": "BadAgentSignature",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "2291127",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1814399999,
+   "now": "BadSignature",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0x44f1ce0062bc0cb2c46ea7419ecc1aca3c73529c91be5e35d6ca3d384222c95b",
+   "dueBy": 1814399999,
+   "now": "BadSignature",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: BadSignature"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xa1414215ff671df7854b72e02d728598af55888c7c029fde237654bf0d9c8b5b",
+   "dueBy": 1814399999,
+   "now": "BadSignature",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: BadSignature"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1814399999,
+   "now": "BadAgentSignature",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1814399999,
+   "now": "BadSignature",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1816286656,
+   "now": "BadSignature",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1814399999,
+   "now": "BadAgentSignature",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1814399999,
+   "now": "BadSignature",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1814399999,
+   "now": "BadAgentSignature",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0x15f05765ac283b101d8bce6b244befddc6b7fcaf5dd05704555ff18cc08dfe88",
+   "dueBy": 1814399999,
+   "now": "BadSignature",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: BadSignature"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1814399999,
+   "now": "BadSignature",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x7Bf474709e8aB1968F19844c1BdBb028d37E9cd2",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1814399999,
+   "now": "NotPayersAgent",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1814399999,
+   "now": "BadAgentSignature",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xa5cc9bd528213ef11f2b3b91b3b44333b69bb47f2b610ab2135f9f42c21370b8",
+   "dueBy": 1814399999,
+   "now": "BadAgentSignature",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: the invoice is paid"
+  },
+  {
+   "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xb0398dcc0efa57a437575f367326f7527118f7f208dde486b77501b90ad0bc21",
+   "dueBy": 1814399999,
+   "now": "BadSignature",
+   "where": [
+    "file runs/campaign-v4-sample.json"
+   ],
+   "later": "never: BadSignature"
+  }
+ ]
+}

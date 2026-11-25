@@ -6,8 +6,8 @@ ciphers. What still holds?
 
 **Short answer:** the invoices, the limits and the company's treasury stay safe. Three parts are
 classical, and each is bounded:
-- the agent's ed25519 key. **On an InvoiceDeskV4 it pays nothing alone**: every agent payment also needs
-  the agent's own ML-DSA-87 signature, checked on chain (live: the classical key alone was refused with
+- the agent's ed25519 key. **On an InvoiceDeskV4 it pays nothing its signer did not sign**: every agent
+  payment also needs the agent's own ML-DSA-87 signature over that exact invoice, checked on chain (live: the classical key alone was refused with
   `BadAgentSignature`, then the same invoice with the signature was paid,
   [`runs/probes/v4-agent-sig.json`](runs/probes/v4-agent-sig.json)). On V2/V3 desks it is bounded like a
   stolen key. V4 stops a *derived* key, and a stolen agent host alone, since the signer runs on its own host (see below);
@@ -166,7 +166,19 @@ a MetaMask-style wallet.
    [`runs/probes/live-split-rehearsal.json`](runs/probes/live-split-rehearsal.json)). What it does not stop: a thief
    of both hosts, or of the repository's settings (anyone who can edit the workflow can reach both secrets; an
    Environment with required reviewers would close that too). The signer is a second key, not a second
-   judge: it signs any payment request for this desk, payer and agent, and the desk still decides.
+   judge, but it does check one thing before it signs: that the desk would pay this request right then
+   (or can never pay it). The reason: an agent signature has no expiry of its own. It binds one invoice
+   and holds until that invoice is paid or past due, and it is public (in the relaying transaction). One
+   made for a payment the desk refused, over today's limit say, could be sent again on a later day by the
+   classical key alone. A fifth review found exactly that: the compromised run's `OverDailyLimit`
+   refusal and the campaign's signed control would both have paid. Both were then settled in person,
+   the signer got its check (`lib/agent.mjs` `signerMay`, asked without making a signature), and
+   `npm run verify` now sends every agent signature ever made public again as the classical key alone
+   ([`runs/signature-sweep.json`](runs/signature-sweep.json): 57, none would pay). The rest could pay only if the company
+   itself first approved that vendor or raised the limit. To void every signature a signer ever made, the
+   company names a new one: `desk.mjs signer rotate`, done on the third company
+   ([`runs/own-company-v4/signer-rotate.log`](runs/own-company-v4/signer-rotate.log)). A V5 would put an expiry in the
+   agent's message itself.
 2. **An open EVM window.** A quantum attacker with a classical key can act inside a window while it is
    open, within its caps. Every window names one target. The agent account's window is 300 blocks, at
    most 3 transactions and 0.4 QOR, to the desk. The company's windows admit one action and close in

@@ -1,0 +1,7 @@
+the old signer 0x8f26b6cc28e5f1697cff1a77a62aa130917eb8c3 kept in keys.env as agentsigner_retired_20261125T1633
+1. the new signer 0x6aa7f0959c3321730cdb061d03855ce8a5b32582: fee money and its ML-DSA-87 key on chain
+  agentsigner ML-DSA-87 key registered        5A3F12DD2123AE1A74A491EAB8D2623E1D3FA6E3333B5C15FDE9BFBF854DD355
+2. name it in the desk (one-transaction window)
+  setAgentSigner(new)        0xd870094f52e8a115fd02e453c4acfe4d040c3e35599a67cb3ffa1336a3a15a92
+
+every signature 0x8F26B6cC28e5F1697cfF1a77a62Aa130917EB8c3 made is void now. Give the new key to the signer's host (LEASH_AGENTSIGNER, or its keys.env).

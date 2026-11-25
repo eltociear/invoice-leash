@@ -460,9 +460,19 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
       let same = 0;
       for (const x of s4.sample) if ((await ask4(x.from, x.data, x.value)) === x.outcome) same++;
       const ctl = await ask4(s4.control.from, s4.control.data);
-      ok(s4.desk === liveRec.invoiceDesk && c4.paid === 0 && c4.network === 0 && c4.control === "PAID" && c4.agentsig.badAgentSignature === c4.agentsig.count && same === s4.sample.length && ["PAID", "OverDailyLimit"].includes(ctl),
+      ok(s4.desk === liveRec.invoiceDesk && c4.paid === 0 && c4.network === 0 && c4.control === "PAID" && c4.agentsig.badAgentSignature === c4.agentsig.count && same === s4.sample.length && ["PAID", "OverDailyLimit", "AlreadyPaid"].includes(ctl),
         `${c4.count.toLocaleString()} dry-run attacks on the live InvoiceDeskV4: 0 would pay. A compromised agent with its signer (invoice tamperings): refused by the vendor's signature and the desk's rules. The agent's key without its signer: ${c4.agentsig.badAgentSignature} of ${c4.agentsig.count} BadAgentSignature. ${same} of ${s4.sample.length} sampled attacks asked again now: same answers`,
-        `(control now: ${ctl === "PAID" ? "would pay" : "past both signature checks, today's limit used"})`);
+        `(control now: ${ctl === "PAID" ? "would pay" : ctl === "AlreadyPaid" ? "past both signature checks, and settled in person since, so its public signature pays nothing" : "past both signature checks, today's limit used"})`);
+    }
+    // every agent ML-DSA-87 signature ever made public on a V4 desk (relayed calldata, EVM-lane calldata, this
+    // repository's records), dry-run again as its agent now: the agent's classical key alone gets none paid
+    {
+      const { sweep } = await import("./signature-sweep.mjs");
+      const { rows } = await sweep();
+      const now = rows.filter((r) => r.now === "PAID"), dormant = rows.filter((r) => /^(only|on a later)/.test(r.later));
+      ok(rows.length >= 50 && now.length === 0 && rows.every((r) => !r.later.startsWith("unclassified")),
+        `every public agent signature on the V4 desks (${rows.length}: relayed transactions, EVM-lane transactions, records here), sent again now by its agent's classical key alone: none would pay. ${dormant.length ? `${dormant.length} could only if the company itself acted first (${dormant.map((r) => r.later.replace(/ before .*/, "").replace(/^only if the company /, "")).join("; ")}), before their invoices fall due` : "None could later either"}`,
+        "(scripts/signature-sweep.mjs)");
     }
     // the third company, set up from nothing on InvoiceDeskV4 (runs/own-company-v4/)
     {
@@ -480,8 +490,14 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
       try { await provider.call({ from: c4d.agentAccountEvm, to: DC, data: desk4.encodeFunctionData("pay", [c4d.payerEvm, hc.token, hc.vendor, hc.amount, hc.id, hc.dueBy, hc.signature, "0x"]) }); alone = "would pay"; }
       catch (e) { try { alone = desk4.parseError(e.data ?? e.info?.error?.data)?.name; } catch { alone = null; } }
       const byAgent = rows.filter((r) => r[7] === "agent").length, byCompany = rows.length - byAgent;
-      ok(c4d.version === 4 && (await provider.getCode(DC)).slice(2) === c4.evm.deployedBytecode.object && rows.length >= 4 && txOk === rows.length && paidOk === rows.length && alone === "BadAgentSignature",
-        `a third company set up from nothing with desk.mjs on InvoiceDeskV4 (byte-for-byte this source): ${byAgent} paid by the agent (with its signer's ML-DSA-87 signature), ${byCompany} by the company in person; each payment re-read and paid() true; its agent's classical key alone: ${alone}`,
+      // its signer was rotated (desk.mjs signer rotate): the desk names the new one, and the agent paid with it after
+      const rot = c4d.signerRotations?.at(-1);
+      const [namedNow] = desk4.decodeFunctionResult("agentSigner", await provider.call({ to: DC, data: desk4.encodeFunctionData("agentSigner", [getAddress(c4d.payerEvm), getAddress(c4d.agentAccountEvm)]) }));
+      const rotRc = rot && await provider.send("eth_getTransactionReceipt", [rot.tx]);
+      const afterRot = rot ? rows.filter((r) => r[7] === "agent" && r[0] > rot.at).length : 0;
+      ok(c4d.version === 4 && (await provider.getCode(DC)).slice(2) === c4.evm.deployedBytecode.object && rows.length >= 4 && txOk === rows.length && paidOk === rows.length && alone === "BadAgentSignature"
+        && rot && getAddress(namedNow) === getAddress(rot.to) && rotRc?.status === "0x1" && afterRot >= 1,
+        `a third company set up from nothing with desk.mjs on InvoiceDeskV4 (byte-for-byte this source): ${byAgent} paid by the agent (with its signer's ML-DSA-87 signature), ${byCompany} by the company in person; each payment re-read and paid() true; its agent's classical key alone: ${alone}. Its signer then rotated (every signature the old one made void): the desk names the new one, and the agent paid ${afterRot} with it`,
         `(${DC.slice(0, 10)}…, runs/own-company-v4/)`);
     }
     // CHAIN_NOTES.md: the transactions it cites still say what it says

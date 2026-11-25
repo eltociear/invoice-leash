@@ -28,6 +28,14 @@
       ],
       "hours": "720",
       "linkTx": "C6847ED20036B0CD5184983D1B319C1553FF5EE0E9984EC1353DEFDE60239AC2"
-    }
+    },
+    "signerRotations": [
+      {
+        "at": "2026-11-25T16:34:02.877Z",
+        "from": "0x8F26B6cC28e5F1697cfF1a77a62Aa130917EB8c3",
+        "to": "0x6aa7f0959c3321730cdb061d03855ce8a5b32582",
+        "tx": "0xd870094f52e8a115fd02e453c4acfe4d040c3e35599a67cb3ffa1336a3a15a92"
+      }
+    ]
   }
 }

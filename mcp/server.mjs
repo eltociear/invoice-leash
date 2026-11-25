@@ -17,10 +17,12 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { appendFileSync, mkdirSync, readFileSync, readdirSync } from "node:fs";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { Interface, JsonRpcProvider, formatUnits } from "ethers";
 import { fetchAuthenticators, fetchSpendingRules } from "@qorechain/sdk";
 import { EVM_CHAIN_ID, EVM_RPC, REST, account, agentKey, balance, fmt, hasKeys, hex, readDeployment } from "../lib/chain.mjs";
-import { deskV2, deskV3, deskV4, describeV2, executeV2, payData } from "../lib/agent.mjs";
+import { deskV2, deskV3, deskV4, describeV2, executeV2, payData, wouldRefuse } from "../lib/agent.mjs";
 import { FUSD, invoiceFacts, validateInvoiceV2 } from "../lib/invoices.mjs";
 import { verifyCompanyMessage } from "../lib/messages.mjs";
 import { openInvoice } from "../lib/sealed.mjs";
@@ -34,7 +36,7 @@ const DESK_NAME = `InvoiceDeskV${D.version ?? 2}`;
 const RO = process.env.LEASH_READONLY === "1" || !hasKeys();
 const me = async () => (RO ? { cosmos: D.agentAccount, evmAddr: D.agentAccountEvm } : account("agentacct"));
 // The log of what agents did. The demo's lives in runs/; a company's (desk.mjs) next to its own deployment record.
-const LOGDIR = process.env.LEASH_DEPLOYMENT ? new URL(`file://${process.env.LEASH_DEPLOYMENT.replace(/[^/]*$/, "")}`) : new URL("runs/", root);
+const LOGDIR = process.env.LEASH_DEPLOYMENT ? new URL("./", pathToFileURL(resolve(process.env.LEASH_DEPLOYMENT))) : new URL("runs/", root);
 const LOG = new URL(`mcp-v2-${new Date().toISOString().replace(/[:.]/g, "-")}.server.jsonl`, LOGDIR);
 // A sealed email (ML-KEM-1024, to the agent account's registered key) is opened with the agent's KEM key.
 const inbox = () => JSON.parse(readFileSync(INBOX, "utf8")).map((m) => {
@@ -132,7 +134,13 @@ server.registerTool("check_invoice", {
   if (!v) return text(`email ${email} has no invoice`);
   const acct = await me();
   let verdict = "WOULD PAY (vendor approved, ML-DSA-87 signature valid, unpaid, not past due, within your limits)";
-  for (let i = 0; ; i++) {
+  // On an InvoiceDeskV4, asked without making an agent signature (lib/agent.mjs wouldRefuse): the same
+  // answer with or without the signer's key, and no signature handed to the RPC node.
+  for (let i = 0; D.version === 4; i++) {
+    try { const n = await wouldRefuse(D, v); if (n) verdict = `WOULD REFUSE: ${n}`; break; }
+    catch (e) { if (i < 3) { await new Promise((r) => setTimeout(r, 1500 * (i + 1))); continue; } verdict = `COULD NOT ASK (a network problem, not a decision by the desk): ${e.shortMessage ?? e.message}`; break; }
+  }
+  for (let i = 0; D.version !== 4; i++) {
     try { await provider.call({ from: acct.evmAddr, to: D.invoiceDesk, data: await payData(D, v, { asAgent: !RO }) }); break; }
     catch (e) {
       const d = e.data ?? e.info?.error?.data; let n = null; try { n = deskV4.parseError(d).name; } catch { /* not a desk error */ }

@@ -1,0 +1,148 @@
+// Every agent ML-DSA-87 signature ever made public, asked again: could the agent's classical key alone get
+// any of them paid now?
+//
+// An InvoiceDeskV4 agent signature binds one invoice (desk, payer, agent, vendor, token, amount, id) and has
+// no expiry of its own. Sent with a payment the desk refused for a reason that can pass later (over today's
+// limit, say), it stays valid until the invoice is paid or past due, and it is public: in the relaying
+// transaction's calldata, or in a record in this repository. So this script collects them all:
+//   - every pay() an agent relayed to an InvoiceDeskV4 (MsgExecuteEVM from its fee wallet), read from REST
+//   - every pay() an agent sent on the EVM lane that a record names (runs/probes/window-v4.json)
+//   - every pay() calldata stored in this repository (runs/**/*.json, docs/*.json)
+// and dry-runs each as that agent (eth_call): it costs nothing and changes nothing.
+//   node scripts/signature-sweep.mjs              writes runs/signature-sweep.json; exits 1 if any would pay
+//   node scripts/signature-sweep.mjs --invoices <dir>   also writes each one that would pay as an invoice file,
+//                                                       for the company to settle in person (desk.mjs pay)
+import { readFileSync, readdirSync, statSync, writeFileSync, mkdirSync } from "node:fs";
+import { Interface, JsonRpcProvider, getAddress, keccak256 } from "ethers";
+
+const ROOT = new URL("../", import.meta.url);
+const REST = process.env.QORE_REST ?? "https://api-testnet.qore.host";
+const provider = new JsonRpcProvider(process.env.QORE_EVM_RPC ?? "https://evm-testnet.qore.host", 9800, { staticNetwork: true });
+const desk = new Interface(JSON.parse(readFileSync(new URL("build/InvoiceDeskV4.json", ROOT), "utf8")).abi);
+const SEL = desk.getFunction("pay").selector;
+const json = (p) => JSON.parse(readFileSync(new URL(p, ROOT), "utf8"));
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+async function get(path) {
+  for (let i = 0; ; i++) {
+    try { const r = await fetch(REST + path); if (r.ok) return await r.json(); if (r.status === 404) return null; } catch { /* retry */ }
+    if (i >= 5) throw new Error(`REST ${path} unavailable`);
+    await sleep(1500 * (i + 1));
+  }
+}
+
+// For one the desk refuses now: can it ever pay? "never", or the one thing the company itself would have to do.
+const PQC = new Interface(["function pqcKeyStatus(address) view returns (bool registered, uint8 algorithmId, bytes pubkey, bool possessionProven)", "function pqcVerify(bytes pubkey, bytes signature, bytes message) view returns (bool valid)"]);
+const call = async (i, to, fn, args) => i.decodeFunctionResult(fn, await provider.call({ to, data: i.encodeFunctionData(fn, args) }));
+async function later(row, a, d) {
+  const due = new Date(row.dueBy * 1000).toISOString().slice(0, 10);
+  if (row.now === "PAID") return "now";
+  if (row.dueBy * 1000 < Date.now()) return "never: past due (an agent may not pay late)";
+  if ((await call(desk, d.invoiceDesk, "paid", [a[0], a[2], a[4]]))[0]) return "never: the invoice is paid";
+  if (["AlreadyPaid", "BadSignature", "BadAgentSignature", "ZeroAmount", "AgentCannotPayNative", "WrongAmount", "Reverted"].includes(row.now)) return `never: ${row.now}`;
+  if (row.now === "UnknownVendor") {
+    const [reg, alg, pk, proven] = await call(PQC, "0x0000000000000000000000000000000000000a02", "pqcKeyStatus", [a[2]]);
+    if (!reg || !proven || Number(alg) !== 1) return "never: the vendor has no proven ML-DSA-87 key";
+    const [msg] = await call(desk, d.invoiceDesk, "invoiceMessage", [a[0], a[2], a[1], a[3], a[4], a[5]]);
+    const [valid] = await call(PQC, "0x0000000000000000000000000000000000000a01", "pqcVerify", [pk, a[6], msg]);
+    return valid ? `only if the company approves vendor ${a[2]} before ${due}` : "never: the vendor's signature does not verify";
+  }
+  if (row.now === "OverPerPaymentLimit") return `only if the company raises the agent's per-payment limit to ${Number(a[3]) / 1e6} fUSD before ${due}`;
+  if (row.now === "OverDailyLimit") return `on a later day before ${due}: today's limit is used`;
+  if (row.now === "NotPayersAgent") {
+    const [isAg] = await call(desk, d.invoiceDesk, "isAgent", [a[0], row.from]), [signer] = await call(desk, d.invoiceDesk, "agentSigner", [a[0], row.from]);
+    return /^0x0{40}$/i.test(signer) ? `only if the company makes ${row.from} an agent and names this signer for it, before ${due}` : `only if the company switches agent ${row.from} on again before ${due}`;
+  }
+  return `unclassified: ${row.now}`;
+}
+
+export async function sweep() {
+const desks = ["runs/live/desk.json", "runs/own-company-v4/desk.json"].map((p) => ({ record: p, ...json(p).v2 })).filter((d) => d.version === 4);
+const byDesk = new Map(desks.map((d) => [getAddress(d.invoiceDesk), d]));
+const found = new Map(); // one entry per (desk, calldata)
+const add = (deskAddr, from, data, where) => {
+  const d = byDesk.get(getAddress(deskAddr));
+  if (!d || !data.startsWith(SEL)) return;
+  const a = desk.decodeFunctionData("pay", data);
+  if (a[7] === "0x") return; // no agent signature: nothing to replay
+  const key = `${d.invoiceDesk}|${keccak256(data)}`;
+  const e = found.get(key) ?? { desk: d.invoiceDesk, from: getAddress(from), data, where: [] };
+  e.where.push(where); found.set(key, e);
+};
+
+// 1. relayed by each desk's fee wallet
+for (const d of desks) {
+  const q = encodeURIComponent(`message.sender='${d.gas}'`);
+  for (let page = 1; ; page++) {
+    const r = await get(`/cosmos/tx/v1beta1/txs?query=${q}&pagination.limit=100&page=${page}&order_by=ORDER_BY_ASC`);
+    const txs = r?.tx_responses ?? [];
+    for (const t of txs) for (const m of t.tx.body.messages) {
+      if (m["@type"] !== "/qorechain.abstractaccount.v1.MsgExecuteEVM" || m.account !== d.agentAccount) continue;
+      if (m.data) add(m.to, d.agentAccountEvm, "0x" + Buffer.from(m.data, "base64").toString("hex"), `tx ${t.txhash}`);
+    }
+    if (txs.length < 100) break;
+  }
+}
+// 2. the EVM lane, by the records that name such transactions
+for (const s of json("runs/probes/window-v4.json").steps) {
+  if (!/^0x[0-9a-f]{64}$/i.test(s.tx ?? "")) continue;
+  const t = await provider.getTransaction(s.tx);
+  if (t?.to) add(t.to, t.from, t.data, `evm ${s.tx}`);
+}
+// 3. calldata kept in this repository
+const files = (dir) => readdirSync(new URL(dir, ROOT)).flatMap((f) => {
+  const p = `${dir}${f}`; return statSync(new URL(p, ROOT)).isDirectory() ? files(`${p}/`) : p.endsWith(".json") ? [p] : [];
+});
+for (const f of [...files("runs/"), ...files("docs/")]) {
+  const walk = (v, ctx) => {
+    if (typeof v === "string" && v.startsWith(SEL)) add(ctx.to ?? ctx.desk ?? json(f).desk ?? "", ctx.from ?? byDesk.get(getAddress(ctx.to ?? ctx.desk ?? json(f).desk))?.agentAccountEvm, v, `file ${f}`);
+    else if (v && typeof v === "object") for (const x of Object.values(v)) walk(x, Array.isArray(v) ? ctx : { ...ctx, ...v });
+  };
+  try { walk(json(f), {}); } catch { /* not a desk's calldata */ }
+}
+
+// ask each one again, as its agent
+async function ask(from, to, data) {
+  for (let i = 0; ; i++) {
+    try { await provider.call({ from, to, data }); return "PAID"; }
+    catch (e) {
+      try { const n = desk.parseError(e.data ?? e.info?.error?.data)?.name; if (n) return n; } catch { /* not the desk's */ }
+      if (/execution reverted/i.test(e.shortMessage ?? "")) return "Reverted";
+      if (i >= 4) throw e;
+      await sleep(1500 * (i + 1));
+    }
+  }
+}
+const rows = [];
+for (const e of found.values()) {
+  const a = desk.decodeFunctionData("pay", e.data);
+  const row = { desk: e.desk, from: e.from, vendor: a[2], amount: a[3].toString(), id: a[4], dueBy: Number(a[5]), now: await ask(e.from, e.desk, e.data), where: e.where };
+  row.later = await later(row, a, byDesk.get(getAddress(e.desk)));
+  rows.push(row);
+}
+return { desks, rows, found };
+}
+
+const isMain = import.meta.url === new URL(`file://${process.argv[1]}`).href;
+if (isMain) {
+const { desks, rows, found } = await sweep();
+const hist = {};
+for (const r of rows) hist[r.now] = (hist[r.now] ?? 0) + 1;
+const live = rows.filter((r) => r.now === "PAID");
+writeFileSync(new URL("runs/signature-sweep.json", ROOT), JSON.stringify({
+  what: "every public agent ML-DSA-87 signature on an InvoiceDeskV4 (relayed calldata, EVM-lane calldata, calldata in this repository), dry-run again as its agent: could the agent's classical key alone get it paid now?",
+  at: new Date().toISOString(), desks: desks.map((d) => d.invoiceDesk), signatures: rows.length, now: hist, wouldPay: live.length,
+  dormant: rows.filter((r) => r.later.startsWith("only") || r.later.startsWith("on a later")).map((r) => ({ id: r.id, amount: r.amount, vendor: r.vendor, later: r.later })), rows }, null, 1) + "\n");
+console.log(`${rows.length} public agent signatures on ${desks.length} InvoiceDeskV4 desks; asked again now: ${JSON.stringify(hist)}`);
+for (const r of rows.filter((r) => !r.later.startsWith("never") && r.later !== "now")) console.log(`  dormant: ${r.amount} (invoice ${r.id.slice(0, 10)}…): ${r.later}`);
+for (const r of live) console.log(`  WOULD PAY: ${r.amount} to ${r.vendor} (invoice ${r.id.slice(0, 10)}…, due ${new Date(r.dueBy * 1000).toISOString().slice(0, 10)}) on ${r.desk}; ${r.where.join(", ")}`);
+const out = process.argv.indexOf("--invoices");
+if (out > 0 && live.length) {
+  const dir = process.argv[out + 1]; mkdirSync(dir, { recursive: true });
+  for (const r of live) {
+    const a = desk.decodeFunctionData("pay", [...found.values()].find((e) => e.desk === r.desk && desk.decodeFunctionData("pay", e.data)[4] === r.id).data);
+    const fusd = (Number(a[3]) / 1e6).toString();
+    writeFileSync(`${dir}/${r.id.slice(2, 12)}.json`, JSON.stringify({ subject: "settle in person: an agent signature for this invoice is public (scripts/signature-sweep.mjs)", invoice: { v: 2, token: a[1], vendor: a[2], fusd, amount: a[3].toString(), ref: `SETTLE-${r.id.slice(2, 10)}`, id: a[4], dueBy: Number(a[5]), signature: a[6] } }, null, 1) + "\n");
+  }
+}
+process.exit(live.length ? 1 : 0);
+}

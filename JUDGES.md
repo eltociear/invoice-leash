@@ -31,7 +31,7 @@ against the real contracts, and the live agent's log is checked link by link. Th
 - [The Desk Console](https://eltociear.github.io/invoice-leash/app.html): pick a desk and read it live
   from the chain (no wallet). With `node desk.mjs serve`, the same page runs your own desk: approve a
   vendor, sign an invoice in the page with ML-DSA-87, triage, let the agent pay, freeze, export. It was
-  driven end to end in a real browser ([`runs/console-e2e.json`](runs/console-e2e.json)).
+  driven end to end in a real browser on a V4 desk ([`runs/console-e2e-v4.json`](runs/console-e2e-v4.json); on V3: [`runs/console-e2e.json`](runs/console-e2e.json)).
 - [The live agent](https://eltociear.github.io/invoice-leash/#live): in GitHub Actions, with its key in
   GitHub Secrets and a decider that obeys every email. On InvoiceDeskV4 each day the genuine invoice is paid
   and four attempts are refused, among them the agent's classical key alone (`BadAgentSignature`). The
@@ -53,7 +53,7 @@ signature with QoreChain's precompile.
 |---|---|
 | Works (25) | `npm run verify`; 100% coverage of the contracts, 17 properties proved with Halmos ([`runs/halmos.txt`](runs/halmos.txt)); the live agent; a third company set up from nothing with `desk.mjs` on InvoiceDeskV4, and the Desk Console driven in a browser on it ([`runs/own-company-v4/`](runs/own-company-v4/), [`runs/console-e2e-v4.json`](runs/console-e2e-v4.json)); a second, upgraded to V3 ([`runs/own-company-v3/`](runs/own-company-v3/)); the V4 attack campaign ([`runs/campaign-v4.json`](runs/campaign-v4.json)) |
 | QoreChain tech (25) | the PQC precompiles in the contract; hybrid accounts; an authenticator with a spending rule; EVM windows with `allowed_targets`; `MsgExecuteEVM`; QoreSign; QoreSeal and the KEM registry; `MsgConvertCoin` / `MsgConvertERC20`; the AMM; QoreScan; QoreChain's MCP server; eleven measured notes for builders, each with its transaction ([CHAIN_NOTES.md](CHAIN_NOTES.md)) |
-| Post-quantum (20) | [QUANTUM_READINESS.md](QUANTUM_READINESS.md): every algorithm in the system and what a quantum computer does to it; the Q-Day drill; Shor's gift; on InvoiceDeskV4 the agent's own classical key pays nothing without its ML-DSA-87 signature ([live](runs/probes/v4-agent-sig.json)); no classical-only lane on the chain at all ([record](runs/probes/no-pq-evm.json)) |
+| Post-quantum (20) | [QUANTUM_READINESS.md](QUANTUM_READINESS.md): every algorithm in the system and what a quantum computer does to it; the Q-Day drill; Shor's gift; on InvoiceDeskV4 the agent's own classical key pays nothing its ML-DSA-87 signer did not sign ([live](runs/probes/v4-agent-sig.json)), the signer signs nothing the desk would refuse, and none of the 57 public agent signatures would pay again ([sweep](runs/signature-sweep.json)); no classical-only lane on the chain at all ([record](runs/probes/no-pq-evm.json)) |
 | Originality (15) | the finding above; an agent whose key is kept where it can leak, on purpose |
 | Clarity (15) | the [site](https://eltociear.github.io/invoice-leash/), the [video](https://youtu.be/K3Teb5sO8JU), [GETTING_STARTED.md](GETTING_STARTED.md), [THREAT_MODEL.md](THREAT_MODEL.md) |
 
@@ -77,7 +77,8 @@ decodes it with the contract's ABI, for every V4 refusal.
 | A forged invoice, or one whose amount was edited | InvoiceDeskV4, via the ML-DSA-87 precompile | `BadSignature` | [live log](runs/live/log.jsonl), [`runs/v4-compromised.json`](runs/v4-compromised.json) |
 | An invoice from a vendor the company never approved | InvoiceDeskV4 | `UnknownVendor` | [`runs/v4-compromised.json`](runs/v4-compromised.json) |
 | Over the agent's limit; a replay | InvoiceDeskV4 | `OverPerPaymentLimit`, `OverDailyLimit`, `AlreadyPaid` | [`runs/v4-compromised.json`](runs/v4-compromised.json) |
-| Past due (agent); zero amount | InvoiceDeskV3 (V4 keeps both) | `PastDue`, `ZeroAmount` | [`runs/own-company-v3/`](runs/own-company-v3/) |
+| Past due (agent); zero amount | InvoiceDeskV4 (dry run, then settled in person); InvoiceDeskV3 on chain | `PastDue`, `ZeroAmount` | [`runs/own-company-v4/triage.log`](runs/own-company-v4/triage.log); [`runs/own-company-v3/`](runs/own-company-v3/) |
+| A refused payment's agent signature, sent again later by the agent's classical key alone | the signer, before signing; the company, by rotating it | the signer signs only what the desk would pay right then (`signerMay`); `desk.mjs signer rotate` voids every signature the old signer made | [`runs/signature-sweep.json`](runs/signature-sweep.json): 57 public agent signatures, none would pay; [`runs/own-company-v4/signer-rotate.log`](runs/own-company-v4/signer-rotate.log) |
 
 ## What it does not stop
 

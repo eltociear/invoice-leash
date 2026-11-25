@@ -14,6 +14,7 @@
 //   node desk.mjs vendors                     approved vendors, read from the chain
 //   node desk.mjs limits <perPayment> <daily> the agent's limits, in fUSD
 //   node desk.mjs agent off|on                switch the agent off (or on) in the desk: one transaction
+//   node desk.mjs signer rotate               name a new ML-DSA-87 signer for the agent: every signature the old one made is void
 //   node desk.mjs freeze                      stop everything now: agent off, its key revoked on chain, windows closed
 //   node desk.mjs unfreeze [hours]            the agent on again, its key relinked
 //   node desk.mjs agent link [hours]          (re)link the agent's key; links expire
@@ -82,7 +83,7 @@ const explain = (e) => (REASON[e] ? `${e}: ${REASON[e]}` : e);
 /** An error, as a person should read it: a network failure says that nothing was lost and a rerun is safe. */
 const humanError = (e) => {
   const msg = String(e?.message || e?.shortMessage || e?.code || e), code = e?.cause?.code ?? e?.code ?? "";
-  const net = /fetch failed|ETIMEDOUT|ECONNRESET|ENOTFOUND|EAI_AGAIN|UND_ERR|socket hang up|network|request timeout|code=TIMEOUT/i.test(`${msg} ${code}`);
+  const net = /fetch failed|ETIMEDOUT|ECONNRESET|ENETUNREACH|ECONNREFUSED|EHOSTUNREACH|ENOTFOUND|EAI_AGAIN|UND_ERR|socket hang up|network|request timeout|code=TIMEOUT/i.test(`${msg} ${code}`);
   return net ? `could not reach the QoreChain testnet (${code || msg}). Nothing was lost: do the same again. setup, run and pay ask the chain first, so they skip what is done and never pay an invoice twice.` : msg;
 };
 const opt = (args, name, dflt) => { const i = args.indexOf(`--${name}`); return i >= 0 ? args[i + 1] : dflt; };
@@ -304,6 +305,39 @@ const cmds = {
    * Stop everything, now: the agent off in the desk, its key revoked on chain, any open window closed.
    * Each step is independent, so one failing does not stop the others. Undo with `node desk.mjs unfreeze`.
    */
+  /**
+   * Name a new ML-DSA-87 signer for the agent (InvoiceDeskV4). An agent signature has no expiry of its own:
+   * it stays valid until its invoice is paid or past due. The desk reads the signer's key at payment time,
+   * so after this every signature the old signer ever made stops verifying, at once. The old key is kept in
+   * keys.env under another name. Use it after a signer may have leaked, or to void signatures left public.
+   */
+  async signer(sub) {
+    if (sub !== "rotate") fail("node desk.mjs signer rotate");
+    const d = D(); if (d.version !== 4) fail("signer rotate is for an InvoiceDeskV4 (node desk.mjs upgrade)");
+    const o = await account("owner"), aa = await account("agentacct"), KEYS = join(HOME, "keys.env");
+    const before = chain.readKeys().agentsigner ? await chain.accountFromKey("agentsigner") : null;
+    const [named] = await view(d.invoiceDesk, new Interface(art().abi), "agentSigner", [o.evmAddr, aa.evmAddr]);
+    // resumable: a key made by an earlier, interrupted rotate (not yet named in the desk) is used, not replaced
+    if (before && getAddress(before.evmAddr) === getAddress(named)) {
+      const stamp = new Date().toISOString().replace(/[-:]/g, "").slice(0, 13);
+      writeFileSync(KEYS, readFileSync(KEYS, "utf8").replace(/^agentsigner=/m, `agentsigner_retired_${stamp}=`), { mode: 0o600 });
+      say(`the old signer ${before.evmAddr} kept in keys.env as agentsigner_retired_${stamp}`);
+    }
+    chain.ensureRoleKey("agentsigner");
+    const sg = await chain.accountFromKey("agentsigner");
+    say(`1. the new signer ${sg.evmAddr}: fee money and its ML-DSA-87 key on chain`);
+    if (BigInt(await balance(sg.cosmos)) < toUqor("0.05")) {
+      const r = await broadcast(o, [bankSend(o.cosmos, sg.cosmos, toUqor("0.3"))], "leash desk: fee money for the new agent signer");
+      if (r.code) fail(`funding the signer was refused: ${r.rawLog}`);
+      await sleep(5000);
+    }
+    if (!(await registerPqc("agentsigner"))) say("  already registered");
+    say("2. name it in the desk (one-transaction window)");
+    const tx = await companyWindow([d.invoiceDesk], 1, (w) => sendEvm("setAgentSigner(new)", new Contract(d.invoiceDesk, art().abi, w).setAgentSigner(aa.evmAddr, sg.evmAddr)));
+    save({ signerRotations: [...(d.signerRotations ?? []), { at: new Date().toISOString(), from: named, to: sg.evmAddr, tx }] });
+    say(`\nevery signature ${named} made is void now. Give the new key to the signer's host (LEASH_AGENTSIGNER, or its keys.env).`);
+  },
+
   async freeze() {
     const d = D(), o = await account("owner"), aa = await account("agentacct"), k = agentKey(), done = [];
     const step = async (label, fn) => { try { await fn(); done.push(`OK    ${label}`); } catch (e) { done.push(`FAIL  ${label}: ${e.message}`); } };
@@ -385,7 +419,7 @@ const cmds = {
       let v = m.invoice, note = "";
       if (!v && m.sealed) { try { v = validateInvoiceV2(openInvoice(m.sealed)); note = "sealed (opened with the agent's ML-KEM-1024 key)"; } catch (e) { out.push({ i, verdict: "REJECTED", why: `sealed, cannot open: ${e.message}` }); continue; } }
       if (!v) { out.push({ i, verdict: "REJECTED", why: "no invoice" }); continue; }
-      const { payData, isPaid } = await import("./lib/agent.mjs");
+      const { payData, isPaid, wouldRefuse } = await import("./lib/agent.mjs");
       const f = invoiceFacts(v);
       // paid first: the desk checks the vendor before the paid record, so a paid invoice from a vendor removed
       // since would otherwise read as UnknownVendor
@@ -398,7 +432,11 @@ const cmds = {
             : { verdict: "REJECTED", why: `${explain("BadSignature")}; the genuine invoice with this number is already paid` }) });
         continue;
       }
-      const [asAgent, asCompany] = [await dryRun(aa.evmAddr, d.invoiceDesk, await payData(d, v, { asAgent: true })), await dryRun(o.evmAddr, d.invoiceDesk, await payData(d, v, { asAgent: false }))];
+      // on V4, the agent's side is asked without making an agent signature (lib/agent.mjs wouldRefuse)
+      const asAgent = d.version === 4
+        ? await wouldRefuse(d, v).then((r) => r ?? "OK", (e) => `network: ${e.shortMessage ?? e.message}`)
+        : await dryRun(aa.evmAddr, d.invoiceDesk, await payData(d, v, { asAgent: true }));
+      const asCompany = await dryRun(o.evmAddr, d.invoiceDesk, await payData(d, v, { asAgent: false }));
       let verdict, why;
       if (asAgent === "OK" && !f.warnings.length) { verdict = "AGENT PAYS"; why = "approved vendor, valid ML-DSA-87 signature, unpaid, not past due, within the agent's limits"; }
       else if (asAgent === "OK") { verdict = "NEEDS A PERSON"; why = `valid, but: ${f.warnings.join("; ")}`; }

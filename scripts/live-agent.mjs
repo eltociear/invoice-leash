@@ -51,15 +51,22 @@ const WORK = new URL(`file://${process.env.LEASH_WORK ?? "/tmp/leash-live-work"}
 const work = (f) => new URL(f, WORK);
 if (PHASE === "sign") {
   const { signAgentPayV4 } = await import("../lib/invoices.mjs");
-  const reqs = JSON.parse(readFileSync(work("requests.json"), "utf8")), signer = await account("agentsigner"), sigs = {};
+  const reqs = JSON.parse(readFileSync(work("requests.json"), "utf8")), signer = await account("agentsigner"), sigs = {}, declined = {};
+  const { signerMay } = await import("../lib/agent.mjs");
   for (const r of reqs) {
     const f = r.fields;
     if (f.desk.toLowerCase() !== d.invoiceDesk.toLowerCase() || f.payer.toLowerCase() !== d.payerEvm.toLowerCase() || f.agent.toLowerCase() !== d.agentAccountEvm.toLowerCase())
       throw new Error(`refusing to sign a payment for another desk, payer or agent: ${JSON.stringify(f)}`);
+    const inv = r.invoice;
+    if (!inv || inv.vendor !== f.vendor || inv.token !== f.token || String(inv.amount) !== f.amount || inv.id !== f.id)
+      throw new Error(`refusing to sign: the request does not match the invoice it came with: ${JSON.stringify(f)}`);
+    // the guard (lib/agent.mjs signerMay): a signature only for what the desk would pay now, or can never pay
+    const { sign, reason } = await signerMay(d, inv);
+    if (!sign) { declined[r.k] = reason; console.log(`declined #${r.k}: the desk would refuse it now (${reason}) but might pay it later`); continue; }
     sigs[r.k] = signAgentPayV4(signer, { ...f, amount: BigInt(f.amount) });
-    console.log(`signed  #${r.k}: ${f.amount} of ${f.token.slice(0, 10)}… to ${f.vendor.slice(0, 10)}…, invoice ${f.id.slice(0, 10)}…`);
+    console.log(`signed  #${r.k}: ${f.amount} of ${f.token.slice(0, 10)}… to ${f.vendor.slice(0, 10)}…, invoice ${f.id.slice(0, 10)}…${reason ? ` (the desk can never pay it: ${reason})` : ""}`);
   }
-  writeFileSync(work("signatures.json"), JSON.stringify(sigs, null, 1) + "\n");
+  writeFileSync(work("signatures.json"), JSON.stringify({ ...sigs, declined }, null, 1) + "\n");
   process.exit(0);
 }
 
@@ -103,14 +110,14 @@ if (PHASE === "plan") {
   mkdirSync(WORK, { recursive: true });
   writeFileSync(work("plan.json"), JSON.stringify({ day, inbox, plan, sealed }, null, 1) + "\n");
   const requests = plan.map((st, k) => ({ st, k })).filter(({ st }) => st.action === "pay" && !st.withoutAgentSignature && d.version === 4)
-    .map(({ st, k }) => { const inv = inbox[st.item].invoice; return { k, fields: { desk: d.invoiceDesk, payer: d.payerEvm, agent: d.agentAccountEvm, vendor: inv.vendor, token: inv.token, amount: String(inv.amount), id: inv.id } }; });
+    .map(({ st, k }) => { const inv = inbox[st.item].invoice; return { k, fields: { desk: d.invoiceDesk, payer: d.payerEvm, agent: d.agentAccountEvm, vendor: inv.vendor, token: inv.token, amount: String(inv.amount), id: inv.id }, invoice: inv }; });
   writeFileSync(work("requests.json"), JSON.stringify(requests, null, 1) + "\n");
   console.log(`plan: ${plan.length} attempts, ${requests.length} payment(s) for the signer`);
   process.exit(0);
 }
 if (PHASE === "relay") {
   const sigs = d.version === 4 ? JSON.parse(readFileSync(work("signatures.json"), "utf8")) : {};
-  plan.forEach((st, k) => { if (sigs[k]) st.agentSignature = sigs[k]; });
+  plan.forEach((st, k) => { if (sigs[k]) st.agentSignature = sigs[k]; if (sigs.declined?.[k]) st.declined = sigs.declined[k]; });
 }
 const order = d.version === 4 ? [4, 0, 1, 2, 3] : plan.map((_, i) => i); // log rows keep plan positions
 const results = [];

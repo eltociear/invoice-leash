@@ -105,13 +105,32 @@ jobs never do ([`.github/workflows/live.yml`](.github/workflows/live.yml), rehea
 [`runs/probes/live-split-rehearsal.json`](runs/probes/live-split-rehearsal.json)). What it does not stop: a thief
 of both hosts, or of the repository's settings (anyone who can edit the workflow can reach both secrets; an
 Environment with required reviewers would close that too). The signer is a second key, not a second
-judge: it signs any payment request for this desk, payer and agent, and the desk still decides.
+judge: the desk still decides. But since 2026-11-25 it checks one thing before it signs (next paragraph).
 
 **Known limits of the agent's signature.** `agentMessage(payer, agent, token, vendor, amount, id)` takes
 `token, vendor` in that order but encodes `vendor, token`: call the view, or use `agentMessageV4` in
 `lib/invoices.mjs`, rather than re-encoding by hand. The signature has no expiry of its own. It binds one
 unpaid invoice, so it is spent when that invoice is paid, and the company voids every outstanding one by
-naming another signer (`setAgentSigner`).
+naming another signer (`setAgentSigner`; `desk.mjs signer rotate` does it, kept in
+[`runs/own-company-v4/signer-rotate.log`](runs/own-company-v4/signer-rotate.log)).
+
+What we had not drawn from that: a signature sent with a payment the desk *refused* is not spent, and it is
+public. A fifth review sent two of ours again as the agent (dry runs) and both would have paid: the
+compromised run's `OverDailyLimit` refusal (the next day had room) and the campaign's signed control. So,
+on 2026-11-25:
+- the three such invoices found were settled by the company in person, so they answer `AlreadyPaid`;
+- the signer signs only a payment the desk would make right then, or one it can never make (a vendor
+  signature that does not verify, already paid, zero, native QOR, past due): `lib/agent.mjs` `signerMay`.
+  It asks without making a signature, by a dry run of the company's own `pay` plus the agent-only rules
+  read from the desk, since an `eth_call` would hand the signature to the RPC node;
+- `npm run verify` collects every agent signature ever made public (relayed calldata, EVM-lane calldata,
+  records in this repository) and sends each again as the agent: none would pay
+  ([`runs/signature-sweep.json`](runs/signature-sweep.json)).
+
+The compromised run is the exception by design: its attacker holds the signer, so nothing checks what it
+signs, and it leaves such signatures behind. The answer to that is to rotate the signer afterwards.
+We did not deploy a V5 with an expiry in the agent's message six days before the deadline. The signer's
+check and the rotation close the same hole without moving the live desk.
 
 ## 9. Show, don't claim: everything is re-checked from the chain
 

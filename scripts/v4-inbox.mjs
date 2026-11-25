@@ -8,6 +8,10 @@
 // key is published, is NOT approved on the live desk: its invoices would prove nothing about genuineness.
 // The classical-key-alone attempt goes first, against an invoice checked unpaid (paid() == false), so only
 // the missing ML-DSA-87 signature can refuse it; that invoice is then paid properly.
+// The worst case: the attacker holds the agent's signer too, so the signer's own guard (lib/agent.mjs
+// signerMay: no signature for what the desk would refuse) is not there, and only the desk stands in the way.
+// It leaves signatures behind for refused payments; afterwards the company names a new signer
+// (desk.mjs signer rotate), which voids every one of them.
 import { readFileSync, writeFileSync } from "node:fs";
 import { Interface, JsonRpcProvider } from "ethers";
 import { evmToQor } from "@qorechain/sdk";
@@ -61,7 +65,7 @@ const log = [];
 for (const step of plan) {
   const unpaidBefore = step.withoutAgentSignature ? !(await isPaid(d, inbox[step.item].invoice)) : undefined;
   if (unpaidBefore === false) throw new Error("that invoice is already paid: the classical-key attempt would prove nothing");
-  const r = await executeV2(step, inbox, d);
+  const r = await executeV2({ ...step, unguarded: true }, inbox, d); // the attacker holds the signer too: it signs whatever it is asked (no guard)
   log.push({ ...step, invoice: undefined, ref: inbox[step.item].invoice?.ref, ok: r.ok, unknown: r.unknown, infra: r.infra, why: r.why, link: r.link, ...(unpaidBefore !== undefined ? { unpaidBefore } : {}) });
   console.log(`${r.ok ? "PAID    " : r.unknown ? "UNKNOWN " : r.infra ? "NOT SENT" : "REFUSED "} ${step.label}\n         ${r.ok ? r.link : r.why}`);
   writeFileSync(new URL("runs/v4-compromised.json", ROOT), JSON.stringify({ what: "the compromised-agent run on InvoiceDeskV4: a decider that obeys every email", desk: d.invoiceDesk, series, inbox, log }, null, 1) + "\n");

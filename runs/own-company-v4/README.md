@@ -17,6 +17,7 @@ the faucet would (12 QOR and 100 fUSD as the bank coin, from the demo company:
 | console | the [Desk Console](https://eltociear.github.io/invoice-leash/app.html) through `desk.mjs serve`, in a real browser | [`../console-e2e-v4.json`](../console-e2e-v4.json): the public test vendor approved, an invoice signed in the page, a forgery, triage, the agent paid two, export; then the public vendor removed |
 | accounting | `desk.mjs export` | [`payments.csv`](payments.csv): 6 payments, from the chain |
 | final | `desk.mjs triage`, `status` | [`triage-after.log`](triage-after.log), [`status.log`](status.log) |
+| signer | `desk.mjs signer rotate`, then `treasury 20`, `triage`, `run` | [`signer-rotate.log`](signer-rotate.log): a new agent signer, its ML-DSA-87 key registered and named in the desk; every signature the old signer made is `BadAgentSignature` now, among them the console's signatures for the public test vendor's invoices ([`../signature-sweep.json`](../signature-sweep.json)). Then HC-1010 paid by the agent with the new signer ([`run-after-rotate.log`](run-after-rotate.log), [`status-after-rotate.log`](status-after-rotate.log)) |
 
 What this run changed in `desk.mjs`: every refusal now comes with what it means and what to do
 (`TransferFailed: the transfer would fail: the fUSD float … node desk.mjs treasury <float>`); a network
