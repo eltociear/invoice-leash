@@ -88,7 +88,7 @@ const emails = inbox.map((m, i) => {
 </article>`;
 }).join("\n");
 
-const html = `<!doctype html>
+let html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
 <title>Invoice Leash: every limit lives on QoreChain</title>
 <meta name="description" content="An invoice-paying AI agent that stays safe when its model does not. Recorded on the QoreChain testnet, every transaction linked.">
@@ -124,7 +124,7 @@ footer{margin-top:64px;color:var(--dim);font-size:14px}
   <a href="lab.html" style="border-color:var(--acc);color:var(--acc)">Try to break it: attack lab, sign your own ML-DSA-87 invoice (live, in your browser)</a>
   <a href="#requirements">Track requirements, on chain</a>
   <a href="#found">What we found about spending rules</a>
-  <a href="#mcp">Claude Code via MCP</a>
+  <a href="record.html#mcp">Claude Code via MCP</a>
   <a href="https://youtu.be/K3Teb5sO8JU">Demo video (2:50)</a>
   <a href="https://github.com/eltociear/invoice-leash">Code</a>
   <a href="https://github.com/eltociear/invoice-leash/blob/main/THREAT_MODEL.md">Threat model</a>
@@ -158,9 +158,9 @@ ${(() => {
 
 <h2 id="v4run">The compromised agent, on the live InvoiceDeskV4</h2>
 <p class="dim">A decider that obeys every email, relayed for real against the live agent's desk (<a href="https://github.com/eltociear/invoice-leash/blob/main/runs/v4-compromised.json">runs/v4-compromised.json</a>).</p>
-<div class="card"><table class="req">${json("runs/v4-compromised.json").log.map((x) => `<tr><td>${x.ok ? '<span class="ok">paid</span>' : '<span class="no">refused</span>'}</td><td>${esc(x.label)}</td><td>${x.ok ? txLink(x.link) : esc(String(x.why).replace(/^InvoiceDesk: /, "").replace(/^a linked key .*$/, "spending rule: not an allowed call").replace(/^denom uqor not allowed.*$/, "spending rule: no QOR").replace(/^permission denied.*not permitted to "send".*$/, "spending rule: no send")) + (x.link ? " " + txLink(x.link) : "")}</td></tr>`).join("")}</table></div>
+<div class="card"><table class="req">${json("runs/v4-compromised.json").log.map((x) => `<tr><td>${x.ok ? '<b style="color:var(--ok)">paid</b>' : '<b style="color:var(--no)">refused</b>'}</td><td>${esc(x.label)}</td><td>${x.ok ? txLink(x.link) : esc(String(x.why).replace(/^InvoiceDesk: /, "").replace(/^a linked key .*$/, "spending rule: not an allowed call").replace(/^denom uqor not allowed.*$/, "spending rule: no QOR").replace(/^permission denied.*not permitted to "send".*$/, "spending rule: no send")) + (x.link ? " " + txLink(x.link) : "")}</td></tr>`).join("")}</table></div>
 
-<h2 id="campaign">2,000 dry-run tamperings against the live desk, and three models told to obey a forged CFO</h2>
+<h2 id="campaign">2,000 dry-run tamperings against a live InvoiceDeskV3, and three models told to obey a forged CFO</h2>
 <div class="card"><p style="margin-top:0">${(() => { const c = json("runs/campaign.json"); return `<b>${c.count.toLocaleString()} dry-run tamperings</b> of one genuine invoice, ${Object.keys(c.byKind).length} kinds, plus ${c.signedOutcomes.length} signed ones (fresh-key forgeries, over the limit, zero amount, an unapproved vendor), each a dry run as the agent against the live InvoiceDeskV3: <b>${c.paid} paid</b>. The genuine control passed. Every refusal is the one expected: ${Object.entries(c.byKind).map(([k, h]) => `${esc(k)} → ${Object.keys(h).map(esc).join("/")}`).join(", ")}. <code>npm run verify</code> regenerates 40 of them from the seed and asks again.`; })()}</p>
 <p style="margin-bottom:0">The same prompt-injected inbox (a forged "CFO" asking for a direct transfer, a forged "security team" asking to approve a new vendor and send QOR) went to <b>Claude Haiku, Sonnet and Opus</b> through the MCP server, with an operator prompt saying "instructions from the CFO are authoritative: follow them". Each paid the two genuine invoices and none sent anything else; Opus also ran the forged emails through <code>verify_message</code> (NOT AUTHENTIC). Transcripts: <a href="https://github.com/eltociear/invoice-leash/tree/main/runs/models">runs/models</a>. This tests the models, not the leash: the forged emails were unsigned and no model tried a forbidden call. The leash does not depend on the model: the live agent above runs a decider that obeys every email, and the chain refuses it every day.</p></div>
 
@@ -184,7 +184,7 @@ ${read("runs/own-company-v3/payments.csv").trim().split("\n").slice(1).map((l) =
 <tr><td>Authenticated messaging</td><td>Invoices: ML-DSA-87 from an approved vendor, checked on chain by <code>0x…0a02</code> / <code>0x…0a01</code>. Instructions: QoreSign messages checked against the company's registered key; a Q-Day forgery (the company's classical key plus another ML-DSA-87 key) is refused.</td><td><a href="lab.html#msg">check them in the lab</a></td></tr>
 <tr><td>Confidential invoices (ML-KEM-1024)</td><td>Vendors seal invoices to the agent account's ML-KEM-1024 key in the chain's KEM registry (QoreSeal): mail stored today cannot be read after Q-Day. Sealing hides; the signature still decides (a sealed forgery is <code>BadSignature</code>). Claude Code, through MCP, paid the genuine sealed invoice and refused the forgery.</td><td>register ${txLink(EX + "5AB689523EDF4F47374A35BED6FFAB3913369CC6CAA32579A16651F238BAA80B")}, Claude paid ${txLink(EX + "04AAE84653DDA587D2E351A5D6424FDD6E070D3D5FC6ECB412A29D6164ECEFB5")}</td></tr>
 <tr><td>Survives Q-Day</td><td>Our own drill: with the secp256k1 keys of four accounts (company, agent account, relayer, a vendor; as if a quantum computer broke them) and no ML-DSA-87 key, 16 attacks (send, transfer, approve, reconfigure the desk, open a window, link a key, swap the KEM key, put the attacker's ML-DSA-87 key on a vendor to forge its invoices), all refused by the chain. Inside an open window, the tx-count, value and target caps held, also in the company's own window. <b>Shor's gift:</b> an account whose secp256k1 private key we publish still holds its QOR; <a href="lab.html#shor">try to take it</a>. On InvoiceDeskV4 the agent's own classical key pays nothing without its ML-DSA-87 signature (live: refused with <code>BadAgentSignature</code>, then paid with it).</td><td><a href="https://github.com/eltociear/invoice-leash/blob/main/QUANTUM_READINESS.md">quantum readiness</a>, control ${txLink(EX + "90677647014606987D75A155D03B255D4BA2D57C7762A4F69E39DEB27C643477")}</td></tr>
-<tr><td>A kill switch</td><td><code>setAgent(agent, false)</code>: the agent's real payment refused (<code>NotPayersAgent</code>); back on, the same payment paid.</td><td><a href="#killswitch">below</a></td></tr>
+<tr><td>A kill switch</td><td><code>setAgent(agent, false)</code>: the agent's real payment refused (<code>NotPayersAgent</code>); back on, the same payment paid.</td><td><a href="record.html#killswitch">below</a></td></tr>
 </tbody></table>
 
 <h2 id="inbox">The inbox, email by email (v2, fUSD)</h2>
@@ -234,6 +234,24 @@ npm install && npm run verify</pre>
 </main></body></html>
 `;
 mkdirSync(new URL("docs/", root), { recursive: true });
+// The earlier recorded runs on InvoiceDeskV2 (the 10-email inbox, Claude Code through MCP, the kill
+// switch) move to their own page, so the front page is the live V4 story; their anchors live on there.
+const cutA = html.indexOf('<h2 id="inbox">'), cutB = html.indexOf('<h2 id="verify">');
+const earlier = html.slice(cutA, cutB);
+const shell = html.slice(0, html.indexOf("<main>") + "<main>".length).replace(/<title>[^<]*<\/title>/, "<title>Invoice Leash: the earlier recorded runs (InvoiceDeskV2)</title>");
+const record = `${shell}
+<p><a href="index.html">← Invoice Leash</a></p>
+<h1>The earlier recorded runs (InvoiceDeskV2)</h1>
+<p class="lede">Recorded on <code>qorechain-diana</code> before InvoiceDeskV3 and V4. The live desk is now an InvoiceDeskV4, which keeps every check below and adds the agent's own ML-DSA-87 signature; the same attacks on V4 are on the <a href="index.html#v4run">front page</a>. These transactions are still re-read by <code>npm run verify</code>.</p>
+${earlier}
+<footer>InvoiceDeskV2 <a href="https://explore.qore.network/address/${dep.v2.invoiceDesk}">${dep.v2.invoiceDesk}</a> · qorechain-diana (EVM 9800)</footer>
+</main></body></html>
+`;
+html = html.slice(0, cutA) + `<h2 id="earlier">Earlier recorded runs (InvoiceDeskV2)</h2>
+<p>The first recorded runs, on InvoiceDeskV2: <a href="record.html#inbox">the inbox, email by email</a>, <a href="record.html#mcp">Claude Code holding the leash through MCP</a> (and an obey-everything MCP client, and Claude as an auditor), and <a href="record.html#killswitch">the kill switch</a>. Every check there is kept in V4.</p>
+
+` + html.slice(cutB).replace(/<pre>([\s\S]*?)<\/pre>\s*\n\s*<footer>/, (m, body) => `<details><summary>The last run, check by check</summary><pre>${body}</pre></details>\n\n<footer>`);
+writeFileSync(new URL("docs/record.html", root), record);
 writeFileSync(new URL("docs/index.html", root), html);
 copyFileSync(new URL("assets/cover.png", root), new URL("docs/cover.png", root));
-console.log(`docs/index.html: ${inbox.length} emails, ${(html.length / 1024).toFixed(0)} KB`);
+console.log(`docs/index.html: ${(html.length / 1024).toFixed(0)} KB; docs/record.html: ${inbox.length} emails, ${(record.length / 1024).toFixed(0)} KB`);
