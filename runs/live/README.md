@@ -5,7 +5,7 @@ times, since a run for a day already logged does nothing)
 ([`.github/workflows/live.yml`](../../.github/workflows/live.yml)), unattended, against a real
 InvoiceDeskV4 since 2026-11-24 ([`desk.json`](desk.json); set up with `desk.mjs`, upgraded from V3). The agent's key and the relayer's key
 are GitHub Secrets on purpose. Invoice Leash assumes the agent's key leaks, so it runs it where it could.
-The decider obeys every email. The agent signer's ML-DSA-87 key is a secret too, so a theft of the secrets is a stolen agent (bounded by the limits); what V4 stops is a key *derived* from the agent's public key. The test vendor's key is a secret too, so the job can send itself the
+The decider obeys every email. From 2026-11-26 the job is split in three (plan, sign, relay): the agent signer's ML-DSA-87 key lives only in the signer's job and its own GitHub Environment, so the agent's jobs' secrets alone pay nothing on V4. The test vendor's key is a secret too, so the job can send itself the
 day's invoice: a leak of the secrets is also a stolen approved-vendor key, bounded by the same limits
 (10 fUSD a payment, 25 a day, to that vendor's own address).
 

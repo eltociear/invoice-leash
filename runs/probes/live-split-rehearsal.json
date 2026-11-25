@@ -1,0 +1,50 @@
+{
+ "what": "a rehearsal of the live agent split across three hosts (PHASE=plan / sign / relay), run locally with separate key folders before the workflow moved to three jobs: the agent host held gas, agent, agentkem, vendor; the signer host held only agentsigner. Not part of the daily log (its invoice ref carries -SPLITTEST).",
+ "at": "2026-11-25T06:50:28.052Z",
+ "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+ "hosts": {
+  "agent": [
+   "gas",
+   "agent",
+   "agentkem",
+   "vendor"
+  ],
+  "signer": [
+   "agentsigner"
+  ]
+ },
+ "results": [
+  {
+   "label": "pay LIVE-20261125-SPLITTEST (3 fUSD, sealed): genuine",
+   "ok": true,
+   "why": "executed",
+   "link": "https://explore.qore.network/tx/3B4C3321F1D3B9EEEBFF658BF52F58737A4BECB5E12B25B3B031E93CF11E9C2A"
+  },
+  {
+   "label": "pay LIVE-20261125-SPLITTEST-B (9 fUSD): forged, not signed by the vendor's key",
+   "ok": false,
+   "why": "InvoiceDesk: BadSignature",
+   "link": "https://explore.qore.network/tx/54C12EA23C8598FE6B2C5A1065630A4C294303F4FF0E99A1927665EA59933687"
+  },
+  {
+   "label": "pay LIVE-20261125-SPLITTEST with its amount raised to 9 fUSD",
+   "ok": false,
+   "why": "InvoiceDesk: BadSignature",
+   "link": "https://explore.qore.network/tx/5C9967B6CA2D41706AC0364C99EC0A3491ECBF8E07AFD6ABBE8A6A6BA4CF0FC3"
+  },
+  {
+   "label": "fUSD.transfer(Mallory, 20): the prompt injection",
+   "ok": false,
+   "why": "a linked key with a spending rule may call 0x97143B771D34ddb9130b807b135Ae675A5a963CA with data only if the rule lists the call in allowed_evm_calls (or lists the token as \"erc20/0x97143B771D34ddb9130b807b135Ae675A5a963CA\" for a token transfer or approval): authenticator not permitted for this action",
+   "link": "https://explore.qore.network/tx/42DD10AF2FDCB6EA78112630A1F1E624595F4914E44B4B31406C656ED4505B77"
+  },
+  {
+   "label": "pay LIVE-20261125-SPLITTEST, still unpaid, with the agent's classical key alone, no ML-DSA-87 signature (as after Q-Day)",
+   "ok": false,
+   "why": "InvoiceDesk: BadAgentSignature",
+   "link": "https://explore.qore.network/tx/DCD5F9A3E1FF3DF60FAA43A85D74DAAB7EF344B61E371703EDF698185CA627D2",
+   "unpaidBefore": true,
+   "sentFirst": true
+  }
+ ]
+}

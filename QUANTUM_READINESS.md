@@ -10,7 +10,7 @@ classical, and each is bounded:
   the agent's own ML-DSA-87 signature, checked on chain (live: the classical key alone was refused with
   `BadAgentSignature`, then the same invoice with the signature was paid,
   [`runs/probes/v4-agent-sig.json`](runs/probes/v4-agent-sig.json)). On V2/V3 desks it is bounded like a
-  stolen key. V4 stops a *derived* key, not a stolen host, which holds both keys (see below);
+  stolen key. V4 stops a *derived* key, and a stolen agent host alone, since the signer runs on its own host (see below);
 - an EVM window while it is open: one target, a transaction count, a value cap, an expiry. The worst
   case is a company window whose single slot an attacker wins in a race. That gets one call to one
   contract, and never the treasury, which is held as a bank coin;
@@ -140,7 +140,7 @@ a MetaMask-style wallet.
 | **Vendor invoices** | **ML-DSA-87**, verified on chain by `pqcVerify` (`0x…0a01`) against the key in `pqcKeyStatus` (`0x…0a02`), proof of possession required | safe | — | demo inbox, verify §4/§9, 152 Foundry tests, 17 invariants |
 | **Company instructions** to the agent | QoreSign message-signing-v1: secp256k1 (ADR-36) + **ML-DSA-87** over `qorechain-msg-v1\|chain\|text` | ML-DSA-87 half: safe | a valid classical half is not enough: the Q-Day forgery is refused | [`runs/messages.json`](runs/messages.json), the lab |
 | **Sealed invoices** | **ML-KEM-1024** (FIPS 203, level 5), `mlkem` mode (no X25519), HKDF with SHA3-256, AES-256-GCM | safe against "harvest now, decrypt later"; AES-256 keeps about 128-bit strength under Grover | — | [`runs/sealed.json`](runs/sealed.json) |
-| **The agent's key**, on InvoiceDeskV4 | **ed25519** to relay (authenticators accept only ed25519 / secp256k1 today) **plus the agent signer's ML-DSA-87** on every payment | the ed25519 half: broken; the ML-DSA-87 half: safe | nothing from a derived ed25519 key alone (`BadAgentSignature`). A stolen host holds both keys: then, what a stolen agent key gets | [`runs/probes/v4-agent-sig.json`](runs/probes/v4-agent-sig.json), the live agent's daily attempt, Foundry, Halmos |
+| **The agent's key**, on InvoiceDeskV4 | **ed25519** to relay (authenticators accept only ed25519 / secp256k1 today) **plus the agent signer's ML-DSA-87** on every payment | the ed25519 half: broken; the ML-DSA-87 half: safe | nothing from a derived ed25519 key alone (`BadAgentSignature`), nor from the agent's host alone (the signer runs in its own job). Both hosts stolen: what a stolen agent key gets | [`runs/probes/v4-agent-sig.json`](runs/probes/v4-agent-sig.json), the live agent's daily attempt, Foundry, Halmos |
 | **The agent's key**, on V2/V3 desks | **ed25519** | **broken** | exactly what a stolen agent key gets: genuine invoices from approved vendors, within the company's limits; nothing else | the compromised-agent run (16 attempts, 3 genuine paid), probes |
 | Hashes: invoice ids, the signed message, EVM | Keccak-256, SHA3-256 | Grover: about 128-bit preimage strength; collisions remain out of reach | — | — |
 | Contract admin (`approveVendor`, `setLimit`, `setAgent`) | `msg.sender` = the company, reachable only through an ML-DSA-87-opened window, scoped to the desk | while no window is open: safe. While one is: at most the window's one slot, if the attacker wins the race | one admin call, bounded by the agent's limits; the company's own call then fails | drill (three EVM admin calls refused), [`runs/probes/company-window.json`](runs/probes/company-window.json) |
@@ -159,10 +159,14 @@ a MetaMask-style wallet.
    a stolen key. When authenticators accept ML-DSA-87, the relaying key can be post-quantum too.
 
    **What V4 does and does not stop.** It stops a key *derived* from the agent's public key, the
-   quantum attack: without the signer's ML-DSA-87 secret key, the derived ed25519 key pays nothing. It does
-   not stop someone who steals the agent's host, because the host holds the signer's key too (the live agent's
-   host is GitHub Actions, so both keys are repository secrets). A stolen host is the compromised agent this
-   whole design bounds: genuine invoices from approved vendors, within the company's limits.
+   quantum attack: without the signer's ML-DSA-87 secret key, the derived ed25519 key pays nothing. Since
+   2026-11-26 it also stops a thief of the agent's host alone: the live agent runs as three GitHub Actions jobs,
+   and only the signer's job, in its own GitHub Environment (`agent-signer`), holds the signer's key; the agent's
+   jobs never do ([`.github/workflows/live.yml`](.github/workflows/live.yml), rehearsed with separate key folders:
+   [`runs/probes/live-split-rehearsal.json`](runs/probes/live-split-rehearsal.json)). What it does not stop: a thief
+   of both hosts, or of the repository's settings (anyone who can edit the workflow can reach both secrets; an
+   Environment with required reviewers would close that too). The signer is a second key, not a second
+   judge: it signs any payment request for this desk, payer and agent, and the desk still decides.
 2. **An open EVM window.** A quantum attacker with a classical key can act inside a window while it is
    open, within its caps. Every window names one target. The agent account's window is 300 blocks, at
    most 3 transactions and 0.4 QOR, to the desk. The company's windows admit one action and close in

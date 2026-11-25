@@ -90,9 +90,11 @@ Said plainly, because a judge, an auditor or a customer will ask.
   ML-DSA-87 secret key is published, for trying the Desk Console. A desk that approves it can be billed by
   anyone, within its limits, exactly like a compromised approved vendor. Approve it only on a desk you use
   to try the console. (It was approved on the live desk for one run on 2026-11-25, then removed.)
-- **A stolen agent host, on InvoiceDeskV4.** The host holds both the agent's key and its signer's
-  ML-DSA-87 key, so stealing it is a compromised agent (bounded as above). V4 stops a key *derived*
-  from the agent's public key, not a stolen host. Keeping the signer on a separate host closes this.
+- **Both of the agent's hosts stolen, on InvoiceDeskV4.** The live agent's classical key and its signer's
+  ML-DSA-87 key are held by separate jobs (the signer in its own GitHub Environment), so either one alone
+  pays nothing. A thief of both, or of the repository's settings (who can rewrite the workflow to reach both
+  secrets), is a compromised agent, bounded as above. Required reviewers on the signer's Environment would
+  close the second case.
 - **(InvoiceDeskV2 only) One approved vendor blocking another's invoice number.** The desk records `paid[payer][id]`, where
   `id` is the hash of the vendor's invoice number, without the vendor in the key. An approved vendor (or
   a thief with its key) could sign a small invoice that reuses another vendor's next number; once the

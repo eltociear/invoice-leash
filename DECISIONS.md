@@ -98,10 +98,14 @@ public key on chain. With V4, that key alone gets `BadAgentSignature` (live:
 [`runs/probes/v4-agent-sig.json`](runs/probes/v4-agent-sig.json)).
 
 **What V4 does and does not stop.** It stops a key *derived* from the agent's public key, the
-quantum attack: without the signer's ML-DSA-87 secret key, the derived ed25519 key pays nothing. It does
-not stop someone who steals the agent's host, because the host holds the signer's key too (the live agent's
-host is GitHub Actions, so both keys are repository secrets). A stolen host is the compromised agent this
-whole design bounds: genuine invoices from approved vendors, within the company's limits.
+quantum attack: without the signer's ML-DSA-87 secret key, the derived ed25519 key pays nothing. Since
+2026-11-26 it also stops a thief of the agent's host alone: the live agent runs as three GitHub Actions jobs,
+and only the signer's job, in its own GitHub Environment (`agent-signer`), holds the signer's key; the agent's
+jobs never do ([`.github/workflows/live.yml`](.github/workflows/live.yml), rehearsed with separate key folders:
+[`runs/probes/live-split-rehearsal.json`](runs/probes/live-split-rehearsal.json)). What it does not stop: a thief
+of both hosts, or of the repository's settings (anyone who can edit the workflow can reach both secrets; an
+Environment with required reviewers would close that too). The signer is a second key, not a second
+judge: it signs any payment request for this desk, payer and agent, and the desk still decides.
 
 **Known limits of the agent's signature.** `agentMessage(payer, agent, token, vendor, amount, id)` takes
 `token, vendor` in that order but encodes `vendor, token`: call the view, or use `agentMessageV4` in
@@ -120,7 +124,9 @@ runs daily. A test fails `npm test` if a document states a count its source no l
 ## 10. The live agent's key in GitHub Secrets, on purpose
 
 **Decision.** The agent runs daily in GitHub Actions (scheduled; [where each day ran](runs/live/README.md#where-each-day-ran)), with its key, the relayer's key and
-the test vendor's key as repository secrets, and a decider that obeys every email.
+the test vendor's key as repository secrets, and a decider that obeys every email. The agent signer's
+ML-DSA-87 key (InvoiceDeskV4) is not among them: it is a secret of the `agent-signer` Environment, used
+only by the job that signs.
 
 **Why.** It is the design's claim, made live: where the key could leak, the worst case is still bounded.
 The agent account's own key, which links and revokes the agent's key, is not in CI. The agent

@@ -17,7 +17,7 @@
 //   LEASH_DIR=<dir with keys.env> LEASH_DEPLOYMENT=runs/live/desk.json node scripts/live-agent.mjs
 // keys.env needs: gas (mnemonic), agent (hex), agentkem (hex), vendor (mnemonic), and on an InvoiceDeskV4,
 // agentsigner (mnemonic: the agent's own ML-DSA-87 signer). Nothing else.
-import { appendFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { sha3_256 } from "@noble/hashes/sha3.js";
 import { generatePqcKeypair, pqcSign } from "@qorechain/sdk";
 import { keccak256, toUtf8Bytes } from "ethers";
@@ -38,6 +38,32 @@ const H = (text) => hex(sha3_256(new TextEncoder().encode(text))); // SHA3-256 o
 const rows = existsSync(LOG) ? readFileSync(LOG, "utf8").trim().split("\n").filter(Boolean) : [];
 if (rows.some((l) => JSON.parse(l).day === day)) { console.log(`already ran for ${day}`); process.exit(0); }
 
+// The live agent runs as three GitHub Actions jobs (PHASE), so the agent's host never holds the agent
+// signer's ML-DSA-87 key:
+//   plan   on the agent's host: today's mail, the decider's plan, and the payments it wants signed
+//   sign   on the signer's own host (a separate job and GitHub Environment): only the signer's key; signs
+//          payment requests for this desk, this payer and this agent, nothing else
+//   relay  on the agent's host again: sends every attempt with the signatures it was given, writes the log
+// Without PHASE, all three run in one process (local runs). A thief of the agent host's secrets alone has
+// the agent's classical key and no signer: on an InvoiceDeskV4 that pays nothing (BadAgentSignature).
+const PHASE = process.env.PHASE ?? "all";
+const WORK = new URL(`file://${process.env.LEASH_WORK ?? "/tmp/leash-live-work"}/`);
+const work = (f) => new URL(f, WORK);
+if (PHASE === "sign") {
+  const { signAgentPayV4 } = await import("../lib/invoices.mjs");
+  const reqs = JSON.parse(readFileSync(work("requests.json"), "utf8")), signer = await account("agentsigner"), sigs = {};
+  for (const r of reqs) {
+    const f = r.fields;
+    if (f.desk.toLowerCase() !== d.invoiceDesk.toLowerCase() || f.payer.toLowerCase() !== d.payerEvm.toLowerCase() || f.agent.toLowerCase() !== d.agentAccountEvm.toLowerCase())
+      throw new Error(`refusing to sign a payment for another desk, payer or agent: ${JSON.stringify(f)}`);
+    sigs[r.k] = signAgentPayV4(signer, { ...f, amount: BigInt(f.amount) });
+    console.log(`signed  #${r.k}: ${f.amount} of ${f.token.slice(0, 10)}… to ${f.vendor.slice(0, 10)}…, invoice ${f.id.slice(0, 10)}…`);
+  }
+  writeFileSync(work("signatures.json"), JSON.stringify(sigs, null, 1) + "\n");
+  process.exit(0);
+}
+
+async function today() {
 // 1. today's mail
 const vendor = await account("vendor"), fusd = String(1 + (n % 5)), ref = `LIVE-${day.replaceAll("-", "")}${process.env.LIVE_TAG ? `-${process.env.LIVE_TAG}` : ""}`;
 const dueBy = Math.floor(Date.now() / 1000) + 30 * 86400;
@@ -68,6 +94,24 @@ const plan = [
   // that can refuse it is the missing signature; then the agent pays the same invoice properly.
   ...(d.version === 4 ? [{ item: 0, action: "pay", withoutAgentSignature: true, label: `pay ${ref}, still unpaid, with the agent's classical key alone, no ML-DSA-87 signature (as after Q-Day)` }] : []),
 ];
+  return { inbox, plan, sealed };
+}
+const saved = PHASE === "relay" ? JSON.parse(readFileSync(work("plan.json"), "utf8")) : null;
+if (saved && saved.day !== day) throw new Error(`the plan is for ${saved.day}, today is ${day}`);
+const { inbox, plan, sealed } = saved ?? (await today());
+if (PHASE === "plan") {
+  mkdirSync(WORK, { recursive: true });
+  writeFileSync(work("plan.json"), JSON.stringify({ day, inbox, plan, sealed }, null, 1) + "\n");
+  const requests = plan.map((st, k) => ({ st, k })).filter(({ st }) => st.action === "pay" && !st.withoutAgentSignature && d.version === 4)
+    .map(({ st, k }) => { const inv = inbox[st.item].invoice; return { k, fields: { desk: d.invoiceDesk, payer: d.payerEvm, agent: d.agentAccountEvm, vendor: inv.vendor, token: inv.token, amount: String(inv.amount), id: inv.id } }; });
+  writeFileSync(work("requests.json"), JSON.stringify(requests, null, 1) + "\n");
+  console.log(`plan: ${plan.length} attempts, ${requests.length} payment(s) for the signer`);
+  process.exit(0);
+}
+if (PHASE === "relay") {
+  const sigs = d.version === 4 ? JSON.parse(readFileSync(work("signatures.json"), "utf8")) : {};
+  plan.forEach((st, k) => { if (sigs[k]) st.agentSignature = sigs[k]; });
+}
 const order = d.version === 4 ? [4, 0, 1, 2, 3] : plan.map((_, i) => i); // log rows keep plan positions
 const results = [];
 for (const k of order) {
