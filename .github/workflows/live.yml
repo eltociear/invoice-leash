@@ -5,6 +5,10 @@ name: live-agent
 on:
   schedule:
     - cron: "10 1 * * *" # 01:10 UTC: just after the desk's UTC day starts
+    # GitHub may drop a scheduled run under load (it did on 2026-11-25), so two more chances a day; a run
+    # for a day already in the log does nothing (scripts/live-agent.mjs).
+    - cron: "47 4 * * *"
+    - cron: "23 9 * * *"
   workflow_dispatch:
 
 permissions:
