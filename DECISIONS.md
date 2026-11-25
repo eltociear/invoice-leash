@@ -103,8 +103,9 @@ quantum attack: without the signer's ML-DSA-87 secret key, the derived ed25519 k
 and only the signer's job, in its own GitHub Environment (`agent-signer`), holds the signer's key; the agent's
 jobs never do ([`.github/workflows/live.yml`](.github/workflows/live.yml), rehearsed with separate key folders:
 [`runs/probes/live-split-rehearsal.json`](runs/probes/live-split-rehearsal.json)). What it does not stop: a thief
-of both hosts, or of the repository's settings (anyone who can edit the workflow can reach both secrets; an
-Environment with required reviewers would close that too). The signer is a second key, not a second
+of both hosts, or of push access to `main` (the signer's Environment admits only runs on `main`:
+[`runs/probes/signer-env.json`](runs/probes/signer-env.json); required reviewers would close that too, at the price of a
+person approving each day's run). The signer is a second key, not a second
 judge: the desk still decides. But since 2026-11-25 it checks one thing before it signs (next paragraph).
 
 **Known limits of the agent's signature.** `agentMessage(payer, agent, token, vendor, amount, id)` takes

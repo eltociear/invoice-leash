@@ -164,8 +164,9 @@ a MetaMask-style wallet.
    and only the signer's job, in its own GitHub Environment (`agent-signer`), holds the signer's key; the agent's
    jobs never do ([`.github/workflows/live.yml`](.github/workflows/live.yml), rehearsed with separate key folders:
    [`runs/probes/live-split-rehearsal.json`](runs/probes/live-split-rehearsal.json)). What it does not stop: a thief
-   of both hosts, or of the repository's settings (anyone who can edit the workflow can reach both secrets; an
-   Environment with required reviewers would close that too). The signer is a second key, not a second
+   of both hosts, or of push access to `main` (the signer's Environment admits only runs on `main`:
+[`runs/probes/signer-env.json`](runs/probes/signer-env.json); required reviewers would close that too, at the price of a
+person approving each day's run). The signer is a second key, not a second
    judge, but it does check one thing before it signs: that the desk would pay this request right then
    (or can never pay it). The reason: an agent signature has no expiry of its own. It binds one invoice
    and holds until that invoice is paid or past due, and it is public (in the relaying transaction). One

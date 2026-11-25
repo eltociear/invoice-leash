@@ -1,0 +1,6 @@
+{
+ "what": "the GitHub Environment that holds the live agent signer key (LEASH_AGENTSIGNER): only workflow runs on main may use it, so a workflow edited on another branch or in a pull request cannot reach the key. Read back from the GitHub API on 2026-11-25; no secret values.",
+ "environment": {"deployment_branch_policy":{"custom_branch_policies":true,"protected_branches":false},"name":"agent-signer","protection_rules":[{"id":74000695,"node_id":"GA_kwDOV2lPNs4EaSk3","type":"branch_policy"}]},
+ "branchPolicies": [{"name":"main","type":"branch"}],
+ "secretNames": ["LEASH_AGENTSIGNER"]
+}
