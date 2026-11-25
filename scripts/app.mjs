@@ -26,7 +26,7 @@ const data = {
       agentPayments: ownCsv.filter((r) => r[7] === "agent" && r[9] === own.invoiceDesk).map((r) => ({ at: r[0], label: `${r[1]} ${r[3]}, ${r[5]} fUSD`, link: `https://explore.qore.network/tx/${r[8]}` })) }),
     desk("The demo company (v2)", "InvoiceDeskV2, the desk the recorded runs and the attack lab use.", { ...dep.v2, vendors: Object.fromEntries(Object.entries(dep.vendors).map(([k, v]) => [v, k])) }, 2),
   ],
-  abiV2: v2.abi, abiV3: v3.abi, abiV4: v4.abi, bytecodeV3: v3.bytecode,
+  abiV2: v2.abi, abiV3: v3.abi, abiV4: v4.abi,
   publicVendor: { address: pub.address, evm: pub.evmAddress, publicKey: pub.mlDsa87PublicKey, secretKey: pub.mlDsa87SecretKey, registerTx: pub.registerTx },
 };
 writeFileSync(new URL("docs/app-data.json", root), JSON.stringify(data) + "\n");

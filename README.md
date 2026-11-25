@@ -15,7 +15,7 @@ what the desk would pay right then.
 [Desk Console](https://eltociear.github.io/invoice-leash/app.html) · [attack lab](https://eltociear.github.io/invoice-leash/lab.html) ·
 [video](https://youtu.be/K3Teb5sO8JU) · `qorechain-diana` testnet only (test tokens have no value) · Post-Quantum AI Agents
 
-> **Check every claim in about two minutes, with no keys and no test QOR:**
+> **Check every claim in about three minutes, with no keys and no test QOR:**
 >
 > ```sh
 > git clone --recurse-submodules https://github.com/eltociear/invoice-leash && cd invoice-leash

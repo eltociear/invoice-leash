@@ -2,7 +2,7 @@
 
 Everything here can be checked without trusting us: no keys, no test tokens, no account.
 
-## 1. Run the checks (about two minutes)
+## 1. Start the checks (about three minutes; read on while they run)
 
 ```sh
 git clone --recurse-submodules https://github.com/eltociear/invoice-leash && cd invoice-leash
