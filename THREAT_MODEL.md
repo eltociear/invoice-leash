@@ -15,7 +15,8 @@ signature. v1, and why it was replaced, are at the end.
 |---|---|---|---|
 | **Company** (payer) | hybrid secp256k1 + **ML-DSA-87** (every tx carries both; key registered with proof of possession) | hold the fUSD; approve/remove vendors, name/remove agents, set per-token limits, set the desk's allowance; pay any invoice in person | — |
 | **Agent account** | its own key (kept by the human, hybrid ML-DSA-87) only links/revokes the agent key | — (holds no fUSD; about 1 QOR for its own fees, which the agent's linked key cannot move; its classical key only inside a scoped window) | — |
-| **Agent key** | ed25519, linked to the agent account with permission `evm`, an expiry, and a rule listing one denom it does not hold (fBTC, 1 satoshi) and one call: `InvoiceDeskV2.pay` | ask the chain to run `pay` as the agent account | send QOR (no `send` permission, `uqor` not allowed); move fUSD directly (`transfer`/`approve`/`transferFrom` are not allowed calls); call any setting in the desk; call any other contract |
+| **Agent key** | ed25519, linked to the agent account with permission `evm`, a 720-hour expiry, and a rule listing one denom it does not hold and one call: the live desk's `pay` (`0x235dA591…/0xe07cc3c1`, [`runs/live/desk.json`](runs/live/desk.json)) | ask the chain to run `pay` as the agent account | send QOR (no `send` permission, `uqor` not allowed); move fUSD directly (`transfer`/`approve`/`transferFrom` are not allowed calls); call any setting in the desk; call any other contract |
+| **Agent signer** (V4) | hybrid, **ML-DSA-87** key registered with proof of possession; named by the company (`setAgentSigner`) | sign each agent payment: desk, payer, agent, vendor, token, amount, invoice id | pay anything by itself: the desk needs the agent account's call too; a payment without its signature is `BadAgentSignature` |
 | **Gas wallet** | hybrid | relay the agent's requests and pay their fees | move the company's money (it never holds any) |
 | **Vendor** | hybrid, **ML-DSA-87** key registered on chain | sign invoices for a specific payer, currency, amount, desk and chain | get paid unless the payer approved it |
 
@@ -30,33 +31,36 @@ gets what the compromised decider got in the demo: genuine invoices from approve
 the company's limits; everything else refused. What a quantum attacker must not get is the power to
 *change* the leash: approve a vendor, name an agent, raise a limit, or forge an invoice. That sits
 behind ML-DSA-87: the company's hybrid key, and vendor invoices checked on chain. When the chain
-accepts post-quantum authenticators, swapping the agent's key is a one-line change in `link-v2`.
+accepts post-quantum authenticators, swapping the agent's key is a one-line change in `desk.mjs agent link`. On InvoiceDeskV4 the classical key is
+already not enough: each agent payment also needs the agent signer's ML-DSA-87 signature (see the row below).
 
 ## Attacks and what stops them
 
-Every row is in the v2 demo inbox, in `npm run verify` against the live testnet, or in the Foundry
-tests (`test/InvoiceDeskV2.t.sol`).
+Every row is in the compromised-agent run on the live InvoiceDeskV4 ("V4 run",
+[`runs/v4-compromised.json`](runs/v4-compromised.json)), the live agent's log, `npm run verify` against the live
+testnet, or the Foundry tests (`test/InvoiceDeskV2.t.sol` … `InvoiceDeskV4.t.sol`). Limits are the live desk's:
+10 fUSD a payment, 25 a UTC day.
 
 | Attack | Stopped by | Where it is shown |
 |---|---|---|
-| Prompt injection: "move 50 QOR to custody" (`MsgSend`) | chain: the agent key has `evm` only, no `send` | inbox #2 |
-| …the same as an EVM value transfer | chain: `uqor` is not in the rule's allowed denoms | inbox #2, probe `unlisted-value` |
-| …as `fUSD.transfer(attacker)` from the agent's account | chain: not an allowed call (and the account holds no fUSD) | inbox #2 |
-| …as `fUSD.transferFrom(company, attacker)` | chain: not an allowed call (and only the desk has an allowance) | inbox #2 |
-| Agent reconfigures its leash (`approveVendor`, `setLimit`, `setAgent`) | chain: only `pay` (`0xf19ff4ff`) is allowed; and in the desk, settings are per `msg.sender`, so the agent would only configure its own empty entry | inbox #3, test `test_agent_limits_are_the_payers_alone` |
+| Prompt injection: "move 50 QOR to custody" (`MsgSend`) | chain: the agent key has `evm` only, no `send` | V4 run |
+| …the same as an EVM value transfer | chain: `uqor` is not in the rule's allowed denoms | V4 run, probe `unlisted-value` |
+| …as `fUSD.transfer(attacker)` from the agent's account | chain: not an allowed call (and the account holds no fUSD) | V4 run, live log daily |
+| …as `fUSD.transferFrom(company, attacker)` | chain: not an allowed call (and only the desk has an allowance) | V4 run |
+| Agent reconfigures its leash (`approveVendor`, `setLimit`, `setAgent`) | chain: only `pay` (`0xe07cc3c1` on V4) is allowed; and in the desk, settings are per `msg.sender`, so the agent would only configure its own empty entry | V4 run (`approveVendor`), test `test_agent_limits_are_the_payers_alone` |
 | The agent's classical key used directly (EVM transactions) | its account's EVM window: ≤3 txs, ≤0.4 QOR, 300 blocks, target the desk only; no window, no transaction. Only the human's hybrid ML-DSA-87 signature opens one | `runs/probes/window.json`, verify §9 |
 | "Approved by the CFO" in an email | instructions count only as QoreSign messages from the company's own account, verified against its registered ML-DSA-87 key, for this chain, with an optional "valid until" (MCP `verify_message`). A Q-Day forgery (the company's classical key + another ML-DSA-87 key), a stranger signing as herself, and an expired instruction are refused | `runs/messages.json`, verify §9 |
 | Reading invoices in transit, now or after Q-Day ("harvest now, decrypt later") | sealed invoices: ML-KEM-1024 to the agent account's key in the chain's KEM registry; only the agent's KEM key opens them, and it gives no spending power | `runs/sealed.json`, verify §9 |
 | A forged invoice sent sealed, to look trustworthy | sealing is not authenticity: once opened it is `BadSignature` | `runs/sealed.json` |
 | An account the company never named calls `pay` for it | `NotPayersAgent` | verify §9, tests |
-| Attacker's own, correctly signed invoice | `UnknownVendor` | inbox #3 |
-| Invoice signed by the wrong key | `BadSignature` (ML-DSA-87 via `0x…0a01`) | inbox #4 |
-| Genuine invoice, amount edited | `BadSignature`: the amount is signed | inbox #5 |
-| Genuine invoice "paid in QOR instead" | chain: `uqor` not allowed; and `BadSignature`: the currency is signed | inbox #6, verify §9 |
+| Attacker's own, correctly signed invoice | `UnknownVendor` | V4 run |
+| Invoice signed by the wrong key | `BadSignature` (ML-DSA-87 via `0x…0a01`) | V4 run, live log daily |
+| Genuine invoice, amount edited | `BadSignature`: the amount is signed | V4 run, live log daily |
+| Genuine invoice "paid in QOR instead" | chain: `uqor` not allowed; and `BadSignature`: the currency is signed | V4 run, verify §9 |
 | Payee / due date / currency / payer / desk / chain / one signature bit changed | `BadSignature` | v2: tests (fuzzed for amount and token), verify §9 (currency); v1: verify §4 replays each tampering live |
-| Replay of a paid invoice | `AlreadyPaid` (checked **after** the signature, so an edited copy is reported as a forgery) | inbox #6 |
-| One big genuine invoice | `OverPerPaymentLimit` (100 fUSD) | inbox #7; a human then pays it with `approve-v2 7` |
-| Many small genuine invoices | `OverDailyLimit` (250 fUSD per UTC day); refused payments do not count | inbox #9, tests |
+| Replay of a paid invoice | `AlreadyPaid` (checked **after** the signature, so an edited copy is reported as a forgery) | V4 run |
+| One big genuine invoice | `OverPerPaymentLimit` (10 fUSD) | V4 run; the company then pays it in person (`desk.mjs pay`) |
+| Many small genuine invoices | `OverDailyLimit` (25 fUSD per UTC day); refused payments do not count | V4 run, tests |
 | Agent pays in native QOR | `AgentCannotPayNative` (and the agent account cannot move QOR anyway) | tests |
 | Vendor key never proven / other algorithm / rotated | `VendorKeyNotProven` / `BadSignature` (the key is read at payment time) | tests (v2 and v1) |
 | A token that returns `false`, or an address with no code | `TransferFailed`, all rolled back | tests |
@@ -82,6 +86,13 @@ Said plainly, because a judge, an auditor or a customer will ask.
 - **A compromised approved vendor.** With Hostline's ML-DSA-87 key, a thief can issue
   genuine-looking Hostline invoices up to the agent's limits, paid only to Hostline's own address
   (the payee is signed). Remedy: `removeVendor`, which only the company can call.
+- **Approving a vendor whose key is public.** The [public test vendor](DECISIONS.md#12-a-public-test-vendor-whose-ml-dsa-87-secret-key-is-published)'s
+  ML-DSA-87 secret key is published, for trying the Desk Console. A desk that approves it can be billed by
+  anyone, within its limits, exactly like a compromised approved vendor. Approve it only on a desk you use
+  to try the console. (It was approved on the live desk for one run on 2026-11-25, then removed.)
+- **A stolen agent host, on InvoiceDeskV4.** The host holds both the agent's key and its signer's
+  ML-DSA-87 key, so stealing it is a compromised agent (bounded as above). V4 stops a key *derived*
+  from the agent's public key, not a stolen host. Keeping the signer on a separate host closes this.
 - **(InvoiceDeskV2 only) One approved vendor blocking another's invoice number.** The desk records `paid[payer][id]`, where
   `id` is the hash of the vendor's invoice number, without the vendor in the key. An approved vendor (or
   a thief with its key) could sign a small invoice that reuses another vendor's next number; once the

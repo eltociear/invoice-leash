@@ -418,6 +418,40 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
     ok(reread4 === v4rows.length && v4r.log.filter((x) => x.ok).length === 3 && BigInt(v4r.fusdBefore) - BigInt(v4r.fusdAfter) === 17_000_000n && v4r.malloryAfter === v4r.malloryBefore
       && expectWhy.every((w) => why4.includes(w)) && !v4r.log.some((x) => /provisions \d+ gas/.test(x.why ?? "")),
       `compromised agent on InvoiceDeskV4: ${v4r.log.length} attempts, 3 genuine invoices paid (17 fUSD), ${v4r.log.length - 3} refused (forgeries, edits, Mallory, limits, injections, the classical key alone, a replay), 0 to Mallory; each re-read`, `(series ${v4r.series})`);
+    // the desk's own error, read from the chain's record of each refused payment: tx_response.data is the
+    // TxMsgData proto, whose MsgExecuteEVMResponse carries the revert bytes (field 2). Decoded here with the
+    // contract's ABI and compared with the reason the log states, for the V4 run and the live agent's V4 days.
+    const pb = (buf) => { const out = []; let i = 0; const vint = () => { let x = 0, m = 1, b; do { b = buf[i++]; x += (b & 127) * m; m *= 128; } while (b & 128); return x; };
+      while (i < buf.length) { const k = vint(), f = k >> 3, w = k & 7; if (w === 0) out.push([f, vint()]); else if (w === 2) { const l = vint(); out.push([f, buf.subarray(i, i + l)]); i += l; } else break; } return out; };
+    const revertOf = async (link) => { const t = (await rest(`/cosmos/tx/v1beta1/txs/${link.slice(-64)}`))?.tx_response; if (!t?.data) return null;
+      const any = pb(Buffer.from(t.data, "hex")).find(([f]) => f === 2)?.[1]; const val = any && pb(any).find(([f]) => f === 2)?.[1];
+      const ret = val && pb(val).find(([f, v]) => f === 2 && v instanceof Uint8Array)?.[1];
+      if (!ret?.length) return null; try { return i4.parseError("0x" + Buffer.from(ret).toString("hex"))?.name ?? null; } catch { return null; } };
+    const i4 = new Interface(JSON.parse(readFileSync(new URL("build/InvoiceDeskV4.json", root), "utf8")).abi);
+    const deskRefusals = v4r.log
+      .concat(readFileSync(new URL("runs/live/log.jsonl", root), "utf8").trim().split("\n").map((l) => JSON.parse(l)).filter((r) => r.day >= "2026-11-25"))
+      .filter((x) => !x.ok && x.link && /^InvoiceDesk: /.test(x.why ?? ""));
+    let decodedOk = 0; const names = new Set();
+    for (const x of deskRefusals) { const n = await revertOf(x.link); if (n && x.why === `InvoiceDesk: ${n}`) { decodedOk++; names.add(n); } }
+    ok(deskRefusals.length > 0 && decodedOk === deskRefusals.length,
+      `InvoiceDeskV4's refusals, read from the chain's own record: for each of ${deskRefusals.length} refused payments, the revert bytes in the transaction's result decode (with the contract's ABI) to the error the log states (${[...names].sort().join(", ")})`, "(tx_response.data)");
+    // the agent account's own scoped EVM window on the live V4 desk (runs/probes/window-v4.json)
+    {
+      const wv = json("runs/probes/window-v4.json"), st = (k) => wv.steps.find((x) => x.step.startsWith(k));
+      const rc = async (h) => (await provider.send("eth_getTransactionReceipt", [h]))?.status;
+      const alone = st("desk.pay(genuine unpaid"), signed = st("the same invoice"), opened = st("open window"), closed = st("close window");
+      const [sAlone, sSigned] = [await rc(alone.tx), await rc(signed.tx)];
+      const open = await rest(`/cosmos/tx/v1beta1/txs/${opened.tx}`), shut = await rest(`/cosmos/tx/v1beta1/txs/${closed.tx}`);
+      const targets = JSON.stringify(open?.tx?.body?.messages?.[0] ?? {});
+      // V4 checks the agent's signature first, so asking the same call again now gives the same answer
+      const iv = wv.invoice; let aloneWhy = null;
+      try { await provider.call({ from: wv.accountEvm, to: wv.desk, data: desk4.encodeFunctionData("pay", [liveRec.payerEvm, iv.token, iv.vendor, iv.amount, iv.id, iv.dueBy, iv.signature, "0x"]) }); aloneWhy = "would pay"; }
+      catch (e) { try { aloneWhy = desk4.parseError(e.data ?? e.info?.error?.data)?.name; } catch { aloneWhy = null; } }
+      ok(aloneWhy === "BadAgentSignature" && wv.desk === liveRec.invoiceDesk && wv.unpaidBefore === true && sAlone === "0x0" && sSigned === "0x1" && open?.tx_response?.code === 0 && shut?.tx_response?.code === 0
+        && targets.toLowerCase().includes(wv.desk.toLowerCase()) && /allowed recipient/.test(st("fUSD.transfer").result) && /allowed recipient/.test(st("0.01 QOR").result) && /no open EVM authorisation window/.test(st("desk.pay(genuine 1 fUSD, signed) after").result),
+        `the agent account's own EVM window on InvoiceDeskV4 (one target: the desk): inside it, its classical key alone was reverted on chain (asked again now: ${aloneWhy}), the same invoice with the agent's ML-DSA-87 signature paid; fUSD and QOR to Mallory refused by the window; after closing, refused`,
+        `(open ${opened.tx.slice(0, 8)}…, receipts re-read)`);
+    }
     const lab4 = json("runs/live/v4-lab-invoice.json"), li = lab4.invoice;
     const ask4 = async (from) => { try { await provider.call({ from, to: DL4, data: desk4.encodeFunctionData("pay", [lab4.payer, li.token, li.vendor, li.amount, li.id, li.dueBy, li.signature, "0x"]) }); return "WOULD PAY"; } catch (e) { return desk4.parseError(e.data ?? e.info?.error?.data)?.name ?? "?"; } };
     const [labAgent, labCompany] = [await ask4(lab4.agent), await ask4(lab4.payer)];
@@ -466,12 +500,22 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
     ok(chained && sigsOk && shapeOk, `live agent log: ${rows.length} rows over ${days.length} day(s), hash-chained (SHA3-256), each day signed with the relayer's on-chain ML-DSA-87 key; each day the genuine invoice paid and every attack refused (on V4 days, also the agent's classical key alone)`,
       `(${days[0]} … ${days.at(-1)})`);
     let txOk = 0, withTx = 0;
+    const height = {};
     for (const r of rows.filter((x) => x.link)) {
       withTx++;
       const t = (await rest(`/cosmos/tx/v1beta1/txs/${r.link.slice(-64)}`))?.tx_response;
+      if (t) height[r.link] = Number(t.height);
       const failed = !t || t.code !== 0 || t.events.some((e) => e.type === "abstractaccount_execution_failed");
       if (t && failed === !r.ok) txOk++;
     }
+    // from 2026-11-26 the classical-key attempt is sent first, while the genuine invoice is unpaid: the chain's
+    // block heights prove the order, so BadAgentSignature (not AlreadyPaid) is the only thing refusing it
+    const firstDays = days.filter((dd) => rows.some((x) => x.day === dd && x.sentFirst));
+    const orderOk = firstDays.every((dd) => { const r = rows.filter((x) => x.day === dd); return r[4].unpaidBefore === true && height[r[4].link] < height[r[0].link]; });
+    const lateDays = days.filter((dd) => dd >= "2026-11-26" && rows.filter((x) => x.day === dd).length === 5);
+    ok(orderOk && lateDays.every((dd) => firstDays.includes(dd)),
+      `live agent, V4 days: the classical-key-alone attempt is sent before the genuine invoice is paid (block heights), so only the missing ML-DSA-87 signature can refuse it: ${firstDays.length} day(s)`,
+      firstDays.length ? `(${firstDays.join(", ")})` : "(from 2026-11-26; on 2026-11-25 it was sent after the payment)");
     const last = Date.parse(rows.at(-1).at);
     ok(withTx > 0 && txOk === withTx && Date.now() - last < 3 * 86400e3, `live agent: each of its ${withTx} logged transactions re-read from the chain agrees; it last ran ${((Date.now() - last) / 3600e3).toFixed(0)} h ago (must be < 72 h)`,
       `(desk ${live.invoiceDesk.slice(0, 10)}…, .github/workflows/live.yml)`);

@@ -20,7 +20,7 @@ chain.**
 > npm install && npm run verify
 > ```
 >
-> 110 checks against the live testnet: the deployed contracts are byte-for-byte this source, every
+> 113 checks against the live testnet: the deployed contracts are byte-for-byte this source, every
 > recorded transaction is re-read, every attack is replayed. Last run: [`runs/verify-latest.txt`](runs/verify-latest.txt)
 > ([JSON](runs/verify-latest.json)). CI runs it daily, with 152 Foundry tests and 17 invariants.
 
@@ -34,14 +34,15 @@ chain.**
 - **What that buys.** On the live InvoiceDeskV4, a decider that obeys every email made 16 attempts
   (forgeries, an edited amount, Mallory's own valid invoice, injections, the agent's classical key alone,
   a replay, both limits) and got only the 3 genuine invoices paid, 0 to the attacker
-  ([`runs/v4-compromised.json`](runs/v4-compromised.json)). 2,000 dry-run tamperings of 10 kinds against the live desk: 0 would pay.
+  ([`runs/v4-compromised.json`](runs/v4-compromised.json)). 2,000 dry-run tamperings of 10 kinds against a live InvoiceDeskV3: 0 would pay.
 - **After Q-Day.** With four accounts' classical keys alone, 16 attacks were refused, including
   swapping a vendor's ML-DSA-87 key. On InvoiceDeskV4 the agent's own classical key alone pays nothing
   either: each payment needs the agent's ML-DSA-87 signature too ([live](runs/probes/v4-agent-sig.json)). An ordinary EVM wallet with no post-quantum key cannot send
   anything at all on this chain. And we publish one account's classical private key: try to take its
   QOR ([lab §6](https://eltociear.github.io/invoice-leash/lab.html#shor)).
-- **It runs, and you can run it.** A scheduled GitHub Actions job runs the agent with an
-  obey-everything decider, its key in GitHub Secrets on purpose (on V4 from 2026-11-25: [a run](https://github.com/eltociear/invoice-leash/actions/runs/45554630612),
+- **It runs, and you can run it.** A GitHub Actions job runs the agent daily with an
+  obey-everything decider (scheduled; so far GitHub has not started the schedule, so each day was started
+  by hand: [where each day ran](runs/live/README.md#where-each-day-ran)), its key in GitHub Secrets on purpose (on V4 from 2026-11-25: [a run](https://github.com/eltociear/invoice-leash/actions/runs/45554630612),
   committed by the job; [`runs/live/`](runs/live/)). `desk.mjs` sets up a desk for your own
   company; a second company was set up that way from nothing.
 
@@ -49,7 +50,7 @@ chain.**
 
 | Criterion | Evidence |
 |---|---|
-| **Works** (25) | `npm run verify` (110 checks); the [live agent](runs/live/); a [second company](runs/own-company-v3/) set up with `desk.mjs`; the [Desk Console](runs/console-e2e.json) driven in a real browser; 100% coverage and 17 Halmos proofs ([`runs/halmos.txt`](runs/halmos.txt)) |
+| **Works** (25) | `npm run verify` (113 checks); the [live agent](runs/live/); a [second company](runs/own-company-v3/) set up with `desk.mjs`; the [Desk Console](runs/console-e2e.json) driven in a real browser; 100% coverage and 17 Halmos proofs ([`runs/halmos.txt`](runs/halmos.txt)) |
 | **QoreChain tech** (25) | the ML-DSA-87 precompiles `0x…0a01`/`0a02` inside the contract; hybrid accounts; an authenticator with a spending rule; EVM windows with `allowed_targets`; `MsgExecuteEVM` relaying; QoreSign; QoreSeal ML-KEM-1024 and the KEM registry; `MsgConvertCoin`/`MsgConvertERC20`; the AMM; QoreScan; QoreChain's MCP server |
 | **Post-quantum** (20) | [QUANTUM_READINESS.md](QUANTUM_READINESS.md): every algorithm in the system, the Q-Day drill, Shor's gift, no classical-only lane |
 | **Originality** (15) | the finding above, and the redesign it forced; an agent whose key is kept where it can leak, on purpose |
@@ -83,8 +84,9 @@ What `pay` checks, all on chain, in this order:
    settle an overdue invoice
 8. exactly the invoiced amount reaches the vendor (`TransferFailed` otherwise)
 
-The demo's recorded runs used the first two designs: v1 (QOR, the agent acting as the company,
-[V1.md](V1.md)) and InvoiceDeskV2 (the same checks, invoice ids per payer, no late settlement). V2 stays
+Earlier recorded runs used the earlier designs: v1 (QOR, the agent acting as the company, [V1.md](V1.md)),
+InvoiceDeskV2 (the same checks, invoice ids per payer, no late settlement) and InvoiceDeskV3 (no agent
+signature). The live agent and the compromised-agent run use V4. V2 stays
 deployed and checked; new desks are V4, and `desk.mjs upgrade` moves a V2 or V3 company ([why](DECISIONS.md#5-invoicedeskv3-invoice-numbers-per-vendor-late-invoices-settled-by-the-company)).
 
 ## What we found: a spending rule bounds amounts, not destinations
@@ -125,8 +127,8 @@ account holds no fUSD and its key may move nothing; the company's money moves on
 |---|---|---|
 | A decider that obeys every email, on InvoiceDeskV4 (forgeries, edits, Mallory's own valid key, injections, the agent's classical key alone, a replay, both limits) | 3 genuine invoices paid (17 fUSD), 13 refused, 0 to the attacker | [`runs/v4-compromised.json`](runs/v4-compromised.json), [site](https://eltociear.github.io/invoice-leash/#v4run) |
 | The same, recorded earlier on InvoiceDeskV2 | 3 paid, 13 refused, 0 to the attacker | [EVIDENCE.md](EVIDENCE.md#the-demo-inbox-v2-fusd) |
-| The live agent, scheduled daily in GitHub Actions | each day: the genuine invoice paid; a forgery, a raised amount and a prompt-injected transfer refused | [`runs/live/`](runs/live/), [site](https://eltociear.github.io/invoice-leash/#live) |
-| 2,000 dry-run tamperings of 10 kinds, plus 23 signed attacks, against the live desk | 0 would pay; each refusal the expected one | [`runs/campaign.json`](runs/campaign.json) |
+| The live agent, daily in GitHub Actions | each day: the genuine invoice paid; a forgery, a raised amount, a prompt-injected transfer and (on V4) the agent's classical key alone refused | [`runs/live/`](runs/live/), [site](https://eltociear.github.io/invoice-leash/#live) |
+| 2,000 dry-run tamperings of 10 kinds, plus 23 signed attacks, against a live InvoiceDeskV3 (V4 keeps every check it exercises) | 0 would pay; each refusal the expected one | [`runs/campaign.json`](runs/campaign.json) |
 | The Q-Day drill: four accounts' classical keys alone | 16 attacks refused | [QUANTUM_READINESS.md](QUANTUM_READINESS.md) |
 | Shor's gift: an account whose classical private key is published | its QOR is still there | [lab §6](https://eltociear.github.io/invoice-leash/lab.html#shor) |
 | A second company, from nothing, with `desk.mjs`; then `upgrade` to V3 | its own vendors' keys; two vendors' `INV-2001` both paid; an overdue invoice settled in person | [`runs/own-company/`](runs/own-company/), [`runs/own-company-v3/`](runs/own-company-v3/) |

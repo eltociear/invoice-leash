@@ -60,7 +60,9 @@ signature with QoreChain's precompile.
 ## The chain's own words
 
 What QoreChain answered when each attack was tried, quoted from the recorded runs (account addresses
-shortened). These are the chain's messages, not ours.
+shortened). The chain's refusals are its own text. The desk's refusals are the contract's revert data,
+which the chain stores in each transaction's result: `npm run verify` reads it back from the chain and
+decodes it with the contract's ABI, for every V4 refusal.
 
 | Attack | Who refused | QoreChain's answer, verbatim | Evidence |
 |---|---|---|---|
@@ -72,9 +74,10 @@ shortened). These are the chain's messages, not ours.
 | The agent's key asks for a direct fUSD transfer (a prompt injection) | the chain's spending rule | `a linked key with a spending rule may call 0x97143B77… with data only if the rule lists the call in allowed_evm_calls … authenticator not permitted for this action` | [live log](runs/live/log.jsonl) |
 | The agent's classical key alone, on InvoiceDeskV4 (as after Q-Day) | InvoiceDeskV4, via the ML-DSA-87 precompile | `BadAgentSignature` | [`runs/probes/v4-agent-sig.json`](runs/probes/v4-agent-sig.json) |
 | An ordinary EVM wallet with no post-quantum key | the chain | `has no usable registered post-quantum key; the EVM lane requires one, like every other lane` | [`runs/probes/no-pq-evm.json`](runs/probes/no-pq-evm.json) |
-| A forged invoice, or one whose amount was edited | InvoiceDeskV3, via the ML-DSA-87 precompile | `BadSignature` | [live log](runs/live/log.jsonl), [`runs/campaign.json`](runs/campaign.json) |
-| An invoice from a vendor the company never approved | InvoiceDeskV3 | `UnknownVendor` | [`runs/campaign.json`](runs/campaign.json) |
-| Over the agent's limit; past due (agent); zero amount | InvoiceDeskV3 | `OverPerPaymentLimit`, `OverDailyLimit`, `PastDue`, `ZeroAmount` | [`runs/own-company-v3/`](runs/own-company-v3/) |
+| A forged invoice, or one whose amount was edited | InvoiceDeskV4, via the ML-DSA-87 precompile | `BadSignature` | [live log](runs/live/log.jsonl), [`runs/v4-compromised.json`](runs/v4-compromised.json) |
+| An invoice from a vendor the company never approved | InvoiceDeskV4 | `UnknownVendor` | [`runs/v4-compromised.json`](runs/v4-compromised.json) |
+| Over the agent's limit; a replay | InvoiceDeskV4 | `OverPerPaymentLimit`, `OverDailyLimit`, `AlreadyPaid` | [`runs/v4-compromised.json`](runs/v4-compromised.json) |
+| Past due (agent); zero amount | InvoiceDeskV3 (V4 keeps both) | `PastDue`, `ZeroAmount` | [`runs/own-company-v3/`](runs/own-company-v3/) |
 
 ## What it does not stop
 

@@ -16,8 +16,8 @@ const data = {
   chain: { chainId: 9800, name: "QoreChain testnet (qorechain-diana)", rpc: "https://evm-testnet.qore.host", explorer: "https://explore.qore.network/tx/", faucet: "https://dashboard.qorechain.io/faucet" },
   fusd: "0x97143B771D34ddb9130b807b135Ae675A5a963CA",
   desks: [
-    desk("The live agent's desk", "InvoiceDeskV4: the agent's payments need its own ML-DSA-87 signature too. A scheduled GitHub Actions job runs the agent here daily, with a decider that obeys every email.", live, live.version ?? 3, {
-      agentPayments: liveLog.filter((r) => r.ok).map((r) => ({ at: r.at, label: r.label, link: r.link })),
+    desk("The live agent's desk", "InvoiceDeskV4: the agent's payments need its own ML-DSA-87 signature too. A GitHub Actions job runs the agent here daily, with a decider that obeys every email.", live, live.version ?? 3, {
+      agentPayments: liveLog.filter((r) => r.ok && r.at >= (live.deployedAt ?? "")).map((r) => ({ at: r.at, label: r.label, link: r.link })),
       refusals: liveLog.filter((r) => !r.ok).length }),
     desk("A company set up with desk.mjs", "InvoiceDeskV3, upgraded from V2 with desk.mjs upgrade. Three vendors, each with its own key.", own, 3, {
       agentPayments: ownCsv.filter((r) => r[7] === "agent" && r[9] === own.invoiceDesk).map((r) => ({ at: r[0], label: `${r[1]} ${r[3]}, ${r[5]} fUSD`, link: `https://explore.qore.network/tx/${r[8]}` })) }),

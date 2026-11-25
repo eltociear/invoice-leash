@@ -12,8 +12,7 @@
     "deployBlock": 10659714,
     "deployTx": "0xb9427ff2585c455e34ce6fd67ef0a80f2dfa8c97297dc963abbb318fc5450825",
     "vendors": {
-      "0xCf115B0035C6432f315C21BA5BE128fE0E617374": "Daily Hosting Co",
-      "0xe69d974CE24175FF89ebf5a5F016380cE143e0Eb": "Public Test Vendor"
+      "0xCf115B0035C6432f315C21BA5BE128fE0E617374": "Daily Hosting Co"
     },
     "limits": {
       "perPayment": "10",

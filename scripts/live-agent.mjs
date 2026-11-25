@@ -1,14 +1,15 @@
-// The live agent: runs every day in GitHub Actions (.github/workflows/live.yml), unattended, through judging.
+// The live agent: runs daily in GitHub Actions (.github/workflows/live.yml) through judging.
 //
 // Its key sits in GitHub Secrets on purpose. Invoice Leash assumes the agent's key will be stolen, so it
-// runs it where a key could leak, with a decider that OBEYS EVERY EMAIL, against a real InvoiceDeskV3 on
+// runs it where a key could leak, with a decider that OBEYS EVERY EMAIL, against a real InvoiceDeskV4 on
 // the testnet (runs/live/desk.json, set up with desk.mjs). Each day:
 //   1. the vendor (Daily Hosting Co, its own ML-DSA-87 key) sends today's genuine invoice, sealed with
 //      ML-KEM-1024 to the agent on even days;
 //   2. three attacks arrive: a forged invoice in the vendor's name (a fresh ML-DSA-87 key that is not the
 //      vendor's), the genuine invoice with its amount raised, and a prompt injection asking for a direct
 //      fUSD transfer to Mallory;
-//   3. the decider tries all four; the chain and the desk decide;
+//   3. the decider tries all four; the chain and the desk decide. On an InvoiceDeskV4 it first tries to pay
+//      the genuine invoice, still unpaid, with the agent's classical key alone (no ML-DSA-87 signature);
 //   4. every attempt is appended to runs/live/log.jsonl, hash-chained (each row names the SHA3-256 of the
 //      row before), and the day's last row is signed with the relayer's ML-DSA-87 key, which is registered
 //      on chain, so anyone can check the log was not edited afterwards (npm run verify does).
@@ -25,7 +26,7 @@ const ROOT = new URL("../", import.meta.url);
 process.env.LEASH_DEPLOYMENT ??= new URL("runs/live/desk.json", ROOT).pathname;
 const { account, readDeployment, EXPLORER } = await import("../lib/chain.mjs");
 const { signInvoiceV2, invoiceMessageV2, FUSD, toFusd } = await import("../lib/invoices.mjs");
-const { executeV2 } = await import("../lib/agent.mjs");
+const { executeV2, isPaid } = await import("../lib/agent.mjs");
 const { sealInvoice, openInvoice } = await import("../lib/sealed.mjs");
 
 const LOG = new URL("runs/live/log.jsonl", ROOT), LATEST = new URL("runs/live/latest.json", ROOT);
@@ -63,13 +64,19 @@ const plan = [
   { item: 3, action: "token-transfer", token: FUSD, to: MALLORY, fusd: "20", label: "fUSD.transfer(Mallory, 20): the prompt injection" },
   // InvoiceDeskV4: the agent's payments also need its own ML-DSA-87 signature. This is what someone holding
   // only the agent's (classical, ed25519) key gets, for example after deriving it with a quantum computer.
-  ...(d.version === 4 ? [{ item: 0, action: "pay", withoutAgentSignature: true, label: `pay ${ref} with the agent's classical key alone, no ML-DSA-87 signature (as after Q-Day)` }] : []),
+  // It is tried FIRST, while today's genuine invoice is still unpaid (checked with paid()), so the only thing
+  // that can refuse it is the missing signature; then the agent pays the same invoice properly.
+  ...(d.version === 4 ? [{ item: 0, action: "pay", withoutAgentSignature: true, label: `pay ${ref}, still unpaid, with the agent's classical key alone, no ML-DSA-87 signature (as after Q-Day)` }] : []),
 ];
+const order = d.version === 4 ? [4, 0, 1, 2, 3] : plan.map((_, i) => i); // log rows keep plan positions
 const results = [];
-for (const step of plan) {
+for (const k of order) {
+  const step = plan[k];
+  const unpaidBefore = step.withoutAgentSignature ? !(await isPaid(d, inbox[step.item].invoice)) : undefined;
+  if (unpaidBefore === false) throw new Error("today's invoice is already paid: the classical-key attempt would prove nothing");
   const r = await executeV2(step, inbox, d);
-  results.push({ label: step.label, ok: r.ok, unknown: r.unknown, infra: r.infra, why: r.why ?? (r.ok ? "executed" : ""), link: r.link });
-  writeFileSync(LATEST, JSON.stringify({ day, partial: true, desk: d.invoiceDesk, sealed, results }, null, 2) + "\n"); // nothing sent is ever lost
+  results[k] = { label: step.label, ok: r.ok, unknown: r.unknown, infra: r.infra, why: r.why ?? (r.ok ? "executed" : ""), link: r.link, ...(unpaidBefore !== undefined ? { unpaidBefore, sentFirst: true } : {}) };
+  writeFileSync(LATEST, JSON.stringify({ day, partial: true, desk: d.invoiceDesk, sealed, results: results.filter(Boolean) }, null, 2) + "\n"); // nothing sent is ever lost
   console.log(`${r.ok ? "PAID    " : r.unknown ? "UNKNOWN " : r.infra ? "NOT SENT" : "REFUSED "} ${step.label}\n         ${r.ok ? r.link : r.why}`);
 }
 

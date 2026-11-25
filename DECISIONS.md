@@ -11,7 +11,7 @@ check. Every limit lives on QoreChain or in the contract.
 and its key lives on a server. A design that is safe only while the model behaves is not safe.
 
 **Evidence.** A decider that obeys every email made 16 payment attempts and got only the 3 genuine
-invoices paid ([EVIDENCE.md](EVIDENCE.md#the-demo-inbox-v2-fusd)). The live agent runs that decider on a daily schedule
+invoices paid ([EVIDENCE.md](EVIDENCE.md#the-demo-inbox-v2-fusd)). The live agent runs that decider daily in GitHub Actions
 ([`runs/live/`](runs/live/)).
 
 ## 2. The agent gets its own empty account (v1 → v2)
@@ -119,7 +119,7 @@ runs daily. A test fails `npm test` if a document states a count its source no l
 
 ## 10. The live agent's key in GitHub Secrets, on purpose
 
-**Decision.** The agent runs on a daily schedule in GitHub Actions, with its key, the relayer's key and
+**Decision.** The agent runs daily in GitHub Actions (scheduled; [where each day ran](runs/live/README.md#where-each-day-ran)), with its key, the relayer's key and
 the test vendor's key as repository secrets, and a decider that obeys every email.
 
 **Why.** It is the design's claim, made live: where the key could leak, the worst case is still bounded.
@@ -146,5 +146,9 @@ post-quantum key; the EVM lane requires one, like every other lane"*
 is published, so any browser can sign invoices as it.
 
 **Why.** It lets anyone see a real ML-DSA-87 invoice signed in a page and paid on chain, with no
-vendor-side setup. It is harmless by construction: a desk pays a vendor only if that desk's owner
-approves it.
+vendor-side setup. A desk pays a vendor only if that desk's owner approves it, so it is harmless to every
+desk that does not approve it. **An owner who approves it lets anyone bill that desk**, up to its limits:
+approve it only on a desk you use to try the console. It was approved on the live V4 desk for the first
+compromised-agent run on 2026-11-25 and removed afterwards
+([0x5e93ddba…](https://explore.qore.network/tx/0x5e93ddbaab92e179860db4195b21d9128d7088ed5606330d8810b8d49419dbd3));
+that run is redone without it on 2026-11-26 (the desk's daily limit was spent on 2026-11-25).

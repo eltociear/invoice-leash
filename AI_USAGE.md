@@ -11,7 +11,7 @@ the AI's work was checked, and the mistakes the AI made that those checks caught
 | **AI** | Claude Code (Anthropic), model `claude-opus-5-5`: one main session that writes code, runs the testnet steps and reports, plus sub-agents started for independent reviews and research |
 | **Human** | the team (one person, [@eltociear](https://github.com/eltociear)): goals, product decisions, accounts and wallets, everything that needs a human identity, and the final call on what ships |
 | **Written by the AI** | nearly all code, tests, scripts, documentation, the demo video (slides, narration script, music) and the cover image |
-| **How the AI's work is checked** | not by trusting it: `npm run verify` (110 read-only checks against the live testnet), 152 Foundry tests and 17 invariants, mutation checks (V2: 14 of 14 mutants caught; V3: 18 of 18), Slither, QoreScan, browser tests, CI daily, and AI reviewers that did not write the code |
+| **How the AI's work is checked** | not by trusting it: `npm run verify` (113 read-only checks against the live testnet), 152 Foundry tests and 17 invariants, mutation checks (V2: 14 of 14 mutants caught; V3: 18 of 18), Slither, QoreScan, browser tests, CI daily, and AI reviewers that did not write the code |
 
 ## The workflow
 

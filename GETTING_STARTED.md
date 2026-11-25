@@ -144,7 +144,7 @@ Your desk is an **InvoiceDeskV4** (InvoiceDeskV3 plus the agent's own ML-DSA-87 
 - A zero-amount invoice is refused (`ZeroAmount`). The desk also checks that the vendor received exactly
   the invoiced amount.
 
-All of this was run on the testnet: [`runs/own-company-v3/`](runs/own-company-v3/).
+All of this was run on the testnet on a V3 desk ([`runs/own-company-v3/`](runs/own-company-v3/)); V4 adds only the agent's signature, which `desk.mjs setup` configures (the `agentsigner` role) and the live agent uses daily ([`runs/live/`](runs/live/)).
 
 **Set up before V4?** `node desk.mjs upgrade` deploys a V4 desk and copies your vendors, agent, limits
 and allowance. It switches the agent off on the old desk, sets the old allowance to 0, and relinks the

@@ -1,8 +1,8 @@
 {
  "chain": "qorechain-diana",
- "block": 10677795,
- "at": "2026-11-24T16:58:51.740Z",
- "passed": 110,
+ "block": 10711904,
+ "at": "2026-11-25T06:13:57.717Z",
+ "passed": 113,
  "failed": 0,
  "checks": [
   {
@@ -297,7 +297,7 @@
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
    "check": "the lab can show the human path: company holds ≥300 fUSD with ≥300 allowance and ≥80 QOR; v1 payer ≥5 QOR",
-   "detail": "(400.0 fUSD, allowance 970.0, 111.80 QOR; v1 8.180 QOR)"
+   "detail": "(400.0 fUSD, allowance 970.0, 110.68 QOR; v1 8.180 QOR)"
   },
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
@@ -359,7 +359,7 @@
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
    "check": "#9 TOKENWELL-INV-8795 as the agent -> ACCEPT",
-   "detail": "(expected from its due date and the 230.0 fUSD left today: OverDailyLimit on the run's UTC day)"
+   "detail": "(expected from its due date and the 250.0 fUSD left today: OverDailyLimit on the run's UTC day)"
   },
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
@@ -438,6 +438,18 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
+   "check": "InvoiceDeskV4's refusals, read from the chain's own record: for each of 10 refused payments, the revert bytes in the transaction's result decode (with the contract's ABI) to the error the log states (AlreadyPaid, BadAgentSignature, BadSignature, OverDailyLimit, OverPerPaymentLimit, UnknownVendor)",
+   "detail": "(tx_response.data)"
+  },
+  {
+   "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
+   "ok": true,
+   "check": "the agent account's own EVM window on InvoiceDeskV4 (one target: the desk): inside it, its classical key alone was reverted on chain (asked again now: BadAgentSignature), the same invoice with the agent's ML-DSA-87 signature paid; fUSD and QOR to Mallory refused by the window; after closing, refused",
+   "detail": "(open DE770D33…, receipts re-read)"
+  },
+  {
+   "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
+   "ok": true,
    "check": "InvoiceDeskV4, asked live (the attack lab's §7): a genuine unpaid invoice is BadAgentSignature for the agent's classical key alone, and payable by the company in person",
    "detail": "(LAB-V4-GENUINE)"
   },
@@ -474,13 +486,19 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "live agent log: 4 rows over 1 day(s), hash-chained (SHA3-256), each day signed with the relayer's on-chain ML-DSA-87 key; each day the genuine invoice paid and every attack refused (on V4 days, also the agent's classical key alone)",
-   "detail": "(2026-11-24 … 2026-11-24)"
+   "check": "live agent log: 9 rows over 2 day(s), hash-chained (SHA3-256), each day signed with the relayer's on-chain ML-DSA-87 key; each day the genuine invoice paid and every attack refused (on V4 days, also the agent's classical key alone)",
+   "detail": "(2026-11-24 … 2026-11-25)"
   },
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "live agent: each of its 4 logged transactions re-read from the chain agrees; it last ran 11 h ago (must be < 72 h)",
+   "check": "live agent, V4 days: the classical-key-alone attempt is sent before the genuine invoice is paid (block heights), so only the missing ML-DSA-87 signature can refuse it: 0 day(s)",
+   "detail": "(from 2026-11-26; on 2026-11-25 it was sent after the payment)"
+  },
+  {
+   "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
+   "ok": true,
+   "check": "live agent: each of its 9 logged transactions re-read from the chain agrees; it last ran 1 h ago (must be < 72 h)",
    "detail": "(desk 0x235dA591…, .github/workflows/live.yml)"
   },
   {
