@@ -21,7 +21,7 @@ verified on chain** (InvoiceDeskV4, the live desk).
 > npm install && npm run verify
 > ```
 >
-> 115 checks against the live testnet: the deployed contracts are byte-for-byte this source, every
+> 116 checks against the live testnet: the deployed contracts are byte-for-byte this source, every
 > recorded transaction is re-read, every attack is replayed. Last run: [`runs/verify-latest.txt`](runs/verify-latest.txt)
 > ([JSON](runs/verify-latest.json)). CI runs it daily, with 152 Foundry tests and 17 invariants.
 
@@ -51,7 +51,7 @@ verified on chain** (InvoiceDeskV4, the live desk).
 
 | Criterion | Evidence |
 |---|---|
-| **Works** (25) | `npm run verify` (115 checks); the [live agent](runs/live/); a [third company set up from nothing on V4](runs/own-company-v4/) with `desk.mjs` (and a [second](runs/own-company-v3/), on V3); the [Desk Console](runs/console-e2e-v4.json) driven in a real browser; 100% coverage and 17 Halmos proofs ([`runs/halmos.txt`](runs/halmos.txt)) |
+| **Works** (25) | `npm run verify` (116 checks); the [live agent](runs/live/); a [third company set up from nothing on V4](runs/own-company-v4/) with `desk.mjs` (and a [second](runs/own-company-v3/), on V3); the [Desk Console](runs/console-e2e-v4.json) driven in a real browser; 100% coverage and 17 Halmos proofs ([`runs/halmos.txt`](runs/halmos.txt)) |
 | **QoreChain tech** (25) | the ML-DSA-87 precompiles `0x…0a01`/`0a02` inside the contract; hybrid accounts; an authenticator with a spending rule; EVM windows with `allowed_targets`; `MsgExecuteEVM` relaying; QoreSign; QoreSeal ML-KEM-1024 and the KEM registry; `MsgConvertCoin`/`MsgConvertERC20`; the AMM; QoreScan; QoreChain's MCP server |
 | **Post-quantum** (20) | [QUANTUM_READINESS.md](QUANTUM_READINESS.md): every algorithm in the system, the Q-Day drill, Shor's gift, no classical-only lane; on InvoiceDeskV4 the agent's classical key alone pays nothing, even inside its own EVM window ([`runs/probes/window-v4.json`](runs/probes/window-v4.json)), and its signer runs on a separate host |
 | **Originality** (15) | the finding above, and the redesign it forced; an agent whose key is kept where it can leak, on purpose |
@@ -114,7 +114,7 @@ limits, skipping the vendor and signature checks. v1's limits still bounded the 
 payment, 2.5 a day), but "the agent can only call `pay`" was not true. v2 is the fix: the agent's own
 account holds no fUSD and its key may move nothing; the company's money moves only through the desk.
 
-**For other builders on QoreChain:**
+**For other builders on QoreChain** (eleven measured notes, each with its transaction: [CHAIN_NOTES.md](CHAIN_NOTES.md)):
 - If your agent acts as an account that holds funds, its spending rule's limits are what bounds it, not
   its call list.
 - An EVM call relayed through an authenticator (`MsgExecuteEVM`) leaves no log that `eth_getLogs`
@@ -199,7 +199,7 @@ v1's earlier owners: [V1.md](V1.md).
 
 [JUDGES.md](JUDGES.md) (start here) · [EVIDENCE.md](EVIDENCE.md) (the record) · [GETTING_STARTED.md](GETTING_STARTED.md) ·
 [QUANTUM_READINESS.md](QUANTUM_READINESS.md) · [THREAT_MODEL.md](THREAT_MODEL.md) (including what it does not stop) ·
-[DECISIONS.md](DECISIONS.md) · [AI_USAGE.md](AI_USAGE.md) · [V1.md](V1.md) · [MANDATE.md](MANDATE.md) (a draft mandate profile, written from this project)
+[DECISIONS.md](DECISIONS.md) · [CHAIN_NOTES.md](CHAIN_NOTES.md) (QoreChain, measured) · [AI_USAGE.md](AI_USAGE.md) · [V1.md](V1.md) · [MANDATE.md](MANDATE.md) (a draft mandate profile, written from this project)
 
 ## Credits
 

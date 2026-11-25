@@ -484,6 +484,16 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
         `a third company set up from nothing with desk.mjs on InvoiceDeskV4 (byte-for-byte this source): ${byAgent} paid by the agent (with its signer's ML-DSA-87 signature), ${byCompany} by the company in person; each payment re-read and paid() true; its agent's classical key alone: ${alone}`,
         `(${DC.slice(0, 10)}…, runs/own-company-v4/)`);
     }
+    // CHAIN_NOTES.md: the transactions it cites still say what it says
+    {
+      const tx = async (h) => (await rest(`/cosmos/tx/v1beta1/txs/${h}`))?.tx_response;
+      const dn = json("runs/probes/denom-notation.json"), gm = json("runs/probes/relay-gas-mismatch.json");
+      const [wrong, right] = [await tx(dn.wrongSpellingSend.tx), await tx(dn.rightSpellingSend.tx)];
+      let gmOk = 0;
+      for (const r of gm.rows) { const t = await tx(r.link.slice(-64)); if (t && t.code !== 0 && /provisions \d+ gas for the call, less than the signed gas_limit/.test(t.raw_log)) gmOk++; }
+      ok(wrong?.code === 5 && /0erc20\/0x97143B/.test(wrong.raw_log) && right?.code === 0 && gm.rows.length > 0 && gmOk === gm.rows.length,
+        `CHAIN_NOTES.md's records re-read: a MsgSend spelling the token erc20/… (the rules' spelling) is an empty denom, refused; erc20:… (the bank's) went through; ${gmOk} relayed calls refused for provisioning less gas than signed`, "(notes 6, 9)");
+    }
     const lab4 = json("runs/live/v4-lab-invoice.json"), li = lab4.invoice;
     const ask4 = async (from) => { try { await provider.call({ from, to: DL4, data: desk4.encodeFunctionData("pay", [lab4.payer, li.token, li.vendor, li.amount, li.id, li.dueBy, li.signature, "0x"]) }); return "WOULD PAY"; } catch (e) { return desk4.parseError(e.data ?? e.info?.error?.data)?.name ?? "?"; } };
     const [labAgent, labCompany] = [await ask4(lab4.agent), await ask4(lab4.payer)];

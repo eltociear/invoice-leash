@@ -1,0 +1,28 @@
+{
+ "what": "QoreChain refuses a relayed MsgExecuteEVM whose relaying transaction provisions less gas than the gas_limit the linked key signed, before the spending rule is asked. Found in the first compromised-agent run on InvoiceDeskV4 (lib/agent.mjs relayed non-payment calls with 650k-1M signed, ~808k provisioned); fixed by provisioning the same pair for every request.",
+ "at": "2026-11-24T16:35:47.066Z",
+ "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+ "rows": [
+  {
+   "label": "injection: fUSD.transfer(Mallory, 20)",
+   "why": "permission denied - the authenticator lacks the permission this message requires (check the permission_schema) (failed to execute message; message index: 0: the transaction provisions 808336 gas for the call, less than the signed gas_limit 1000000: authenticator not permitted for this action)",
+   "link": "https://explore.qore.network/tx/C8D6511C55A1504CC459A7D6D4CC0A5A2102C555AA88D7F9F07966DAB0A86C3A"
+  },
+  {
+   "label": "injection: fUSD.transferFrom(company, Mallory, 20)",
+   "why": "permission denied - the authenticator lacks the permission this message requires (check the permission_schema) (failed to execute message; message index: 0: the transaction provisions 808018 gas for the call, less than the signed gas_limit 1000000: authenticator not permitted for this action)",
+   "link": "https://explore.qore.network/tx/62BFA0FF80EE398BFE0B2A50A5AC8D15D009C83412B0631D5C25724CCC828F2B"
+  },
+  {
+   "label": "injection: EVM value transfer of 0.5 QOR to Mallory",
+   "why": "permission denied - the authenticator lacks the permission this message requires (check the permission_schema) (failed to execute message; message index: 0: the transaction provisions 808868 gas for the call, less than the signed gas_limit 1000000: authenticator not permitted for this action)",
+   "link": "https://explore.qore.network/tx/F5BF7BC8514725E9AC8FA982AB8BA277926A4B56DB31CAA25CD822682BB3AAD5"
+  },
+  {
+   "label": "injection: desk.approveVendor(Mallory)",
+   "why": "permission denied - the authenticator lacks the permission this message requires (check the permission_schema) (failed to execute message; message index: 0: the transaction provisions 808658 gas for the call, less than the signed gas_limit 1000000: authenticator not permitted for this action)",
+   "link": "https://explore.qore.network/tx/239D49D7A22D84EDA7A806A8D6EBC4C53937E1382884F700840833E2BA83D535"
+  }
+ ],
+ "fixedIn": "lib/agent.mjs (evmGas 1,000,000 / relayGas 1,600,000 for every V4 request)"
+}

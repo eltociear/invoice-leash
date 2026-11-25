@@ -1,0 +1,8 @@
+{
+ "what": "one ERC-20 token, two spellings: the bank module names its coin erc20:0x… (colon); spending rules and the authenticator's messages name it erc20/0x… (slash). A MsgSend with the slash spelling is a different, empty denom.",
+ "bankDenom": "erc20:0x97143B771D34ddb9130b807b135Ae675A5a963CA (GET /cosmos/bank/v1beta1/balances/<address>)",
+ "ruleDenom": "erc20/0x4604e7e45b2ecdbfbdc157103f5b2b62cb16451a (runs/live/desk.json agentRule.allowedDenoms, as linked)",
+ "chainMessage": "a linked key with a spending rule may call 0x97143B77… with data only if the rule lists the call in allowed_evm_calls (or lists the token as \"erc20/0x97143B771D34ddb9130b807b135Ae675A5a963CA\" for a token transfer or approval)",
+ "wrongSpellingSend": { "tx": "55779A1841D6D0A673FE0F0DB767B44E617C8A4E929D186346A94169A2E8149A", "code": 5, "rawLog": "spendable balance 0erc20/0x97143B771D34ddb9130b807b135Ae675A5a963CA is smaller than 100000000erc20/0x97143B771D34ddb9130b807b135Ae675A5a963CA: insufficient funds" },
+ "rightSpellingSend": { "tx": "1BBD0C8D7DCE6FC97052A27F7986F3E9816979E7F7E795EDA35C0A3BE4FE15F3", "code": 0 }
+}

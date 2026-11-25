@@ -1,8 +1,8 @@
 {
  "chain": "qorechain-diana",
- "block": 10732755,
- "at": "2026-11-25T14:30:14.879Z",
- "passed": 115,
+ "block": 10734473,
+ "at": "2026-11-25T15:11:13.655Z",
+ "passed": 116,
  "failed": 0,
  "checks": [
   {
@@ -297,7 +297,7 @@
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
    "check": "the lab can show the human path: company holds ≥300 fUSD with ≥300 allowance and ≥80 QOR; v1 payer ≥5 QOR",
-   "detail": "(400.0 fUSD, allowance 970.0, 96.821 QOR; v1 8.180 QOR)"
+   "detail": "(400.0 fUSD, allowance 970.0, 196.82 QOR; v1 8.180 QOR)"
   },
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
@@ -406,7 +406,7 @@
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
    "check": "most of the company's fUSD is the bank coin (moves only with ML-DSA-87); the desk's ERC-20 float, the smaller part, is what a window could ever expose",
-   "detail": "(treasury 408.14006 fUSD, float 400.0 fUSD)"
+   "detail": "(treasury 1408.14006 fUSD, float 400.0 fUSD)"
   },
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
@@ -462,6 +462,12 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
+   "check": "CHAIN_NOTES.md's records re-read: a MsgSend spelling the token erc20/… (the rules' spelling) is an empty denom, refused; erc20:… (the bank's) went through; 4 relayed calls refused for provisioning less gas than signed",
+   "detail": "(notes 6, 9)"
+  },
+  {
+   "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
+   "ok": true,
    "check": "InvoiceDeskV4, asked live (the attack lab's §7): a genuine unpaid invoice is BadAgentSignature for the agent's classical key alone, and payable by the company in person",
    "detail": "(LAB-V4-GENUINE)"
   },
@@ -510,7 +516,7 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "live agent: each of its 9 logged transactions re-read from the chain agrees; it last ran 9 h ago (must be < 72 h)",
+   "check": "live agent: each of its 9 logged transactions re-read from the chain agrees; it last ran 10 h ago (must be < 72 h)",
    "detail": "(desk 0x235dA591…, .github/workflows/live.yml)"
   },
   {

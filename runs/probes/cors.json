@@ -1,0 +1,8 @@
+{
+ "what": "which QoreChain testnet endpoints a web page may call (CORS), measured with curl and an Origin header",
+ "at": "2026-11-25T15:04:58Z",
+ "origin": "https://eltociear.github.io",
+ "rest": { "url": "https://api-testnet.qore.host", "GET": "200, no Access-Control-Allow-Origin header", "OPTIONS preflight for POST /cosmos/tx/v1beta1/txs": "501" },
+ "evmRpc": { "url": "https://evm-testnet.qore.host", "POST eth_chainId": "200, access-control-allow-origin: *" },
+ "consequence": "a page can read and simulate EVM calls (eth_call), but cannot query REST or broadcast a Cosmos transaction; the Desk Console reads through the EVM RPC and signs through desk.mjs serve on 127.0.0.1"
+}
