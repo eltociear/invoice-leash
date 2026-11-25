@@ -1,0 +1,32 @@
+{
+ "what": "the Desk Console (docs/app.html) driven in a real browser (Playwright) against desk.mjs serve for the third company, an InvoiceDeskV4 set up from nothing with desk.mjs: approve the public test vendor, sign an fUSD invoice in the page with ML-DSA-87, add a forgery, triage, let the agent pay (each payment carrying the agent signer's ML-DSA-87 signature), export; then the public vendor was removed again",
+ "at": "2026-11-25T14:20:00Z",
+ "desk": "0xd8a723c91Af58A885d8E87509E7B770559c0C353",
+ "version": 4,
+ "payerEvm": "0xf146edafc12f793850e3211e37e42c03aecff4f0",
+ "approveTx": "0x3f598fba00ec146e7f5a2fdffc5de515599ef32bea76aa057e177c9d3b44d42d",
+ "removeTx": "0x5425c67348bff2630648f70bf36c3775916f6015a0929c7da71df32a42d01d5a",
+ "signedInBrowser": [
+  "PTV-OPGDYM",
+  "PTV-XU5CYV"
+ ],
+ "paidByAgent": [
+  {
+   "ref": "PTV-ZEBADY",
+   "tx": "0958BB245BEE9238A8A453FB12F92F921B107E378176E4AA6FBCA5F89640B5EB"
+  },
+  {
+   "ref": "PTV-OPGDYM",
+   "tx": "ECAAB15A2FAD0B37935826B9C1462BF5466EC0DE57A486280A59C17E728FBD11"
+  }
+ ],
+ "forged": {
+  "ref": "PTV-WYVT6G-F",
+  "verdict": "REJECTED"
+ },
+ "notes": [
+  "PTV-XU5CYV, also signed in the page, met NEEDS FUNDS: the float was spent (1 fUSD left), and triage said so with the command that fixes it",
+  "PTV-77, refused as UnknownVendor before, became payable while the public test vendor was approved: why DECISIONS #12 says to approve it only on a desk you use to try the console",
+  "page errors: 0"
+ ]
+}

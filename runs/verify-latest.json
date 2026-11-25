@@ -1,8 +1,8 @@
 {
  "chain": "qorechain-diana",
- "block": 10730918,
- "at": "2026-11-25T13:46:22.159Z",
- "passed": 114,
+ "block": 10732755,
+ "at": "2026-11-25T14:30:14.879Z",
+ "passed": 115,
  "failed": 0,
  "checks": [
   {
@@ -297,7 +297,7 @@
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
    "check": "the lab can show the human path: company holds ≥300 fUSD with ≥300 allowance and ≥80 QOR; v1 payer ≥5 QOR",
-   "detail": "(400.0 fUSD, allowance 970.0, 110.68 QOR; v1 8.180 QOR)"
+   "detail": "(400.0 fUSD, allowance 970.0, 96.821 QOR; v1 8.180 QOR)"
   },
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
@@ -406,7 +406,7 @@
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
    "check": "most of the company's fUSD is the bank coin (moves only with ML-DSA-87); the desk's ERC-20 float, the smaller part, is what a window could ever expose",
-   "detail": "(treasury 508.14006 fUSD, float 400.0 fUSD)"
+   "detail": "(treasury 408.14006 fUSD, float 400.0 fUSD)"
   },
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
@@ -452,6 +452,12 @@
    "ok": true,
    "check": "2,000 dry-run attacks on the live InvoiceDeskV4: 0 would pay. A compromised agent with its signer (invoice tamperings): refused by the vendor's signature and the desk's rules. The agent's key without its signer: 985 of 985 BadAgentSignature. 40 of 40 sampled attacks asked again now: same answers",
    "detail": "(control now: would pay)"
+  },
+  {
+   "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
+   "ok": true,
+   "check": "a third company set up from nothing with desk.mjs on InvoiceDeskV4 (byte-for-byte this source): 4 paid by the agent (with its signer's ML-DSA-87 signature), 2 by the company in person; each payment re-read and paid() true; its agent's classical key alone: BadAgentSignature",
+   "detail": "(0xd8a723c9…, runs/own-company-v4/)"
   },
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
@@ -504,7 +510,7 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "live agent: each of its 9 logged transactions re-read from the chain agrees; it last ran 8 h ago (must be < 72 h)",
+   "check": "live agent: each of its 9 logged transactions re-read from the chain agrees; it last ran 9 h ago (must be < 72 h)",
    "detail": "(desk 0x235dA591…, .github/workflows/live.yml)"
   },
   {

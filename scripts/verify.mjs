@@ -464,6 +464,26 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
         `${c4.count.toLocaleString()} dry-run attacks on the live InvoiceDeskV4: 0 would pay. A compromised agent with its signer (invoice tamperings): refused by the vendor's signature and the desk's rules. The agent's key without its signer: ${c4.agentsig.badAgentSignature} of ${c4.agentsig.count} BadAgentSignature. ${same} of ${s4.sample.length} sampled attacks asked again now: same answers`,
         `(control now: ${ctl === "PAID" ? "would pay" : "past both signature checks, today's limit used"})`);
     }
+    // the third company, set up from nothing on InvoiceDeskV4 (runs/own-company-v4/)
+    {
+      const c4d = json("runs/own-company-v4/desk.json").v2, DC = getAddress(c4d.invoiceDesk);
+      const rows = readFileSync(new URL("runs/own-company-v4/payments.csv", root), "utf8").trim().split("\n").slice(1).map((l) => l.split(","));
+      let txOk = 0, paidOk = 0;
+      for (const r of rows) {
+        const [, , vendor, ref, id, , , by, tx] = r;
+        if (by === "company") { const rc = await provider.send("eth_getTransactionReceipt", [tx.startsWith("0x") ? tx : "0x" + tx]); if (rc?.status === "0x1") txOk++; }
+        else { const t = (await rest(`/cosmos/tx/v1beta1/txs/${tx}`))?.tx_response; if (t && t.code === 0 && !t.events.some((e) => e.type === "abstractaccount_execution_failed")) txOk++; }
+        const [p] = desk4.decodeFunctionResult("paid", await provider.call({ to: DC, data: desk4.encodeFunctionData("paid", [getAddress(c4d.payerEvm), getAddress(vendor), id]) }));
+        if (p) paidOk++;
+      }
+      const hc = json("runs/own-company-v4/invoices/HC-1001.json").invoice; let alone = null;
+      try { await provider.call({ from: c4d.agentAccountEvm, to: DC, data: desk4.encodeFunctionData("pay", [c4d.payerEvm, hc.token, hc.vendor, hc.amount, hc.id, hc.dueBy, hc.signature, "0x"]) }); alone = "would pay"; }
+      catch (e) { try { alone = desk4.parseError(e.data ?? e.info?.error?.data)?.name; } catch { alone = null; } }
+      const byAgent = rows.filter((r) => r[7] === "agent").length, byCompany = rows.length - byAgent;
+      ok(c4d.version === 4 && (await provider.getCode(DC)).slice(2) === c4.evm.deployedBytecode.object && rows.length >= 4 && txOk === rows.length && paidOk === rows.length && alone === "BadAgentSignature",
+        `a third company set up from nothing with desk.mjs on InvoiceDeskV4 (byte-for-byte this source): ${byAgent} paid by the agent (with its signer's ML-DSA-87 signature), ${byCompany} by the company in person; each payment re-read and paid() true; its agent's classical key alone: ${alone}`,
+        `(${DC.slice(0, 10)}…, runs/own-company-v4/)`);
+    }
     const lab4 = json("runs/live/v4-lab-invoice.json"), li = lab4.invoice;
     const ask4 = async (from) => { try { await provider.call({ from, to: DL4, data: desk4.encodeFunctionData("pay", [lab4.payer, li.token, li.vendor, li.amount, li.id, li.dueBy, li.signature, "0x"]) }); return "WOULD PAY"; } catch (e) { return desk4.parseError(e.data ?? e.info?.error?.data)?.name ?? "?"; } };
     const [labAgent, labCompany] = [await ask4(lab4.agent), await ask4(lab4.payer)];

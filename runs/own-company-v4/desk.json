@@ -1,0 +1,33 @@
+{
+  "v2": {
+    "version": 4,
+    "invoiceDesk": "0xd8a723c91Af58A885d8E87509E7B770559c0C353",
+    "token": "0x97143B771D34ddb9130b807b135Ae675A5a963CA",
+    "payer": "qor179rwmt7p9auns58ryy0r0epvqwhvla8slywqh4",
+    "payerEvm": "0xf146edafc12f793850e3211e37e42c03aecff4f0",
+    "agentAccount": "qor176ncklh0ktyyasucd80keslnawzrvk0c3qhl4t",
+    "agentAccountEvm": "0xf6a78b7eefb2c84ec39869df6cc3f3eb843659f8",
+    "gas": "qor1n347hlkgs7sw9exkpxydlvglehq7pe5udky7fz",
+    "deployedAt": "2026-11-25T13:57:04.244Z",
+    "deployBlock": 10731447,
+    "deployTx": "0x0d1c098861e8ab3b83128b02fb8e96c6fbf70510846d458f2d36538367b9f9c3",
+    "vendors": {
+      "0xD63f7EFf477a055609908d5AEB1E2079EB1c1965": "Harbor Cloud"
+    },
+    "limits": {
+      "perPayment": "30",
+      "daily": "60",
+      "allowance": "200"
+    },
+    "agentRule": {
+      "allowedDenoms": [
+        "erc20/0x4604e7e45b2ecdbfbdc157103f5b2b62cb16451a"
+      ],
+      "allowedEvmCalls": [
+        "0xd8a723c91Af58A885d8E87509E7B770559c0C353/0xe07cc3c1"
+      ],
+      "hours": "720",
+      "linkTx": "C6847ED20036B0CD5184983D1B319C1553FF5EE0E9984EC1353DEFDE60239AC2"
+    }
+  }
+}

@@ -1,0 +1,4 @@
+
+could not reach the QoreChain testnet (ETIMEDOUT). Nothing was lost: run the same command again. setup, run and pay ask the chain first, so they skip what is done and never pay an invoice twice.
+
+request timeout (code=TIMEOUT, version=6.17.0)

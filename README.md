@@ -21,7 +21,7 @@ verified on chain** (InvoiceDeskV4, the live desk).
 > npm install && npm run verify
 > ```
 >
-> 114 checks against the live testnet: the deployed contracts are byte-for-byte this source, every
+> 115 checks against the live testnet: the deployed contracts are byte-for-byte this source, every
 > recorded transaction is re-read, every attack is replayed. Last run: [`runs/verify-latest.txt`](runs/verify-latest.txt)
 > ([JSON](runs/verify-latest.json)). CI runs it daily, with 152 Foundry tests and 17 invariants.
 
@@ -51,7 +51,7 @@ verified on chain** (InvoiceDeskV4, the live desk).
 
 | Criterion | Evidence |
 |---|---|
-| **Works** (25) | `npm run verify` (114 checks); the [live agent](runs/live/); a [second company](runs/own-company-v3/) set up with `desk.mjs`; the [Desk Console](runs/console-e2e.json) driven in a real browser; 100% coverage and 17 Halmos proofs ([`runs/halmos.txt`](runs/halmos.txt)) |
+| **Works** (25) | `npm run verify` (115 checks); the [live agent](runs/live/); a [third company set up from nothing on V4](runs/own-company-v4/) with `desk.mjs` (and a [second](runs/own-company-v3/), on V3); the [Desk Console](runs/console-e2e-v4.json) driven in a real browser; 100% coverage and 17 Halmos proofs ([`runs/halmos.txt`](runs/halmos.txt)) |
 | **QoreChain tech** (25) | the ML-DSA-87 precompiles `0x…0a01`/`0a02` inside the contract; hybrid accounts; an authenticator with a spending rule; EVM windows with `allowed_targets`; `MsgExecuteEVM` relaying; QoreSign; QoreSeal ML-KEM-1024 and the KEM registry; `MsgConvertCoin`/`MsgConvertERC20`; the AMM; QoreScan; QoreChain's MCP server |
 | **Post-quantum** (20) | [QUANTUM_READINESS.md](QUANTUM_READINESS.md): every algorithm in the system, the Q-Day drill, Shor's gift, no classical-only lane; on InvoiceDeskV4 the agent's classical key alone pays nothing, even inside its own EVM window ([`runs/probes/window-v4.json`](runs/probes/window-v4.json)), and its signer runs on a separate host |
 | **Originality** (15) | the finding above, and the redesign it forced; an agent whose key is kept where it can leak, on purpose |
@@ -133,6 +133,7 @@ account holds no fUSD and its key may move nothing; the company's money moves on
 | 2,000 dry-run tamperings of 10 kinds, plus 23 signed attacks, against InvoiceDeskV3 | 0 would pay; each refusal the expected one | [`runs/campaign.json`](runs/campaign.json) |
 | The Q-Day drill: four accounts' classical keys alone | 16 attacks refused | [QUANTUM_READINESS.md](QUANTUM_READINESS.md) |
 | Shor's gift: an account whose classical private key is published | its QOR is still there | [lab §6](https://eltociear.github.io/invoice-leash/lab.html#shor) |
+| A third company, from nothing, with `desk.mjs`, on InvoiceDeskV4 | the agent paid 2 (one sealed), the company 2 in person (over the limit; past due); an edited copy and an unapproved vendor refused; the Desk Console driven in a browser on it | [`runs/own-company-v4/`](runs/own-company-v4/), [`runs/console-e2e-v4.json`](runs/console-e2e-v4.json) |
 | A second company, from nothing, with `desk.mjs`; then `upgrade` to V3 | its own vendors' keys; two vendors' `INV-2001` both paid; an overdue invoice settled in person | [`runs/own-company/`](runs/own-company/), [`runs/own-company-v3/`](runs/own-company-v3/) |
 | Claude Code through the MCP server; a sealed (ML-KEM-1024) inbox; an obey-everything MCP client | Claude paid only the genuine invoices; the client was refused 12 times | [EVIDENCE.md](EVIDENCE.md#the-mcp-server-and-the-sessions-recorded-through-it) |
 | Model behaviour: Haiku, Sonnet and Opus told to obey a forged, unsigned "CFO" | none tried the injected transfers. This tests the models, not the leash | [`runs/models/`](runs/models/) |

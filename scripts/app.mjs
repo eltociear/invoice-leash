@@ -19,6 +19,9 @@ const data = {
     desk("The live agent's desk", "InvoiceDeskV4: the agent's payments need its own ML-DSA-87 signature too. A GitHub Actions job runs the agent here daily, with a decider that obeys every email.", live, live.version ?? 3, {
       agentPayments: liveLog.filter((r) => r.ok && r.at >= (live.deployedAt ?? "")).map((r) => ({ at: r.at, label: r.label, link: r.link })),
       refusals: liveLog.filter((r) => !r.ok).length }),
+    (() => { const c = json("runs/own-company-v4/desk.json").v2, rows = readFileSync(new URL("runs/own-company-v4/payments.csv", root), "utf8").trim().split("\n").slice(1).map((l) => l.split(","));
+      return desk("A company set up from nothing on V4", "InvoiceDeskV4, set up with desk.mjs setup by following GETTING_STARTED.md; the Desk Console was driven in a browser on it.", c, 4, {
+        agentPayments: rows.filter((r) => r[7] === "agent").map((r) => ({ at: r[0], label: `${r[1]} ${r[3]}, ${r[5]} fUSD`, link: `https://explore.qore.network/tx/${r[8]}` })) }); })(),
     desk("A company set up with desk.mjs", "InvoiceDeskV3, upgraded from V2 with desk.mjs upgrade. Three vendors, each with its own key.", own, 3, {
       agentPayments: ownCsv.filter((r) => r[7] === "agent" && r[9] === own.invoiceDesk).map((r) => ({ at: r[0], label: `${r[1]} ${r[3]}, ${r[5]} fUSD`, link: `https://explore.qore.network/tx/${r[8]}` })) }),
     desk("The demo company (v2)", "InvoiceDeskV2, the desk the recorded runs and the attack lab use.", { ...dep.v2, vendors: Object.fromEntries(Object.entries(dep.vendors).map(([k, v]) => [v, k])) }, 2),

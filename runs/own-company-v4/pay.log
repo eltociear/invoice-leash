@@ -1,0 +1,12 @@
+
+the desk would refuse it: TransferFailed
+paying HC-0950, 12 fUSD to Harbor Cloud, as the company
+
+ETIMEDOUT
+
+the desk would refuse it: TransferFailed: the transfer would fail: the fUSD float or the desk's allowance is too low (node desk.mjs status; node desk.mjs treasury <float>, or allowance <fUSD>)
+paying HC-1002, 45 fUSD to Harbor Cloud, as the company
+
+could not reach the QoreChain testnet (UND_ERR_CONNECT_TIMEOUT). Nothing was lost: run the same command again. setup, run and pay ask the chain first, so they skip what is done and never pay an invoice twice.
+paying HC-1002, 45 fUSD to Harbor Cloud, as the company
+  pay (as the company)       0x8e67b2aca13448787b883f6ce9abe28868111b562d011142d83b4ea119ca1348

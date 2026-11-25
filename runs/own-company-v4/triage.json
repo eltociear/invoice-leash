@@ -1,0 +1,115 @@
+{
+  "at": "2026-11-25T14:22:54.078Z",
+  "items": [
+    {
+      "i": 0,
+      "ref": "HC-1001",
+      "id": "0x97b49e532ec9012c7e01394c89a3aeae06882ddf2a455c71bd6379e2fc7e585e",
+      "vendor": "0xd63f7eff477a055609908d5aeb1e2079eb1c1965",
+      "vendorName": "Harbor Cloud",
+      "amount": "20 fUSD",
+      "verdict": "ALREADY PAID",
+      "why": "the desk has paid this invoice id for you (node desk.mjs export)",
+      "note": ""
+    },
+    {
+      "i": 1,
+      "ref": "HC-1002",
+      "id": "0x1e2aa74d75afa78b545c502978838d361b713d562ffe6f626c4c802b7811aafa",
+      "vendor": "0xd63f7eff477a055609908d5aeb1e2079eb1c1965",
+      "vendorName": "Harbor Cloud",
+      "amount": "45 fUSD",
+      "note": "",
+      "verdict": "ALREADY PAID",
+      "why": "the desk has paid this invoice id for you (node desk.mjs export)"
+    },
+    {
+      "i": 2,
+      "ref": "HC-1003",
+      "id": "0x86252bc59d5eec3333945a633ceec2b949e482fb2f3e19a2c49921d8feb83f2a",
+      "vendor": "0xd63f7eff477a055609908d5aeb1e2079eb1c1965",
+      "vendorName": "Harbor Cloud",
+      "amount": "15 fUSD",
+      "note": "sealed (opened with the agent's ML-KEM-1024 key)",
+      "verdict": "ALREADY PAID",
+      "why": "the desk has paid this invoice id for you (node desk.mjs export)"
+    },
+    {
+      "i": 3,
+      "ref": "HC-0950",
+      "id": "0x75b63dc7bd562d0966c300f1f1df8934848ce72e4766d6ee16254748a28e84f6",
+      "vendor": "0xd63f7eff477a055609908d5aeb1e2079eb1c1965",
+      "vendorName": "Harbor Cloud",
+      "amount": "12 fUSD",
+      "note": "",
+      "verdict": "ALREADY PAID",
+      "why": "the desk has paid this invoice id for you (node desk.mjs export)"
+    },
+    {
+      "i": 4,
+      "ref": "HC-1001",
+      "id": "0x97b49e532ec9012c7e01394c89a3aeae06882ddf2a455c71bd6379e2fc7e585e",
+      "vendor": "0xd63f7eff477a055609908d5aeb1e2079eb1c1965",
+      "vendorName": "Harbor Cloud",
+      "amount": "29 fUSD",
+      "note": "",
+      "verdict": "REJECTED",
+      "why": "BadSignature: the ML-DSA-87 signature does not match: not what the vendor signed (edited after signing, or signed by another key); the genuine invoice with this number is already paid"
+    },
+    {
+      "i": 5,
+      "ref": "PTV-77",
+      "id": "0x9419ec33cb0f38df4267fb52656a002abf621ae23698ea2d18d2132304f75952",
+      "vendor": "0xe69d974ce24175ff89ebf5a5f016380ce143e0eb",
+      "vendorName": null,
+      "amount": "9 fUSD",
+      "verdict": "REJECTED",
+      "why": "UnknownVendor: not one of your approved vendors (node desk.mjs vendor add <address> <name>, if you trust it)",
+      "note": ""
+    },
+    {
+      "i": 6,
+      "ref": "PTV-ZEBADY",
+      "id": "0x39f94f74edae65781ac03e34991ccec9a5c866c9c3c021118184cce13e389895",
+      "vendor": "0xe69d974CE24175FF89ebf5a5F016380cE143e0Eb",
+      "vendorName": null,
+      "amount": "2 fUSD",
+      "note": "",
+      "verdict": "ALREADY PAID",
+      "why": "the desk has paid this invoice id for you (node desk.mjs export)"
+    },
+    {
+      "i": 7,
+      "ref": "PTV-OPGDYM",
+      "id": "0x18a6917a04ebffd163e3e80b1da034b407809e8d04294ee21bc91c7818442024",
+      "vendor": "0xe69d974CE24175FF89ebf5a5F016380cE143e0Eb",
+      "vendorName": null,
+      "amount": "2 fUSD",
+      "note": "",
+      "verdict": "ALREADY PAID",
+      "why": "the desk has paid this invoice id for you (node desk.mjs export)"
+    },
+    {
+      "i": 8,
+      "ref": "PTV-XU5CYV",
+      "id": "0xa4cf7e913ff00f9eb6a0130a410cbfa338a4b075d0c08a75f009ec382925c675",
+      "vendor": "0xe69d974CE24175FF89ebf5a5F016380cE143e0Eb",
+      "vendorName": null,
+      "amount": "2 fUSD",
+      "verdict": "REJECTED",
+      "why": "UnknownVendor: not one of your approved vendors (node desk.mjs vendor add <address> <name>, if you trust it)",
+      "note": ""
+    },
+    {
+      "i": 9,
+      "ref": "PTV-WYVT6G-F",
+      "id": "0xb9e282e3dd6b0ff0c61d5aa8e542073829814d00401d0d291f868ab09a83b008",
+      "vendor": "0xe69d974CE24175FF89ebf5a5F016380cE143e0Eb",
+      "vendorName": null,
+      "amount": "2 fUSD",
+      "verdict": "REJECTED",
+      "why": "UnknownVendor: not one of your approved vendors (node desk.mjs vendor add <address> <name>, if you trust it)",
+      "note": ""
+    }
+  ]
+}

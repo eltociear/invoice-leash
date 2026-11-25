@@ -1,0 +1,41 @@
+1. the company's ML-DSA-87 key
+  owner ML-DSA-87 key registered        89A03BA73ECC010B8848DE7F04451CDDD5C8F7277A5E7FC4E9BB5C0340314D7C
+2. fee money: the fee wallet (relays the agent's requests) and the agent account (its own setup)
+
+fetch failed
+1. the company's ML-DSA-87 key
+  already registered
+2. fee money: the fee wallet (relays the agent's requests) and the agent account (its own setup)
+  sent 3 QOR to qor1n347hlkgs7sw9exkpxydlvglehq7pe5udky7fz  7ECEB2F4456A1EADC26007B9C373DB20BFB03688196C5D397CA1391BE80A2BC1
+  sent 1 QOR to qor176ncklh0ktyyasucd80keslnawzrvk0c3qhl4t  524A71C4E24908C061702C4FE323BFC467EECB2FF983D8FD9C6F3CF7608A9C57
+  sent 0.3 QOR to qor13untdnpguhckjl8lrfm6v24pxzghawxrqggc5x  8C2CAE7D98A5AEF26867349E2B5440770DBB4ECEC3A933DF2C2E885E8896C5E5
+3. ML-DSA-87 keys for the fee wallet and the agent account
+  gas ML-DSA-87 key registered        4E627B5FBF0E7E7E457FC00450B8CFDC64561B64739E394DC6B2E42FA109D9EA
+
+fetch failed
+1. the company's ML-DSA-87 key
+  already registered
+2. fee money: the fee wallet (relays the agent's requests) and the agent account (its own setup)
+  qor1n347hlkgs7sw9exkpxydlvglehq7pe5udky7fz has enough
+  qor176ncklh0ktyyasucd80keslnawzrvk0c3qhl4t has enough
+  qor13untdnpguhckjl8lrfm6v24pxzghawxrqggc5x has enough
+3. ML-DSA-87 keys for the fee wallet and the agent account
+  gas already registered
+  agentacct ML-DSA-87 key registered        896533136AB3D4691A5D972340C573A1D6CB2478B4D35830D17FAB727E119B2D
+  agentsigner ML-DSA-87 key registered        C9DDACC20FCF8433BCB44601B533F5170A64D682053F2ACF7ED35F6FC3D6A9DA
+4. your InvoiceDeskV4 (a contract creation has no target, so it gets its own one-transaction window)
+  deployed                   0x0d1c098861e8ab3b83128b02fb8e96c6fbf70510846d458f2d36538367b9f9c3
+  InvoiceDeskV4 at 0xd8a723c91Af58A885d8E87509E7B770559c0C353
+5. the desk's settings, in one window scoped to the desk and fUSD
+  setAgent(agent account)    0x2528260f1f96b5f0aff8e4df3540dfb5f24f481251595144d212b21a8b79b90b
+  setAgentSigner(ML-DSA-87)  0x181cbc74a0d57d823fba8bf2dcb177e71751ed075299aece2ae62e6eb44e1bd3
+  setLimit(30, 60)           0x383921a3ffe3c838878ad4e4a68a3dd0fa206527a585800fea2ac4cedb464115
+  fUSD.approve(desk, 200)    0xcdca88ec7451d71d671e3dc68f54355b743a2e5642d165bdcb78eb867c5c4e1a
+6. the agent's key, linked to the agent account: no denom it holds, one call (the desk's pay)
+  agent key linked for 720 h: only 0xd8a723c91Af58A885d8E87509E7B770559c0C353.pay  C6847ED20036B0CD5184983D1B319C1553FF5EE0E9984EC1353DEFDE60239AC2
+7. the agent account's ML-KEM-1024 key, so vendors can seal invoices to it
+  registered                 5673AE2EA36145FAEF0C72B6B7C80BA7F81EF0A63F3EBA965052B1A6624B1E60
+8. treasury and float
+  float 60 fUSD (ERC-20, the desk pays from it), treasury 40 fUSD (bank coin, moves only with ML-DSA-87)  40DAC74A5CC0A3F0C518B50B81D3CDF6011DAC55C3CDAD0C9A01D37A47E3FE22
+
+done. next: approve your vendors (node desk.mjs vendor add <address> <name>), then node desk.mjs status

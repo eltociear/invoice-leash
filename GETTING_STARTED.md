@@ -2,7 +2,8 @@
 
 This guide sets up your own payment desk on the QoreChain testnet (`qorechain-diana`): your company, your
 vendors, your agent. It takes about 15 minutes. Every step below was run end to end on the testnet, and
-the output is in [`runs/own-company/`](runs/own-company/). `npm run verify` re-checks that run every day.
+the latest run, on an InvoiceDeskV4 from nothing, is in [`runs/own-company-v4/`](runs/own-company-v4/) (the first, on V2, in
+[`runs/own-company/`](runs/own-company/)). `npm run verify` re-checks both every day.
 
 Two programs, used by two parties:
 
@@ -144,7 +145,7 @@ Your desk is an **InvoiceDeskV4** (InvoiceDeskV3 plus the agent's own ML-DSA-87 
 - A zero-amount invoice is refused (`ZeroAmount`). The desk also checks that the vendor received exactly
   the invoiced amount.
 
-All of this was run on the testnet on a V3 desk ([`runs/own-company-v3/`](runs/own-company-v3/)); V4 adds only the agent's signature, which `desk.mjs setup` configures (the `agentsigner` role) and the live agent uses daily ([`runs/live/`](runs/live/)).
+All of this was run on the testnet on a V4 desk set up from nothing ([`runs/own-company-v4/`](runs/own-company-v4/): an over-limit invoice and an overdue one settled in person) and on a V3 desk ([`runs/own-company-v3/`](runs/own-company-v3/): two vendors' `INV-2001`, both paid).
 
 **Set up before V4?** `node desk.mjs upgrade` deploys a V4 desk and copies your vendors, agent, limits
 and allowance. It switches the agent off on the old desk, sets the old allowance to 0, and relinks the

@@ -1,0 +1,5 @@
+company       qor179rwmt7p9auns58ryy0r0epvqwhvla8slywqh4  4.910747 QOR  ML-DSA-87 registered
+fee wallet    qor1n347hlkgs7sw9exkpxydlvglehq7pe5udky7fz  1.68 QOR  (pays for the agent's requests)
+agent account qor176ncklh0ktyyasucd80keslnawzrvk0c3qhl4t  0.64 QOR  ML-DSA-87 registered
+
+could not reach the QoreChain testnet (ETIMEDOUT). Nothing was lost: do the same again. setup, run and pay ask the chain first, so they skip what is done and never pay an invoice twice.

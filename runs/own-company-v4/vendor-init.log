@@ -1,0 +1,4 @@
+keys: /Users/ikkoashimine/.config/leash-c4-vendor/keys.env (mode 600). Back it up.
+
+your address  qor16clhal680gz4vzvs34dwk83q0843cxt9fcapgf  (EVM 0xd63f7eff477a055609908d5aeb1e2079eb1c1965)
+fund it with about 1 QOR (faucet), then: node vendor.mjs register

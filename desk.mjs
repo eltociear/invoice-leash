@@ -62,6 +62,29 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let sink = null;
 const say = (s) => (sink ? sink.push(String(s)) : console.log(s));
 const fail = (s) => { throw new Error(s); };
+/** What each of the desk's refusals means, for a person. */
+const REASON = {
+  BadSignature: "the ML-DSA-87 signature does not match: not what the vendor signed (edited after signing, or signed by another key)",
+  UnknownVendor: "not one of your approved vendors (node desk.mjs vendor add <address> <name>, if you trust it)",
+  VendorKeyNotProven: "the vendor's ML-DSA-87 key is not registered with proof of possession",
+  AlreadyPaid: "already paid (node desk.mjs export)",
+  ZeroAmount: "a zero amount",
+  PastDue: "past due: the agent may not pay late; the company may settle it in person",
+  OverPerPaymentLimit: "over the agent's per-payment limit",
+  OverDailyLimit: "over what the agent may still pay today (UTC)",
+  NotPayersAgent: "the agent is switched off for this company (node desk.mjs agent on)",
+  TransferFailed: "the transfer would fail: the fUSD float or the desk's allowance is too low (node desk.mjs status; node desk.mjs treasury <float>, or allowance <fUSD>)",
+  BadAgentSignature: "the agent's own ML-DSA-87 signature is missing or wrong (InvoiceDeskV4)",
+  AgentSignerNotSet: "no agent signer is named to the desk (node desk.mjs setup)",
+  AgentKeyNotProven: "the agent signer's ML-DSA-87 key is not registered with proof of possession",
+};
+const explain = (e) => (REASON[e] ? `${e}: ${REASON[e]}` : e);
+/** An error, as a person should read it: a network failure says that nothing was lost and a rerun is safe. */
+const humanError = (e) => {
+  const msg = String(e?.message || e?.shortMessage || e?.code || e), code = e?.cause?.code ?? e?.code ?? "";
+  const net = /fetch failed|ETIMEDOUT|ECONNRESET|ENOTFOUND|EAI_AGAIN|UND_ERR|socket hang up|network|request timeout|code=TIMEOUT/i.test(`${msg} ${code}`);
+  return net ? `could not reach the QoreChain testnet (${code || msg}). Nothing was lost: do the same again. setup, run and pay ask the chain first, so they skip what is done and never pay an invoice twice.` : msg;
+};
 const opt = (args, name, dflt) => { const i = args.indexOf(`--${name}`); return i >= 0 ? args[i + 1] : dflt; };
 const view = async (to, i, fn, a) => i.decodeFunctionResult(fn, await provider.call({ to, data: i.encodeFunctionData(fn, a) }));
 const D = () => readDeployment().v2 ?? {};
@@ -138,7 +161,14 @@ const cmds = {
       const coin = ((await chain.getJson(`/cosmos/bank/v1beta1/balances/${o.cosmos}`)).balances ?? []).find((b) => b.denom.toLowerCase() === `erc20:${FUSD}`.toLowerCase());
       const link = (await links(aa.cosmos)).find((a) => a.pubkeyHex.toLowerCase() === hex(agentKey().pk));
       const exp = link ? new Date(Number(link.expiryUnix) * 1000) : null;
-      say(`desk          ${d.invoiceDesk}`);
+      let signerNote = "";
+      if ((d.version ?? 2) === 4) {
+        const sg = await account("agentsigner").catch(() => null);
+        const [named] = await view(d.invoiceDesk, desk, "agentSigner", [o.evmAddr, aa.evmAddr]).catch(() => [null]);
+        const ss = sg ? await sdk.fetchPqcStatus({ rest: REST, address: sg.cosmos }).catch(() => null) : null;
+        signerNote = `; agent signer ${named ? named.slice(0, 10) + "…" : "NOT named"}${sg && named && named.toLowerCase() === sg.evmAddr.toLowerCase() ? "" : " (not this machine's agentsigner)"}, ML-DSA-87 ${ss?.registered ? "registered" : "NOT registered"}`;
+      }
+      say(`desk          InvoiceDeskV${d.version ?? 2} ${d.invoiceDesk}${signerNote}`);
       say(`fUSD          float ${fusd(bal)} (ERC-20, what the desk pays from), treasury ${fusd(coin?.amount ?? 0)} (bank coin); desk allowance ${fusd(allow)}`);
       say(`agent         ${on ? "ON" : "OFF"} in the desk; limits ${fusd(lim[0])} a payment, ${fusd(lim[1])} a day; ${fusd(left)} left today (UTC)`);
       say(`agent key     ${!link ? "NOT linked" : link.revoked ? "revoked" : exp < new Date() ? `EXPIRED ${exp.toISOString()}` : `linked until ${exp.toISOString()}`}`);
@@ -355,8 +385,19 @@ const cmds = {
       let v = m.invoice, note = "";
       if (!v && m.sealed) { try { v = validateInvoiceV2(openInvoice(m.sealed)); note = "sealed (opened with the agent's ML-KEM-1024 key)"; } catch (e) { out.push({ i, verdict: "REJECTED", why: `sealed, cannot open: ${e.message}` }); continue; } }
       if (!v) { out.push({ i, verdict: "REJECTED", why: "no invoice" }); continue; }
-      const { payData } = await import("./lib/agent.mjs");
+      const { payData, isPaid } = await import("./lib/agent.mjs");
       const f = invoiceFacts(v);
+      // paid first: the desk checks the vendor before the paid record, so a paid invoice from a vendor removed
+      // since would otherwise read as UnknownVendor
+      // (only for the copy the vendor signed: an edited copy of a paid invoice has the same id, and is a forgery)
+      if (await isPaid(d, v).catch(() => false)) {
+        const k = await keyStatus(v.vendor), msg = invoiceMessageV2({ desk: d.invoiceDesk, payer: d.payerEvm, vendor: v.vendor, token: v.token, amount: BigInt(v.amount), id: v.id, dueBy: v.dueBy });
+        const genuine = k.reg && sdk.pqcVerify(getBytes(k.pk), msg, getBytes(v.signature));
+        out.push({ i, ref: v.ref, id: v.id, vendor: v.vendor, vendorName: d.vendors?.[getAddress(v.vendor)] ?? null, amount: f.amount, note,
+          ...(genuine ? { verdict: "ALREADY PAID", why: "the desk has paid this invoice id for you (node desk.mjs export)" }
+            : { verdict: "REJECTED", why: `${explain("BadSignature")}; the genuine invoice with this number is already paid` }) });
+        continue;
+      }
       const [asAgent, asCompany] = [await dryRun(aa.evmAddr, d.invoiceDesk, await payData(d, v, { asAgent: true })), await dryRun(o.evmAddr, d.invoiceDesk, await payData(d, v, { asAgent: false }))];
       let verdict, why;
       if (asAgent === "OK" && !f.warnings.length) { verdict = "AGENT PAYS"; why = "approved vendor, valid ML-DSA-87 signature, unpaid, not past due, within the agent's limits"; }
@@ -369,7 +410,7 @@ const cmds = {
       else if (asAgent === "TransferFailed" || asCompany === "TransferFailed") { verdict = "NEEDS FUNDS"; why = "valid, but the transfer would fail: the company's fUSD float or the desk's allowance is too low (node desk.mjs status; node desk.mjs treasury <float> or allowance <fUSD>)"; }
       else if (asCompany === "AlreadyPaid") { verdict = "ALREADY PAID"; why = "the desk has paid this invoice id for you (node desk.mjs export)"; }
       else if (/^network/.test(asCompany)) { verdict = "TRY AGAIN"; why = asCompany; }
-      else { verdict = "REJECTED"; why = asCompany; }
+      else { verdict = "REJECTED"; why = explain(asCompany); }
       out.push({ i, ref: v.ref, id: v.id, vendor: v.vendor, vendorName: d.vendors?.[getAddress(v.vendor)] ?? null, amount: f.amount, verdict, why, note });
     }
     writeFileSync(TRIAGE, JSON.stringify({ at: new Date().toISOString(), items: out }, null, 2) + "\n");
@@ -400,7 +441,7 @@ const cmds = {
     const c = new Contract(d.invoiceDesk, art().abi, provider), args = [o.evmAddr, inv.token, inv.vendor, inv.amount, inv.id, inv.dueBy, inv.signature, ...(d.version === 4 ? ["0x"] : [])];
     const { payData } = await import("./lib/agent.mjs");
     const verdict = await dryRun(o.evmAddr, d.invoiceDesk, await payData(d, inv, { asAgent: false }));
-    if (verdict !== "OK") fail(/^network/.test(verdict) ? `could not ask the desk (${verdict}); try again` : `the desk would refuse it: ${verdict}`);
+    if (verdict !== "OK") fail(/^network/.test(verdict) ? `could not ask the desk (${verdict}); try again` : `the desk would refuse it: ${explain(verdict)}`);
     say(`paying ${inv.ref}, ${invoiceFacts(inv).amount} to ${d.vendors?.[getAddress(inv.vendor)] ?? inv.vendor}, as the company`);
     const h = await companyWindow([d.invoiceDesk], 1, (w) => sendEvm("pay (as the company)", c.connect(w).pay(...args, { gasLimit: 700_000 })));
     appendFileSync(PAYLOG, JSON.stringify({ at: new Date().toISOString(), by: "company", i: Number(n), ref: inv.ref, id: inv.id, vendor: inv.vendor, amount: inv.amount, token: inv.token, ok: true, link: h }) + "\n");
@@ -530,7 +571,7 @@ const cmds = {
     const ALLOWED = new Set(["https://eltociear.github.io", "http://127.0.0.1:8765", "http://localhost:8765", ...(process.env.LEASH_SERVE_ORIGIN ? [process.env.LEASH_SERVE_ORIGIN] : [])]);
     let busy = Promise.resolve();
     const run = (fn) => { // one action at a time, with its output captured
-      const p = busy.then(async () => { sink = []; try { const value = await fn(); return { ok: true, log: sink.join("\n"), value }; } catch (e) { return { ok: false, log: sink.join("\n"), error: e.message || String(e) }; } finally { sink = null; } });
+      const p = busy.then(async () => { sink = []; try { const value = await fn(); return { ok: true, log: sink.join("\n"), value }; } catch (e) { return { ok: false, log: sink.join("\n"), error: humanError(e) }; } finally { sink = null; } });
       busy = p.catch(() => {}); return p;
     };
     const snapshot = async () => {
@@ -591,4 +632,4 @@ const cmds = {
 
 const [cmd, ...args] = process.argv.slice(2);
 if (!cmds[cmd]) { say(readFileSync(new URL(import.meta.url), "utf8").split("\n").filter((l) => l.startsWith("//")).slice(0, 32).map((l) => l.slice(3)).join("\n")); process.exit(cmd ? 1 : 0); }
-try { await cmds[cmd](...args); } catch (e) { console.error(`\n${e.message || e.shortMessage || e.code || e}`); if (process.env.LEASH_DEBUG) console.error(e); process.exitCode = 1; }
+try { await cmds[cmd](...args); } catch (e) { console.error(`\n${humanError(e)}`); if (process.env.LEASH_DEBUG) console.error(e); process.exitCode = 1; }
