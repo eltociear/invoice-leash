@@ -5,7 +5,8 @@
 // no expiry of its own. Sent with a payment the desk refused for a reason that can pass later (over today's
 // limit, say), it stays valid until the invoice is paid or past due, and it is public: in the relaying
 // transaction's calldata, or in a record in this repository. So this script collects them all:
-//   - every pay() an agent relayed to an InvoiceDeskV4 (MsgExecuteEVM from its fee wallet), read from REST
+//   - every pay() relayed for an agent to an InvoiceDeskV4 (MsgExecuteEVM): all its fee wallet sent, and every
+//     refused one whoever relayed it, read from REST
 //   - every pay() an agent account sent itself on the EVM lane (its MsgEthereumTx, found through REST)
 //   - every pay() calldata stored in this repository (runs/**/*.json, docs/*.json)
 // and dry-runs each as that agent (eth_call): it costs nothing and changes nothing.
@@ -71,9 +72,12 @@ const add = (deskAddr, from, data, where) => {
   e.where.push(where); found.set(key, e);
 };
 
-// 1. relayed by each desk's fee wallet
-for (const d of desks) {
-  const q = encodeURIComponent(`message.sender='${d.gas}'`);
+// 1. relayed: by each desk's fee wallet, and every refused one by ANY relayer. A refused relay names the
+//    agent account in its abstractaccount_execution_failed event; a successful one paid its invoice (spent).
+//    Not found: a relay by another wallet that failed as a transaction (out of gas, say), which names the
+//    agent in no event; such calldata is still in the block, so this is a gap a full indexer would close.
+for (const d of desks) for (const query of [`message.sender='${d.gas}'`, `abstractaccount_execution_failed.account='${d.agentAccount}'`]) {
+  const q = encodeURIComponent(query);
   for (let page = 1; ; page++) {
     const r = await get(`/cosmos/tx/v1beta1/txs?query=${q}&pagination.limit=100&page=${page}&order_by=ORDER_BY_ASC`);
     const txs = r?.tx_responses ?? [];
