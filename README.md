@@ -6,8 +6,9 @@
 
 An AI agent pays a company's invoices on the QoreChain testnet, and we assume from the start that its
 model will be fooled and its key stolen. So the agent checks nothing. **Every limit lives on QoreChain or
-in the contract, and every invoice needs the vendor's post-quantum ML-DSA-87 signature, verified on
-chain.**
+in the contract, every invoice needs the vendor's post-quantum ML-DSA-87 signature, and every payment
+the agent makes needs the agent's own ML-DSA-87 signature too, from a signer on a separate host, all
+verified on chain** (InvoiceDeskV4, the live desk).
 
 **Judges: [JUDGES.md](JUDGES.md)** (a five-minute route) · [site](https://eltociear.github.io/invoice-leash/) ·
 [Desk Console](https://eltociear.github.io/invoice-leash/app.html) · [attack lab](https://eltociear.github.io/invoice-leash/lab.html) ·
@@ -40,10 +41,10 @@ chain.**
   either: each payment needs the agent's ML-DSA-87 signature too ([live](runs/probes/v4-agent-sig.json)). An ordinary EVM wallet with no post-quantum key cannot send
   anything at all on this chain. And we publish one account's classical private key: try to take its
   QOR ([lab §6](https://eltociear.github.io/invoice-leash/lab.html#shor)).
-- **It runs, and you can run it.** A GitHub Actions job runs the agent daily with an
-  obey-everything decider (scheduled; so far GitHub has not started the schedule, so each day was started
-  by hand: [where each day ran](runs/live/README.md#where-each-day-ran)), its key in GitHub Secrets on purpose (on V4 from 2026-11-25: [a run](https://github.com/eltociear/invoice-leash/actions/runs/45554630612),
-  committed by the job; [`runs/live/`](runs/live/)). `desk.mjs` sets up a desk for your own
+- **It runs, and you can run it.** GitHub Actions runs the agent daily with an obey-everything decider
+  and its key in GitHub Secrets on purpose; the signer is a separate job with its own secret
+  ([`runs/live/`](runs/live/); [where each day ran](runs/live/README.md#where-each-day-ran): so far GitHub
+  has not started the schedule, so the days were started by hand). `desk.mjs` sets up a desk for your own
   company; a second company was set up that way from nothing.
 
 ## The rubric, and where to look
@@ -52,7 +53,7 @@ chain.**
 |---|---|
 | **Works** (25) | `npm run verify` (113 checks); the [live agent](runs/live/); a [second company](runs/own-company-v3/) set up with `desk.mjs`; the [Desk Console](runs/console-e2e.json) driven in a real browser; 100% coverage and 17 Halmos proofs ([`runs/halmos.txt`](runs/halmos.txt)) |
 | **QoreChain tech** (25) | the ML-DSA-87 precompiles `0x…0a01`/`0a02` inside the contract; hybrid accounts; an authenticator with a spending rule; EVM windows with `allowed_targets`; `MsgExecuteEVM` relaying; QoreSign; QoreSeal ML-KEM-1024 and the KEM registry; `MsgConvertCoin`/`MsgConvertERC20`; the AMM; QoreScan; QoreChain's MCP server |
-| **Post-quantum** (20) | [QUANTUM_READINESS.md](QUANTUM_READINESS.md): every algorithm in the system, the Q-Day drill, Shor's gift, no classical-only lane |
+| **Post-quantum** (20) | [QUANTUM_READINESS.md](QUANTUM_READINESS.md): every algorithm in the system, the Q-Day drill, Shor's gift, no classical-only lane; on InvoiceDeskV4 the agent's classical key alone pays nothing, even inside its own EVM window ([`runs/probes/window-v4.json`](runs/probes/window-v4.json)), and its signer runs on a separate host |
 | **Originality** (15) | the finding above, and the redesign it forced; an agent whose key is kept where it can leak, on purpose |
 | **Clarity** (15) | the [site](https://eltociear.github.io/invoice-leash/), [JUDGES.md](JUDGES.md), [GETTING_STARTED.md](GETTING_STARTED.md), [THREAT_MODEL.md](THREAT_MODEL.md), [DECISIONS.md](DECISIONS.md); the track's requirements one by one: [EVIDENCE.md](EVIDENCE.md#the-tracks-requirements-and-where-each-one-is-shown-on-chain) |
 
