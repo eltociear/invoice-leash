@@ -6,7 +6,7 @@
 // limit, say), it stays valid until the invoice is paid or past due, and it is public: in the relaying
 // transaction's calldata, or in a record in this repository. So this script collects them all:
 //   - every pay() an agent relayed to an InvoiceDeskV4 (MsgExecuteEVM from its fee wallet), read from REST
-//   - every pay() an agent sent on the EVM lane that a record names (runs/probes/window-v4.json)
+//   - every pay() an agent account sent itself on the EVM lane (its MsgEthereumTx, found through REST)
 //   - every pay() calldata stored in this repository (runs/**/*.json, docs/*.json)
 // and dry-runs each as that agent (eth_call): it costs nothing and changes nothing.
 //   node scripts/signature-sweep.mjs              writes runs/signature-sweep.json; exits 1 if any would pay
@@ -22,6 +22,8 @@ const desk = new Interface(JSON.parse(readFileSync(new URL("build/InvoiceDeskV4.
 const SEL = desk.getFunction("pay").selector;
 const json = (p) => JSON.parse(readFileSync(new URL(p, ROOT), "utf8"));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// the testnet's endpoints drop requests now and then: a read is tried again before it counts as an answer
+async function retry(fn) { for (let i = 0; ; i++) { try { return await fn(); } catch (e) { if (i >= 4 || e?.data || e?.info?.error?.data) throw e; await sleep(1500 * (i + 1)); } } }
 async function get(path) {
   for (let i = 0; ; i++) {
     try { const r = await fetch(REST + path); if (r.ok) return await r.json(); if (r.status === 404) return null; } catch { /* retry */ }
@@ -32,7 +34,7 @@ async function get(path) {
 
 // For one the desk refuses now: can it ever pay? "never", or the one thing the company itself would have to do.
 const PQC = new Interface(["function pqcKeyStatus(address) view returns (bool registered, uint8 algorithmId, bytes pubkey, bool possessionProven)", "function pqcVerify(bytes pubkey, bytes signature, bytes message) view returns (bool valid)"]);
-const call = async (i, to, fn, args) => i.decodeFunctionResult(fn, await provider.call({ to, data: i.encodeFunctionData(fn, args) }));
+const call = async (i, to, fn, args) => i.decodeFunctionResult(fn, await retry(() => provider.call({ to, data: i.encodeFunctionData(fn, args) })));
 async function later(row, a, d) {
   const due = new Date(row.dueBy * 1000).toISOString().slice(0, 10);
   if (row.now === "PAID") return "now";
@@ -82,11 +84,22 @@ for (const d of desks) {
     if (txs.length < 100) break;
   }
 }
-// 2. the EVM lane, by the records that name such transactions
-for (const s of json("runs/probes/window-v4.json").steps) {
-  if (!/^0x[0-9a-f]{64}$/i.test(s.tx ?? "")) continue;
-  const t = await provider.getTransaction(s.tx);
-  if (t?.to) add(t.to, t.from, t.data, `evm ${s.tx}`);
+// 2. the EVM lane: every MsgEthereumTx the agent account itself sent (inside one of its EVM windows), found
+//    through its Cosmos transactions, then read as an EVM transaction; plus those the records name
+const evmHashes = new Set();
+for (const d of desks) {
+  const q = encodeURIComponent(`message.sender='${d.agentAccount}'`);
+  for (let page = 1; ; page++) {
+    const r = await get(`/cosmos/tx/v1beta1/txs?query=${q}&pagination.limit=100&page=${page}&order_by=ORDER_BY_ASC`);
+    const txs = r?.tx_responses ?? [];
+    for (const t of txs) for (const e of t.events) for (const a of e.attributes) if (a.key === "ethereumTxHash") evmHashes.add(a.value.toLowerCase());
+    if (txs.length < 100) break;
+  }
+}
+for (const s of json("runs/probes/window-v4.json").steps) if (/^0x[0-9a-f]{64}$/i.test(s.tx ?? "")) evmHashes.add(s.tx.toLowerCase());
+for (const h of evmHashes) {
+  const t = await retry(() => provider.getTransaction(h));
+  if (t?.to) add(t.to, t.from, t.data, `evm ${h}`);
 }
 // 3. calldata kept in this repository
 const files = (dir) => readdirSync(new URL(dir, ROOT)).flatMap((f) => {
@@ -119,7 +132,7 @@ for (const e of found.values()) {
   row.later = await later(row, a, byDesk.get(getAddress(e.desk)));
   rows.push(row);
 }
-return { desks, rows, found };
+return { desks, rows, found, evmLane: evmHashes.size };
 }
 
 const isMain = import.meta.url === new URL(`file://${process.argv[1]}`).href;

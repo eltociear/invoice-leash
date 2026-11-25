@@ -138,7 +138,7 @@ A V4 agent signature binds one invoice and has no expiry of its own, and it is p
 sent with a payment the desk refused stays valid until that invoice is paid or past due. A fifth review
 found two of ours that the agent's classical key alone could have sent again and got paid. We then
 collected all of them ([`scripts/signature-sweep.mjs`](scripts/signature-sweep.mjs)): every `pay` the
-agents relayed to a V4 desk, every one sent on the EVM lane that a record names, every `pay` calldata in
+agents relayed to a V4 desk, every one an agent account sent itself on the EVM lane (found from the chain), every `pay` calldata in
 this repository. Each is sent again as its agent, by dry run. `npm run verify` repeats this on every run.
 
 | | |
