@@ -13,7 +13,7 @@ what the desk would pay right then.
 
 **Judges: [JUDGES.md](JUDGES.md)** (a five-minute route) · [site](https://eltociear.github.io/invoice-leash/) ·
 [Desk Console](https://eltociear.github.io/invoice-leash/app.html) · [attack lab](https://eltociear.github.io/invoice-leash/lab.html) ·
-[video](https://youtu.be/K3Teb5sO8JU) · `qorechain-diana` testnet only (test tokens have no value) · Post-Quantum AI Agents
+[video](https://youtu.be/dyHS4OQdb9Y) · `qorechain-diana` testnet only (test tokens have no value) · Post-Quantum AI Agents
 
 > **Check every claim in three to four minutes, with no keys and no test QOR:**
 >
