@@ -1,6 +1,7 @@
 # The live agent's log
 
-[`scripts/live-agent.mjs`](../../scripts/live-agent.mjs) runs on a schedule, daily at 01:10 UTC, in GitHub Actions
+[`scripts/live-agent.mjs`](../../scripts/live-agent.mjs) runs daily in GitHub Actions (scheduled at 01:10 UTC, with two backup
+times, since a run for a day already logged does nothing)
 ([`.github/workflows/live.yml`](../../.github/workflows/live.yml)), unattended, against a real
 InvoiceDeskV4 since 2026-11-24 ([`desk.json`](desk.json); set up with `desk.mjs`, upgraded from V3). The agent's key and the relayer's key
 are GitHub Secrets on purpose. Invoice Leash assumes the agent's key leaks, so it runs it where it could.
@@ -22,3 +23,13 @@ checks both, re-reads every transaction from the chain, and checks that the agen
 while writing the log (a bug: it hashed a string, not bytes). Those requests are on chain but not in the
 log: the genuine invoice `LIVE-20261124` was paid, the other three refused. The script was fixed to save
 each result as it goes, and that day was rerun as `LIVE-20261124-b`, the log's first rows.
+
+## Where each day ran
+
+| Day | Desk | Where | Notes |
+|---|---|---|---|
+| 2026-11-24 | V3 | the author's machine, with only the keys CI holds | before the upgrade to V4; 1 paid, 3 refused. The first GitHub Actions run that day found the day already logged and did nothing |
+| 2026-11-25 | V4 | GitHub Actions, [run 45554630612](https://github.com/eltociear/invoice-leash/actions/runs/45554630612), committed by the job ([`3df2c33`](https://github.com/eltociear/invoice-leash/commit/3df2c33)) | GitHub never started the 01:10 schedule that day, so the workflow was started by hand at 05:35 UTC; backup schedules were added. 1 paid, 4 refused, including `BadAgentSignature` |
+
+From 2026-11-26 the days come from the schedule; the Actions page shows each run's trigger.
+

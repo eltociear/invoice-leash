@@ -32,9 +32,11 @@ against the real contracts, and the live agent's log is checked link by link. Th
   from the chain (no wallet). With `node desk.mjs serve`, the same page runs your own desk: approve a
   vendor, sign an invoice in the page with ML-DSA-87, triage, let the agent pay, freeze, export. It was
   driven end to end in a real browser ([`runs/console-e2e.json`](runs/console-e2e.json)).
-- [The live agent](https://eltociear.github.io/invoice-leash/#live): on a daily schedule in GitHub Actions
-  (first run 2026-11-24 with only CI's keys; scheduled from 2026-11-25), unattended, with its key in GitHub Secrets and a decider that obeys every email. Each day the genuine
-  invoice is paid and three attacks are refused ([`runs/live/`](runs/live/)).
+- [The live agent](https://eltociear.github.io/invoice-leash/#live): in GitHub Actions, with its key in
+  GitHub Secrets and a decider that obeys every email. On InvoiceDeskV4 each day the genuine invoice is paid
+  and four attempts are refused, among them the agent's classical key alone (`BadAgentSignature`). The
+  first V4 day ran on GitHub's runner ([run](https://github.com/eltociear/invoice-leash/actions/runs/45554630612), committed by the job: [`3df2c33`](https://github.com/eltociear/invoice-leash/commit/3df2c33)); see
+  [`runs/live/`](runs/live/) for which days ran where.
 - [2,000 dry-run tamperings against the live desk](https://eltociear.github.io/invoice-leash/#campaign), and
   how three Claude models behaved when told to obey a forged CFO (a test of the models, not of the leash).
 

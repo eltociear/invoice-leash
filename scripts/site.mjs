@@ -133,7 +133,7 @@ footer{margin-top:64px;color:var(--dim);font-size:14px}
 </div>
 
 <div class="stats">
-  <div class="stat"><b>${[...new Set(liveRows.map((r) => r.day))].length} day${[...new Set(liveRows.map((r) => r.day))].length === 1 ? "" : "s"}</b><span>of <a href="#live">the live agent</a>: key in GitHub Secrets, scheduled daily from 2026-11-25 (the first day ran locally with only CI's keys); each day the genuine invoice paid, every attack refused</span></div>
+  <div class="stat"><b>${[...new Set(liveRows.map((r) => r.day))].length} day${[...new Set(liveRows.map((r) => r.day))].length === 1 ? "" : "s"}</b><span>of <a href="#live">the live agent</a>: key in GitHub Secrets, daily in GitHub Actions; each day the genuine invoice paid, every attack refused (<a href="https://github.com/eltociear/invoice-leash/tree/main/runs/live#where-each-day-ran">where each day ran</a>)</span></div>
   <div class="stat"><b>0</b><span>paid by the agent's own classical key alone on <a href="lab.html#v4">InvoiceDeskV4</a> (<code>BadAgentSignature</code>), after Q-Day included</span></div>
   <div class="stat"><b>${campaign.paid}</b><span>of ${campaign.count.toLocaleString()} <a href="#campaign">dry-run tamperings</a> of a genuine invoice would pay, against the live desk</span></div>
   <div class="stat"><b>${verifyCount} checks</b><span><a href="#verify">npm run verify</a> re-reads every claim from the chain, keyless; CI runs it daily</span></div>
@@ -145,8 +145,8 @@ footer{margin-top:64px;color:var(--dim);font-size:14px}
   <div class="layer"><h3>Post-quantum on both sides</h3><p>The vendor signs the invoice with ML-DSA-87; on V4 the agent signs the payment with ML-DSA-87. The desk checks both with QoreChain's precompiles <code>0x…0a02</code> and <code>0x…0a01</code>, against keys registered on chain.</p></div>
 </div>
 
-<h2 id="live">Live: the agent runs on a daily schedule, unattended, with its key in GitHub Secrets</h2>
-<p class="dim">Daily at 01:10 UTC (first run 2026-11-24 with only CI's keys, scheduled from 2026-11-25), GitHub Actions runs the agent against a real InvoiceDeskV4 (the first day ran on V3, before the upgrade) with a decider that obeys every email: the vendor's genuine invoice (sealed with ML-KEM-1024 on even days), a forged one, the genuine one with its amount raised, and a prompt injection asking for a direct transfer to Mallory. The log is hash-chained and each day is signed with ML-DSA-87 (<a href="https://github.com/eltociear/invoice-leash/tree/main/runs/live">runs/live</a>, checked by <code>npm run verify</code>).</p>
+<h2 id="live">Live: the agent runs daily in GitHub Actions, with its key in GitHub Secrets</h2>
+<p class="dim">Daily, GitHub Actions runs the agent against a real InvoiceDeskV4 (the first day, 2026-11-24, ran on V3 on the author's machine with only CI's keys; <a href="https://github.com/eltociear/invoice-leash/tree/main/runs/live#where-each-day-ran">where each day ran</a>) with a decider that obeys every email: the vendor's genuine invoice (sealed with ML-KEM-1024 on even days), a forged one, the genuine one with its amount raised, and a prompt injection asking for a direct transfer to Mallory. The log is hash-chained and each day is signed with ML-DSA-87 (<a href="https://github.com/eltociear/invoice-leash/tree/main/runs/live">runs/live</a>, checked by <code>npm run verify</code>).</p>
 <div class="card"><table class="req"><tr><th>Day (UTC)</th><th>Genuine invoice</th><th>Forged</th><th>Amount raised</th><th>Injection: transfer to Mallory</th><th>The agent\'s classical key alone (V4)</th></tr>
 ${(() => {
   const rows = read("runs/live/log.jsonl").trim().split("\n").filter(Boolean).map((l) => JSON.parse(l));

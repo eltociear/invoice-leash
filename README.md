@@ -41,8 +41,8 @@ chain.**
   anything at all on this chain. And we publish one account's classical private key: try to take its
   QOR ([lab §6](https://eltociear.github.io/invoice-leash/lab.html#shor)).
 - **It runs, and you can run it.** A scheduled GitHub Actions job runs the agent with an
-  obey-everything decider, its key in GitHub Secrets on purpose (first run 2026-11-24 with only CI's
-  keys; daily from 2026-11-25, [`runs/live/`](runs/live/)). `desk.mjs` sets up a desk for your own
+  obey-everything decider, its key in GitHub Secrets on purpose (on V4 from 2026-11-25: [a run](https://github.com/eltociear/invoice-leash/actions/runs/45554630612),
+  committed by the job; [`runs/live/`](runs/live/)). `desk.mjs` sets up a desk for your own
   company; a second company was set up that way from nothing.
 
 ## The rubric, and where to look
