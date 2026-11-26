@@ -9,8 +9,8 @@ inbox, the tests, the attack lab, the MCP sessions, and how to replay it all.
 | Post-Quantum AI Agents requires | Invoice Leash | Evidence (re-read by `npm run verify`) |
 |---|---|---|
 | **The agent's own scoped EVM window** | on InvoiceDeskV4 (the live desk until 2026-11-26): the agent account's window admits ≤3 txs, ≤0.9 QOR value+fees, 300 blocks, and **one target: the desk** (`allowed_targets`). Inside it, the account's classical key **alone** was reverted on chain (`BadAgentSignature`: no ML-DSA-87 signature); the same invoice with the agent signer's ML-DSA-87 signature was paid; `fUSD.transfer` and a QOR send to Mallory were refused (*"the window does not list … as an allowed recipient"*); after closing, so was `pay`. (First recorded on V2: [`runs/probes/window.json`](runs/probes/window.json).) | open [DE770D33…](https://explore.qore.network/tx/DE770D33F18563B21B97D07E1C83BE093347BAE2FDF4819AE2F4FF629B8FAA1B) · classical key alone, reverted [0x67f7c361…](https://explore.qore.network/tx/0x67f7c36184747b10e38930dc9c67e8c6c0ed3260a2833f049f833950bccf792d) · signed, paid [0x5de63315…](https://explore.qore.network/tx/0x5de63315712239ef3cf03832680e863e31713e4054fa30bc658c1bb69dd926dd) · close [C58303E3…](https://explore.qore.network/tx/C58303E3D0B984832575B04D5D2E7E231586904E7EA4DAAA2E257B19738BDA1A) · [`runs/probes/window-v4.json`](runs/probes/window-v4.json) |
-| **Transaction, value, duration and target limits** | window: tx count, value, blocks, target. Spending rule: one call (the live desk's `pay`: on V5 `0x02378ba6`, before it V4's `0xe07cc3c1`), no QOR or fUSD, 720-hour expiry. Desk: 10 fUSD a payment, 25 a UTC day, approved payees only, the agent's ML-DSA-87 signature, and on V5 that signature's 15-minute deadline | V5 link [A6790DD5…](https://explore.qore.network/tx/A6790DD5826B1ED94D45B9BA2CB60BAF950AD81DCBD652EC40010BCCBEB84099), V4 link [C0D7967D…](https://explore.qore.network/tx/C0D7967D16E62CDA85D3E78CE31F7E430A94D7B645612BF03E5BCBA7AA0E9178); every refusal in [the V4 run](#the-compromised-agent-on-invoicedeskv4) |
-| **Smart-account spending rules** | the agent's ed25519 key is linked to its own account with permission `evm` and a rule; the chain refused `MsgSend`, an EVM value transfer, `fUSD.transfer`/`transferFrom`, `approveVendor`, `setLimit` | [the V4 run](#the-compromised-agent-on-invoicedeskv4), the live log daily, [probes](README.md#what-we-found-a-spending-rule-bounds-amounts-not-destinations) |
+| **Transaction, value, duration and target limits** | window: tx count, value, blocks, target. Spending rule: one call (the live desk's `pay`: on V5 `0x02378ba6`, before it V4's `0xe07cc3c1`), no QOR or fUSD, 720-hour expiry. Desk: 10 fUSD a payment, 25 a UTC day, approved payees only, the agent's ML-DSA-87 signature, and on V5 that signature's 15-minute deadline | V5 link [A6790DD5…](https://explore.qore.network/tx/A6790DD5826B1ED94D45B9BA2CB60BAF950AD81DCBD652EC40010BCCBEB84099), V4 link [C0D7967D…](https://explore.qore.network/tx/C0D7967D16E62CDA85D3E78CE31F7E430A94D7B645612BF03E5BCBA7AA0E9178); every refusal in [the V4 run](#the-compromised-agent-on-invoicedeskv5-then-on-invoicedeskv4) |
+| **Smart-account spending rules** | the agent's ed25519 key is linked to its own account with permission `evm` and a rule; the chain refused `MsgSend`, an EVM value transfer, `fUSD.transfer`/`transferFrom`, `approveVendor`, `setLimit` | [the V4 run](#the-compromised-agent-on-invoicedeskv5-then-on-invoicedeskv4), the live log daily, [probes](README.md#what-we-found-a-spending-rule-bounds-amounts-not-destinations) |
 | **Authenticated messaging** | (1) every invoice is ML-DSA-87 signed by a vendor and checked **on chain** by the precompiles `0x…0a02`/`0x…0a01`; (2) the company's instructions to the agent are QoreSign messages (QoreX `signArbitrary` format), checked against the company's registered key; a **Q-Day forgery** (the company's classical key, as if broken, plus another ML-DSA-87 key) is refused | [`runs/messages.json`](runs/messages.json), MCP tool `verify_message`, the [attack lab](https://eltociear.github.io/invoice-leash/lab.html) |
 | Confidential invoices (ML-KEM-1024) | vendors seal invoices to the agent account's ML-KEM-1024 key, published in the chain's KEM key registry (QoreSeal); email on the path, stored today and attacked after Q-Day, shows nothing. Sealing hides; the ML-DSA-87 signature still decides (a sealed forgery is `BadSignature`); Claude Code paid the genuine sealed invoice through MCP and refused the forgery | register [5AB68952…](https://explore.qore.network/tx/5AB689523EDF4F47374A35BED6FFAB3913369CC6CAA32579A16651F238BAA80B) · [`inbox/inbox-v2-SEALED.json`](inbox/inbox-v2-SEALED.json) · [`runs/sealed.json`](runs/sealed.json) · Claude paid [04AAE846…](https://explore.qore.network/tx/04AAE84653DDA587D2E351A5D6424FDD6E070D3D5FC6ECB412A29D6164ECEFB5) |
 | Survives Q-Day | our own drill: with the **secp256k1 keys of four accounts** (company, agent account, relayer, a vendor; as if Shor broke them) and no ML-DSA-87 key, 16 attacks (send, transfer, approve, reconfigure the desk, open a window, link a key, swap the KEM key, **put the attacker's ML-DSA-87 key on a vendor** to forge its invoices) were all refused; inside an open window, the tx-count, value and target caps held, also inside the company's own window; a hybrid-signed control went through. **Shor's gift:** an account whose secp256k1 private key is published still holds its QOR; try it in the [lab](https://eltociear.github.io/invoice-leash/lab.html#shor) | [QUANTUM_READINESS.md](QUANTUM_READINESS.md), [`runs/qday-drill.json`](runs/qday-drill.json), [`runs/probes/window-caps.json`](runs/probes/window-caps.json), [`runs/probes/company-window.json`](runs/probes/company-window.json), [`runs/qday-public.json`](runs/qday-public.json), control [90677647…](https://explore.qore.network/tx/90677647014606987D75A155D03B255D4BA2D57C7762A4F69E39DEB27C643477) |
@@ -34,7 +34,13 @@ limit check, **no** vendor check and **no** signature check. Then we run it with
 fully compromised (it obeys every instruction it reads, the attacker's included) and show that the
 chain still refuses every attack. Invoices are in **fUSD**, signed with **ML-DSA-87**.
 
-## The compromised agent on InvoiceDeskV4
+## The compromised agent on InvoiceDeskV5, then on InvoiceDeskV4
+
+On the live InvoiceDeskV5, on 2026-11-26, [`scripts/v5-inbox.mjs`](scripts/v5-inbox.mjs) ran the same inbox
+([`runs/v5-compromised.json`](runs/v5-compromised.json)): the classical key alone first, on an invoice `paid()`
+showed unpaid (`BadAgentSignature`); 3 genuine invoices paid (4 + 3 + 10 fUSD); 13 refused; 0 fUSD to Mallory.
+Its attacker holds the signer, so the over-limit refusals carry valid agent signatures: on V5 they expired 15
+minutes later. The run on V4 (the live desk until then):
 
 [`scripts/v4-inbox.mjs`](scripts/v4-inbox.mjs) ran a decider that obeys every email against the live agent's
 InvoiceDeskV4, relaying every attempt for real ([`runs/v4-compromised.json`](runs/v4-compromised.json)):
@@ -104,7 +110,7 @@ transaction stops the agent, without touching the chain link or the money.
 | Off chain | the v1 demo inbox and six tamperings, with real ML-DSA-87 and throwaway keys; what the agent and MCP tools are shown and trust (signed amounts, malformed sealed invoices, the company-only message check, expiry, chain id) | `npm test` |
 | The signer's guard | what the agent's signer will sign (`lib/agent.mjs` `signerMay`), against a stand-in desk: it signs only what the desk would pay now, by the signer the desk names; it declines everything else, a forgery or a past-due invoice included (the agent's message does not bind the due date or the vendor's signature, so such a signature could pay a genuine invoice with the same fields), signs nothing when the chain does not answer, and never puts an agent signature in the dry run (18 cases, `test/guard.test.mjs`) | `npm test` |
 | Documents | every link into this repository and the site resolves (file and anchor); every count the documents state (checks, drill attacks, tests, invariants, mutants, public agent signatures) against its source; `verify` fails if its own count drifts from the documents | `npm test` |
-| On chain | 119 read-only checks against the live testnet | `npm run verify` |
+| On chain | 121 read-only checks against the live testnet | `npm run verify` |
 
 ### Cryptography inventory (QoreScan)
 
@@ -160,6 +166,15 @@ real ([`runs/probes/v5-bindings.json`](runs/probes/v5-bindings.json)):
 
 `npm run verify` re-reads all seven and decodes each refusal from the chain's record.
 
+Then 2,000 randomized dry-run attacks on the live V5 desk ([`scripts/attack-campaign-v5.mjs`](scripts/attack-campaign-v5.mjs),
+[`runs/campaign-v5.json`](runs/campaign-v5.json)): 0 would pay. Of them, 1,008 had the agent's key without its signer, holding
+the signer's real signatures for other payments: signatures over another amount, vendor, id, token, agent,
+payer, desk or chain; past their deadline; with the deadline moved in the calldata; over the same invoice with
+another due date or another vendor signature; V4-style signatures over these very fields. All 1,008 refused:
+950 `BadAgentSignature`, 58 `AgentSignatureExpired`. The genuine, signed control passed. `npm run verify` asks 40
+of them again from their stored calldata; once the campaign's deadline (three hours after it ran) has passed,
+those that got past the agent-signature check before answer `AgentSignatureExpired`.
+
 ## Every public agent signature, sent again
 
 A V4 agent signature binds one invoice and has no expiry of its own, and it is public once relayed. One
@@ -171,7 +186,7 @@ this repository. Each is sent again as its agent, by dry run. `npm run verify` r
 
 | | |
 |---|---|
-| public agent signatures | 70, on the live desk and the third company's |
+| public agent signatures | 125, on the live V5 and V4 desks and the third company's |
 | would pay now, first sweep | 3: the compromised run's `OverDailyLimit` refusal (10 fUSD), the campaign's signed control (1 fUSD), an early V4 probe that ran out of gas (1 fUSD) |
 | what was done | the company paid those three in person, so they answer `AlreadyPaid` ([`0x47c9edd7…`](https://explore.qore.network/tx/0x47c9edd7b395e558c6d734051049cbbdb496b1101a95530cd5a245ec6154ff0d), [`0x15d52551…`](https://explore.qore.network/tx/0x15d525512ff31b94a9e7362e7267f1949f9566feedb87f7c0bc910be20d98ed5), [`0x1f5b2a21…`](https://explore.qore.network/tx/0x1f5b2a21088984cc206722dc100077ddc78a45744db13762a76f9a7503895550)); both desks then rotated their signers ([live](runs/live/signer-rotate.log), [third company](runs/own-company-v4/signer-rotate.log), and once more from the Desk Console in a browser: [`runs/console-rotate-v4.json`](runs/console-rotate-v4.json)), so every signature an old signer made is `BadAgentSignature` now |
 | would pay now | **0** ([`runs/signature-sweep.json`](runs/signature-sweep.json)) |

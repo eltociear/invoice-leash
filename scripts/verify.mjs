@@ -13,7 +13,7 @@
 //   8. the probes of what a spending-rule-bound key can move (the finding behind v2), re-read
 //   9. v2 (fUSD): bytecode, the agent account's rule, the payer's settings, the run, attacks as the agent
 import solc from "solc";
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { AbiCoder, Interface, JsonRpcProvider, getAddress, formatUnits, keccak256 } from "ethers";
 import { qorToEvm } from "@qorechain/sdk";
 import net from "node:net";
@@ -449,6 +449,41 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
       const rule5 = (live5.agentRule?.allowedEvmCalls ?? []).join() === `${DL5}/${desk5.getFunction("pay").selector}`;
       ok(code5 && ks5[0] && ks5[3] && Number(ks5[1]) === 1 && rule5 && (live5.previous ?? []).some((p) => p.version === 4 && getAddress(p.invoiceDesk) === DL4),
         `InvoiceDeskV5, the live agent's desk since 2026-11-26: bytecode at ${DL5} == contracts/InvoiceDeskV5.sol; its agent signer ${named5.slice(0, 10)}… has a proven ML-DSA-87 key; the agent's key may call only its pay`, "(upgraded from V4 with desk.mjs upgrade)");
+      // the V5 campaign (runs/campaign-v5.json): 2,000 dry-run attacks on the live V5 desk; a sample, kept as
+      // full calldata, asked again now with no keys. Every signature in it carries the campaign's deadline: past
+      // it, the attacks that got past the agent-signature check before answer AgentSignatureExpired instead
+      if (existsSync(new URL("runs/campaign-v5.json", root))) {
+        const c5 = json("runs/campaign-v5.json"), s5 = json("runs/campaign-v5-sample.json");
+        const ask5 = async (from, data, value = "0") => { try { await provider.call({ from, to: s5.desk, data, value: BigInt(value) }); return "PAID"; } catch (e) { try { return desk5.parseError(e.data ?? e.info?.error?.data)?.name ?? "Reverted"; } catch { return "Reverted"; } } };
+        const deadline = Number(desk5.decodeFunctionData("pay", s5.control.data)[8]), past = Date.now() / 1000 > deadline;
+        let same = 0, expiredNow = 0;
+        for (const x of s5.sample) { const now = await ask5(x.from, x.data, x.value); if (now === x.outcome) same++; else if (past && now === "AgentSignatureExpired") expiredNow++; }
+        const ctl = await ask5(s5.control.from, s5.control.data);
+        const agentsigRefused = c5.agentsig.badAgentSignature + c5.agentsig.agentSignatureExpired;
+        ok(s5.desk === live5.invoiceDesk && c5.paid === 0 && c5.network === 0 && c5.control === "PAID" && c5.classicalAlone === "BadAgentSignature" && agentsigRefused === c5.agentsig.count && same + expiredNow === s5.sample.length
+          && (past ? ctl === "AgentSignatureExpired" : ["PAID", "OverDailyLimit"].includes(ctl)),
+          `${c5.count.toLocaleString()} dry-run attacks on the live InvoiceDeskV5: 0 would pay. A compromised agent with its signer: refused by the vendor's signature and the desk's rules. The agent's key without its signer (signatures made for other payments, expired ones, ones for another due date or vendor signature, V4-style ones): ${c5.agentsig.count} of ${c5.agentsig.count} refused (${c5.agentsig.badAgentSignature} BadAgentSignature, ${c5.agentsig.agentSignatureExpired} AgentSignatureExpired). ${s5.sample.length} sampled attacks asked again now: ${same} answer as recorded${expiredNow ? `, ${expiredNow} are AgentSignatureExpired since their deadline passed` : ""}`,
+          `(control now: ${ctl === "PAID" ? "would pay" : ctl === "AgentSignatureExpired" ? "its signature past its deadline, so it pays nothing" : "today's limit used"})`);
+      }
+      // the compromised-agent run on V5 (runs/v5-compromised.json): every row re-read, each refusal decoded
+      if (existsSync(new URL("runs/v5-compromised.json", root))) {
+        const r5 = json("runs/v5-compromised.json"), rows5 = r5.log.filter((x) => x.link);
+        const reread5 = await reread(rows5);
+        const why5 = r5.log.filter((x) => !x.ok).map((x) => x.why).join(" | ");
+        let dec5 = 0, deskRef5 = 0;
+        for (const x of r5.log.filter((x) => !x.ok && /^InvoiceDesk: /.test(x.why ?? ""))) {
+          deskRef5++;
+          const t = (await rest(`/cosmos/tx/v1beta1/txs/${x.link.slice(-64)}`))?.tx_response;
+          const any = t?.data && pb(Buffer.from(t.data, "hex")).find(([f]) => f === 2)?.[1], val = any && pb(any).find(([f]) => f === 2)?.[1], ret = val && pb(val).find(([f, v]) => f === 2 && v instanceof Uint8Array)?.[1];
+          let n = null; try { n = ret?.length && desk5.parseError("0x" + Buffer.from(ret).toString("hex"))?.name; } catch { /* not the desk's */ }
+          if (n && x.why === `InvoiceDesk: ${n}`) dec5++;
+        }
+        const first5 = r5.log[0];
+        ok(r5.desk === live5.invoiceDesk && reread5 === rows5.length && r5.log.length === 16 && r5.log.filter((x) => x.ok).length === 3 && BigInt(r5.fusdBefore) - BigInt(r5.fusdAfter) === 17_000_000n && r5.malloryAfter === r5.malloryBefore
+          && first5.withoutAgentSignature && first5.unpaidBefore === true && first5.why === "InvoiceDesk: BadAgentSignature"
+          && ["UnknownVendor", "BadSignature", "OverPerPaymentLimit", "AlreadyPaid", "OverDailyLimit", "denom uqor not allowed", "not permitted to \"send\"", "only if the rule lists the call"].every((w) => why5.includes(w)) && deskRef5 > 0 && dec5 === deskRef5,
+          `compromised agent on the live InvoiceDeskV5: ${r5.log.length} attempts, the classical key alone first (on an unpaid invoice: BadAgentSignature), 3 genuine invoices paid (17 fUSD), ${r5.log.length - 3} refused, 0 to Mallory; each re-read, the desk's ${deskRef5} refusals decoded from the chain's record`, `(series ${r5.series})`);
+      }
       const pr5 = json("runs/probes/v5-bindings.json");
       let asSaid = 0;
       for (const st of pr5.steps) {

@@ -165,10 +165,10 @@ const hist = {};
 for (const r of rows) hist[r.now] = (hist[r.now] ?? 0) + 1;
 const live = rows.filter((r) => r.now === "PAID");
 writeFileSync(new URL("runs/signature-sweep.json", ROOT), JSON.stringify({
-  what: "every public agent ML-DSA-87 signature on an InvoiceDeskV4 (relayed calldata, EVM-lane calldata, calldata in this repository), dry-run again as its agent: could the agent's classical key alone get it paid now?",
+  what: "every public agent ML-DSA-87 signature on an InvoiceDeskV4 or V5 (relayed calldata, EVM-lane calldata, calldata in this repository), dry-run again as its agent: could the agent's classical key alone get it paid now?",
   at: new Date().toISOString(), desks: desks.map((d) => d.invoiceDesk), signatures: rows.length, now: hist, wouldPay: live.length,
   dormant: rows.filter((r) => r.later.startsWith("only") || r.later.startsWith("on a later")).map((r) => ({ id: r.id, amount: r.amount, vendor: r.vendor, later: r.later })), rows }, null, 1) + "\n");
-console.log(`${rows.length} public agent signatures on ${desks.length} InvoiceDeskV4 desks; asked again now: ${JSON.stringify(hist)}`);
+console.log(`${rows.length} public agent signatures on ${desks.length} InvoiceDeskV4/V5 desks; asked again now: ${JSON.stringify(hist)}`);
 for (const r of rows.filter((r) => !r.later.startsWith("never") && r.later !== "now")) console.log(`  dormant: ${r.amount} (invoice ${r.id.slice(0, 10)}…): ${r.later}`);
 for (const r of live) console.log(`  WOULD PAY: ${r.amount} to ${r.vendor} (invoice ${r.id.slice(0, 10)}…, due ${new Date(r.dueBy * 1000).toISOString().slice(0, 10)}) on ${r.desk}; ${r.where.join(", ")}`);
 const out = process.argv.indexOf("--invoices");

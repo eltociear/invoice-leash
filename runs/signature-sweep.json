@@ -1,15 +1,17 @@
 {
- "what": "every public agent ML-DSA-87 signature on an InvoiceDeskV4 (relayed calldata, EVM-lane calldata, calldata in this repository), dry-run again as its agent: could the agent's classical key alone get it paid now?",
- "at": "2026-11-26T07:42:01.639Z",
+ "what": "every public agent ML-DSA-87 signature on an InvoiceDeskV4 or V5 (relayed calldata, EVM-lane calldata, calldata in this repository), dry-run again as its agent: could the agent's classical key alone get it paid now?",
+ "at": "2026-11-26T18:17:35.953Z",
  "desks": [
+  "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
   "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
   "0xd8a723c91Af58A885d8E87509E7B770559c0C353"
  ],
- "signatures": 70,
+ "signatures": 125,
  "now": {
-  "BadAgentSignature": 66,
+  "BadAgentSignature": 67,
+  "AgentSignatureExpired": 50,
   "AlreadyPaid": 1,
-  "NotPayersAgent": 3
+  "NotPayersAgent": 7
  },
  "wouldPay": 0,
  "dormant": [],
@@ -23,6 +25,7 @@
    "dueBy": 1798104830,
    "now": "BadAgentSignature",
    "where": [
+    "tx DDF9344404EDB336157EA0E63DFD52DA968A200EC3DF6A750366CC3DA295A659",
     "tx DDF9344404EDB336157EA0E63DFD52DA968A200EC3DF6A750366CC3DA295A659"
    ],
    "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
@@ -36,6 +39,7 @@
    "dueBy": 1798106834,
    "now": "BadAgentSignature",
    "where": [
+    "tx 2ED771805A73B521EA2248A694723710EDA7072F21E9AC58C0103F672B3F3004",
     "tx 2ED771805A73B521EA2248A694723710EDA7072F21E9AC58C0103F672B3F3004"
    ],
    "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
@@ -51,6 +55,9 @@
    "where": [
     "tx FC6ABF71C6F0C456928D493C8B0A94F0B9F47B2AEF32DF002C4998387D503CDB",
     "tx 90D7A8C089153D464BDD4650A6674B5856AFD969B901B623F52B44A138CA3C44",
+    "tx 90D7A8C089153D464BDD4650A6674B5856AFD969B901B623F52B44A138CA3C44",
+    "tx FC6ABF71C6F0C456928D493C8B0A94F0B9F47B2AEF32DF002C4998387D503CDB",
+    "tx 90D7A8C089153D464BDD4650A6674B5856AFD969B901B623F52B44A138CA3C44",
     "tx 90D7A8C089153D464BDD4650A6674B5856AFD969B901B623F52B44A138CA3C44"
    ],
    "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
@@ -64,6 +71,7 @@
    "dueBy": 1798130046,
    "now": "BadAgentSignature",
    "where": [
+    "tx 717089590975F47121F4E80D070DB8B756C4270C9645BEE5C49094BBF7010947",
     "tx 717089590975F47121F4E80D070DB8B756C4270C9645BEE5C49094BBF7010947"
    ],
    "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
@@ -77,6 +85,8 @@
    "dueBy": 1798130046,
    "now": "BadAgentSignature",
    "where": [
+    "tx 3582D4B64D198E3A654F72EF92666B4F48F7981C124508AB6AF6C39B31D497D1",
+    "tx 3582D4B64D198E3A654F72EF92666B4F48F7981C124508AB6AF6C39B31D497D1",
     "tx 3582D4B64D198E3A654F72EF92666B4F48F7981C124508AB6AF6C39B31D497D1",
     "tx 3582D4B64D198E3A654F72EF92666B4F48F7981C124508AB6AF6C39B31D497D1"
    ],
@@ -92,6 +102,8 @@
    "now": "BadAgentSignature",
    "where": [
     "tx 919B998CC2F13B411607A8DE1A4918DD9BF833D76A78AD481122AB80316E01CB",
+    "tx 919B998CC2F13B411607A8DE1A4918DD9BF833D76A78AD481122AB80316E01CB",
+    "tx 919B998CC2F13B411607A8DE1A4918DD9BF833D76A78AD481122AB80316E01CB",
     "tx 919B998CC2F13B411607A8DE1A4918DD9BF833D76A78AD481122AB80316E01CB"
    ],
    "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
@@ -105,6 +117,8 @@
    "dueBy": 1798130046,
    "now": "BadAgentSignature",
    "where": [
+    "tx CE0A1E9F263514D5E26153E738EE393C2FFDE2F8AE876F92B308F87F5557E894",
+    "tx CE0A1E9F263514D5E26153E738EE393C2FFDE2F8AE876F92B308F87F5557E894",
     "tx CE0A1E9F263514D5E26153E738EE393C2FFDE2F8AE876F92B308F87F5557E894",
     "tx CE0A1E9F263514D5E26153E738EE393C2FFDE2F8AE876F92B308F87F5557E894"
    ],
@@ -120,6 +134,8 @@
    "now": "BadAgentSignature",
    "where": [
     "tx 59D75D4B14A8220729950CADD9ED868014E0DDBFEF6E480D379AD4BBA49785BE",
+    "tx 59D75D4B14A8220729950CADD9ED868014E0DDBFEF6E480D379AD4BBA49785BE",
+    "tx 59D75D4B14A8220729950CADD9ED868014E0DDBFEF6E480D379AD4BBA49785BE",
     "tx 59D75D4B14A8220729950CADD9ED868014E0DDBFEF6E480D379AD4BBA49785BE"
    ],
    "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
@@ -134,6 +150,8 @@
    "now": "BadAgentSignature",
    "where": [
     "tx EB088875D58FBF474D8A186EDC6C3A08A620D8A26EEDF1092707434F7D02F004",
+    "tx EB088875D58FBF474D8A186EDC6C3A08A620D8A26EEDF1092707434F7D02F004",
+    "tx EB088875D58FBF474D8A186EDC6C3A08A620D8A26EEDF1092707434F7D02F004",
     "tx EB088875D58FBF474D8A186EDC6C3A08A620D8A26EEDF1092707434F7D02F004"
    ],
    "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
@@ -147,6 +165,7 @@
    "dueBy": 1798130046,
    "now": "BadAgentSignature",
    "where": [
+    "tx E3C3699EB5752484906997182E693350584FA584238691A96C1C50E72D200017",
     "tx E3C3699EB5752484906997182E693350584FA584238691A96C1C50E72D200017"
    ],
    "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
@@ -161,6 +180,8 @@
    "now": "BadAgentSignature",
    "where": [
     "tx 6E88AC529A07BBAFE53CF695D5CF7A86C813C31376A476D6160E5675C5572A42",
+    "tx 6E88AC529A07BBAFE53CF695D5CF7A86C813C31376A476D6160E5675C5572A42",
+    "tx 6E88AC529A07BBAFE53CF695D5CF7A86C813C31376A476D6160E5675C5572A42",
     "tx 6E88AC529A07BBAFE53CF695D5CF7A86C813C31376A476D6160E5675C5572A42"
    ],
    "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
@@ -174,6 +195,7 @@
    "dueBy": 1798176942,
    "now": "BadAgentSignature",
    "where": [
+    "tx 953A89D65707A29E124E802D78549987281774D32975E581993DB2CED16E7B4E",
     "tx 953A89D65707A29E124E802D78549987281774D32975E581993DB2CED16E7B4E"
    ],
    "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
@@ -187,6 +209,8 @@
    "dueBy": 1798176942,
    "now": "BadAgentSignature",
    "where": [
+    "tx C2FFAC711015C81A22D3C5D0872D2A2B93F645697E6E61DC6F8207CE9AD44AC0",
+    "tx C2FFAC711015C81A22D3C5D0872D2A2B93F645697E6E61DC6F8207CE9AD44AC0",
     "tx C2FFAC711015C81A22D3C5D0872D2A2B93F645697E6E61DC6F8207CE9AD44AC0",
     "tx C2FFAC711015C81A22D3C5D0872D2A2B93F645697E6E61DC6F8207CE9AD44AC0"
    ],
@@ -202,6 +226,8 @@
    "now": "BadAgentSignature",
    "where": [
     "tx 6D4BCD9CEC819B54009CDC1E99BA91F08DCF55970655C3834EA3C98ABDB57EE2",
+    "tx 6D4BCD9CEC819B54009CDC1E99BA91F08DCF55970655C3834EA3C98ABDB57EE2",
+    "tx 6D4BCD9CEC819B54009CDC1E99BA91F08DCF55970655C3834EA3C98ABDB57EE2",
     "tx 6D4BCD9CEC819B54009CDC1E99BA91F08DCF55970655C3834EA3C98ABDB57EE2"
    ],
    "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
@@ -215,6 +241,7 @@
    "dueBy": 1798181396,
    "now": "BadAgentSignature",
    "where": [
+    "tx 3B4C3321F1D3B9EEEBFF658BF52F58737A4BECB5E12B25B3B031E93CF11E9C2A",
     "tx 3B4C3321F1D3B9EEEBFF658BF52F58737A4BECB5E12B25B3B031E93CF11E9C2A"
    ],
    "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
@@ -228,6 +255,8 @@
    "dueBy": 1798181396,
    "now": "BadAgentSignature",
    "where": [
+    "tx 54C12EA23C8598FE6B2C5A1065630A4C294303F4FF0E99A1927665EA59933687",
+    "tx 54C12EA23C8598FE6B2C5A1065630A4C294303F4FF0E99A1927665EA59933687",
     "tx 54C12EA23C8598FE6B2C5A1065630A4C294303F4FF0E99A1927665EA59933687",
     "tx 54C12EA23C8598FE6B2C5A1065630A4C294303F4FF0E99A1927665EA59933687"
    ],
@@ -243,6 +272,8 @@
    "now": "BadAgentSignature",
    "where": [
     "tx 5C9967B6CA2D41706AC0364C99EC0A3491ECBF8E07AFD6ABBE8A6A6BA4CF0FC3",
+    "tx 5C9967B6CA2D41706AC0364C99EC0A3491ECBF8E07AFD6ABBE8A6A6BA4CF0FC3",
+    "tx 5C9967B6CA2D41706AC0364C99EC0A3491ECBF8E07AFD6ABBE8A6A6BA4CF0FC3",
     "tx 5C9967B6CA2D41706AC0364C99EC0A3491ECBF8E07AFD6ABBE8A6A6BA4CF0FC3"
    ],
    "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
@@ -256,6 +287,7 @@
    "dueBy": 1798262660,
    "now": "BadAgentSignature",
    "where": [
+    "tx 4C6661504EBE0673C196A1F406AF1ECECD90A7B3331513D96290FD7D2EF759DB",
     "tx 4C6661504EBE0673C196A1F406AF1ECECD90A7B3331513D96290FD7D2EF759DB"
    ],
    "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
@@ -270,6 +302,8 @@
    "now": "BadAgentSignature",
    "where": [
     "tx D62FD932F8D5A35EC78A8993888117FA575014A7E19DA50D9620C255F92B419E",
+    "tx D62FD932F8D5A35EC78A8993888117FA575014A7E19DA50D9620C255F92B419E",
+    "tx D62FD932F8D5A35EC78A8993888117FA575014A7E19DA50D9620C255F92B419E",
     "tx D62FD932F8D5A35EC78A8993888117FA575014A7E19DA50D9620C255F92B419E"
    ],
    "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
@@ -283,6 +317,8 @@
    "dueBy": 1798262660,
    "now": "BadAgentSignature",
    "where": [
+    "tx 843C34B40F5F88FFFA263F3B748AE19717FDD6365F14E97F2D861D2F82B1D77F",
+    "tx 843C34B40F5F88FFFA263F3B748AE19717FDD6365F14E97F2D861D2F82B1D77F",
     "tx 843C34B40F5F88FFFA263F3B748AE19717FDD6365F14E97F2D861D2F82B1D77F",
     "tx 843C34B40F5F88FFFA263F3B748AE19717FDD6365F14E97F2D861D2F82B1D77F"
    ],
@@ -299,6 +335,9 @@
    "where": [
     "tx 9319351D11B3AFC7B3E8A54747F488AFF18220FC009BCC2015C1834313EB9441",
     "tx 99EE72DAD312F6012E9B1B5B1BCE5D16F1236CD1B8707B37B549E510C1EF23C9",
+    "tx 99EE72DAD312F6012E9B1B5B1BCE5D16F1236CD1B8707B37B549E510C1EF23C9",
+    "tx 9319351D11B3AFC7B3E8A54747F488AFF18220FC009BCC2015C1834313EB9441",
+    "tx 99EE72DAD312F6012E9B1B5B1BCE5D16F1236CD1B8707B37B549E510C1EF23C9",
     "tx 99EE72DAD312F6012E9B1B5B1BCE5D16F1236CD1B8707B37B549E510C1EF23C9"
    ],
    "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
@@ -312,6 +351,7 @@
    "dueBy": 1798265152,
    "now": "BadAgentSignature",
    "where": [
+    "tx E605993C28B6A5348F05BE36CCAC62D4768AA909418B8ACA5E476F42D75C93E3",
     "tx E605993C28B6A5348F05BE36CCAC62D4768AA909418B8ACA5E476F42D75C93E3"
    ],
    "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
@@ -325,6 +365,8 @@
    "dueBy": 1798265152,
    "now": "BadAgentSignature",
    "where": [
+    "tx 5EF5442987DF3236C64B1162E9E70AEF05CAB42AB146CCD4B2EF00D49C4BEF5C",
+    "tx 5EF5442987DF3236C64B1162E9E70AEF05CAB42AB146CCD4B2EF00D49C4BEF5C",
     "tx 5EF5442987DF3236C64B1162E9E70AEF05CAB42AB146CCD4B2EF00D49C4BEF5C",
     "tx 5EF5442987DF3236C64B1162E9E70AEF05CAB42AB146CCD4B2EF00D49C4BEF5C"
    ],
@@ -340,6 +382,8 @@
    "now": "BadAgentSignature",
    "where": [
     "tx 48A2126E5D90A2AC0F5C507BB553D13CBA20BAA3A073875A8C54D8B332798C78",
+    "tx 48A2126E5D90A2AC0F5C507BB553D13CBA20BAA3A073875A8C54D8B332798C78",
+    "tx 48A2126E5D90A2AC0F5C507BB553D13CBA20BAA3A073875A8C54D8B332798C78",
     "tx 48A2126E5D90A2AC0F5C507BB553D13CBA20BAA3A073875A8C54D8B332798C78"
    ],
    "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
@@ -353,6 +397,8 @@
    "dueBy": 1798265152,
    "now": "BadAgentSignature",
    "where": [
+    "tx B2B08217D02DBA77CBC58F3D4FA30B21CF95DAF4A576C71FFA214266A17CB961",
+    "tx B2B08217D02DBA77CBC58F3D4FA30B21CF95DAF4A576C71FFA214266A17CB961",
     "tx B2B08217D02DBA77CBC58F3D4FA30B21CF95DAF4A576C71FFA214266A17CB961",
     "tx B2B08217D02DBA77CBC58F3D4FA30B21CF95DAF4A576C71FFA214266A17CB961"
    ],
@@ -368,6 +414,8 @@
    "now": "BadAgentSignature",
    "where": [
     "tx A6D5EE459192010BB6054811CED76B698AF0587386351ADE5D65D7ABDA47A9BD",
+    "tx A6D5EE459192010BB6054811CED76B698AF0587386351ADE5D65D7ABDA47A9BD",
+    "tx A6D5EE459192010BB6054811CED76B698AF0587386351ADE5D65D7ABDA47A9BD",
     "tx A6D5EE459192010BB6054811CED76B698AF0587386351ADE5D65D7ABDA47A9BD"
    ],
    "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
@@ -382,6 +430,8 @@
    "now": "BadAgentSignature",
    "where": [
     "tx 391A3ED78853389D32990127AE4CA3845CF97D5EE72FF48EDA9EA37155326C10",
+    "tx 391A3ED78853389D32990127AE4CA3845CF97D5EE72FF48EDA9EA37155326C10",
+    "tx 391A3ED78853389D32990127AE4CA3845CF97D5EE72FF48EDA9EA37155326C10",
     "tx 391A3ED78853389D32990127AE4CA3845CF97D5EE72FF48EDA9EA37155326C10"
    ],
    "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
@@ -395,6 +445,7 @@
    "dueBy": 1798265152,
    "now": "BadAgentSignature",
    "where": [
+    "tx E5832EA2538CD4D7FAF36468C4EB876DACF9F3F13203F665C54AE686FC239194",
     "tx E5832EA2538CD4D7FAF36468C4EB876DACF9F3F13203F665C54AE686FC239194"
    ],
    "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
@@ -409,9 +460,247 @@
    "now": "BadAgentSignature",
    "where": [
     "tx 5B639205EE308DE1D23A7E64857C6E7C58A8813AA088856ED0999AD59EF347DC",
+    "tx 5B639205EE308DE1D23A7E64857C6E7C58A8813AA088856ED0999AD59EF347DC",
+    "tx 5B639205EE308DE1D23A7E64857C6E7C58A8813AA088856ED0999AD59EF347DC",
     "tx 5B639205EE308DE1D23A7E64857C6E7C58A8813AA088856ED0999AD59EF347DC"
    ],
    "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0x3ec0573ab9831eb8e3db368cd860f40e18e1af4f9f5669acaccb2380a6aeacd8",
+   "dueBy": 1798273509,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "tx BB13DA2A3DFF4BE0E4F035882CECD76791D75C1660990695F35F273DDD229CAE",
+    "tx BB13DA2A3DFF4BE0E4F035882CECD76791D75C1660990695F35F273DDD229CAE",
+    "tx BB13DA2A3DFF4BE0E4F035882CECD76791D75C1660990695F35F273DDD229CAE",
+    "tx BB13DA2A3DFF4BE0E4F035882CECD76791D75C1660990695F35F273DDD229CAE"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0x3ec0573ab9831eb8e3db368cd860f40e18e1af4f9f5669acaccb2380a6aeacd8",
+   "dueBy": 1798273509,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "tx 2E6E985D2FF7065C79EEF1C495F57AB1E3B35C24B6DE6D4CCA779010E4BCC010",
+    "tx 2E6E985D2FF7065C79EEF1C495F57AB1E3B35C24B6DE6D4CCA779010E4BCC010",
+    "tx 2E6E985D2FF7065C79EEF1C495F57AB1E3B35C24B6DE6D4CCA779010E4BCC010",
+    "tx 2E6E985D2FF7065C79EEF1C495F57AB1E3B35C24B6DE6D4CCA779010E4BCC010"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0x3ec0573ab9831eb8e3db368cd860f40e18e1af4f9f5669acaccb2380a6aeacd8",
+   "dueBy": 1798359909,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "tx 1D47FF6CF15F5A9FF1DF90955F56A914DE0527AF0421F72419F239FF9CA92325",
+    "tx 1D47FF6CF15F5A9FF1DF90955F56A914DE0527AF0421F72419F239FF9CA92325",
+    "tx 1D47FF6CF15F5A9FF1DF90955F56A914DE0527AF0421F72419F239FF9CA92325",
+    "tx 1D47FF6CF15F5A9FF1DF90955F56A914DE0527AF0421F72419F239FF9CA92325"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0x3ec0573ab9831eb8e3db368cd860f40e18e1af4f9f5669acaccb2380a6aeacd8",
+   "dueBy": 1798273509,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "tx 1E275189D1F74E9BD74709631089AE07630855B16757193DEC137F5E27D3F9CB",
+    "tx A745A2A5502DD46886356F0075A68852B84AF7A6B502D5F60267EE280CE03977",
+    "tx A745A2A5502DD46886356F0075A68852B84AF7A6B502D5F60267EE280CE03977",
+    "tx 1E275189D1F74E9BD74709631089AE07630855B16757193DEC137F5E27D3F9CB",
+    "tx A745A2A5502DD46886356F0075A68852B84AF7A6B502D5F60267EE280CE03977",
+    "tx A745A2A5502DD46886356F0075A68852B84AF7A6B502D5F60267EE280CE03977"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0x3ec0573ab9831eb8e3db368cd860f40e18e1af4f9f5669acaccb2380a6aeacd8",
+   "dueBy": 1798359909,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "tx 95F56C8CAA6A303F604211F4CE57A18A0AE3BDE7EA1B16A116ABC61D93ADA835",
+    "tx 95F56C8CAA6A303F604211F4CE57A18A0AE3BDE7EA1B16A116ABC61D93ADA835",
+    "tx 95F56C8CAA6A303F604211F4CE57A18A0AE3BDE7EA1B16A116ABC61D93ADA835",
+    "tx 95F56C8CAA6A303F604211F4CE57A18A0AE3BDE7EA1B16A116ABC61D93ADA835"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "4000000",
+   "id": "0x82ff5703c5d61bbe1ee9ce692d092bedaaff72cbfdba42bdb9632eb498ee7d8d",
+   "dueBy": 1798299962,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "tx 5E4C403417F4DB2FC64B13EB9098EA604BF5AE827467D30750367E6040FFE340",
+    "tx 5E4C403417F4DB2FC64B13EB9098EA604BF5AE827467D30750367E6040FFE340"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "3000000",
+   "id": "0x879f83c41851a91634aa3b3fa1866a8f96c123fde326b38165808b68c1a780f9",
+   "dueBy": 1798299962,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "tx A8352432146A4584BEEFBFC5951AEBFBA69E180E16231320A9642746DDF8E712",
+    "tx A8352432146A4584BEEFBFC5951AEBFBA69E180E16231320A9642746DDF8E712"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0x37F35dDeFb85A16A0c13A2567DF57a50474a4609",
+   "amount": "6000000",
+   "id": "0x4d2bbbcad789c83fc49aa40e266c69235a9f73063fa8380eae32a42d3957c6c9",
+   "dueBy": 1798299962,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "tx 0648CD66911FEA0C23EDB0DDF411753359B3F5D1EDD3F01E3E9E9A132F988E98",
+    "tx 0648CD66911FEA0C23EDB0DDF411753359B3F5D1EDD3F01E3E9E9A132F988E98",
+    "tx 0648CD66911FEA0C23EDB0DDF411753359B3F5D1EDD3F01E3E9E9A132F988E98",
+    "tx 0648CD66911FEA0C23EDB0DDF411753359B3F5D1EDD3F01E3E9E9A132F988E98"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "7000000",
+   "id": "0x206e7610d6f0d4730c2acecd86cfa1792a87912a04615f322d466049c0500ace",
+   "dueBy": 1798299962,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "tx BB7CD1D22A8774E742B526CC45D01D393892F7D6A9D3927C1E00D8C84CCA0A16",
+    "tx BB7CD1D22A8774E742B526CC45D01D393892F7D6A9D3927C1E00D8C84CCA0A16",
+    "tx BB7CD1D22A8774E742B526CC45D01D393892F7D6A9D3927C1E00D8C84CCA0A16",
+    "tx BB7CD1D22A8774E742B526CC45D01D393892F7D6A9D3927C1E00D8C84CCA0A16"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "9000000",
+   "id": "0x82ff5703c5d61bbe1ee9ce692d092bedaaff72cbfdba42bdb9632eb498ee7d8d",
+   "dueBy": 1798299962,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "tx 57316B7D6A12B302E66D67B3B1C183D65D78F40544C1AC84A07E0B05FA4691FD",
+    "tx 57316B7D6A12B302E66D67B3B1C183D65D78F40544C1AC84A07E0B05FA4691FD",
+    "tx 57316B7D6A12B302E66D67B3B1C183D65D78F40544C1AC84A07E0B05FA4691FD",
+    "tx 57316B7D6A12B302E66D67B3B1C183D65D78F40544C1AC84A07E0B05FA4691FD"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "4000000",
+   "id": "0x82ff5703c5d61bbe1ee9ce692d092bedaaff72cbfdba42bdb9632eb498ee7d8d",
+   "dueBy": 1798299962,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "tx E8BD36880648E7A873D5BEFF266C64A66723E75CAC562096C8AB56FA89D538BE",
+    "tx E8BD36880648E7A873D5BEFF266C64A66723E75CAC562096C8AB56FA89D538BE",
+    "tx E8BD36880648E7A873D5BEFF266C64A66723E75CAC562096C8AB56FA89D538BE",
+    "tx E8BD36880648E7A873D5BEFF266C64A66723E75CAC562096C8AB56FA89D538BE"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "15000000",
+   "id": "0x98a6d61c26c5d8a4d56f6cc0d6596b86846513c8d955d704fb794210b6d0af2e",
+   "dueBy": 1798299962,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "tx 9E3E9EB2F6531AF7AEFD084716200771F69DF43D26080C178C7A69C1CFD519AB",
+    "tx 9E3E9EB2F6531AF7AEFD084716200771F69DF43D26080C178C7A69C1CFD519AB",
+    "tx 9E3E9EB2F6531AF7AEFD084716200771F69DF43D26080C178C7A69C1CFD519AB",
+    "tx 9E3E9EB2F6531AF7AEFD084716200771F69DF43D26080C178C7A69C1CFD519AB"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "4000000",
+   "id": "0x82ff5703c5d61bbe1ee9ce692d092bedaaff72cbfdba42bdb9632eb498ee7d8d",
+   "dueBy": 1798299962,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "tx 6018C663B17814126C09060733145F872B0720AF5016549AE32E642773B9A73E",
+    "tx 6018C663B17814126C09060733145F872B0720AF5016549AE32E642773B9A73E",
+    "tx 6018C663B17814126C09060733145F872B0720AF5016549AE32E642773B9A73E",
+    "tx 6018C663B17814126C09060733145F872B0720AF5016549AE32E642773B9A73E"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "10000000",
+   "id": "0x96ec8c3bfbba38ff3efbd3c3c7a1b327b5a0d731c5ddc9cf3f099f96aa728cdd",
+   "dueBy": 1798299962,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "tx F00933474EA207D3F8D9B824AC5CC8FC9FBB74955FB7141FBAD654F0FA6FBFA4",
+    "tx F00933474EA207D3F8D9B824AC5CC8FC9FBB74955FB7141FBAD654F0FA6FBFA4"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "10000000",
+   "id": "0x28c69a09c3212b12a94ac85ab772111ba0f1ae53116f759c7586891213263e60",
+   "dueBy": 1798299962,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "tx F7F17E8790A361621AF9C9088D1D0E948CE5B589BEEF6FFE0F1708B2EC20212B",
+    "tx F7F17E8790A361621AF9C9088D1D0E948CE5B589BEEF6FFE0F1708B2EC20212B",
+    "tx F7F17E8790A361621AF9C9088D1D0E948CE5B589BEEF6FFE0F1708B2EC20212B",
+    "tx F7F17E8790A361621AF9C9088D1D0E948CE5B589BEEF6FFE0F1708B2EC20212B"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
   },
   {
    "desk": "0xd8a723c91Af58A885d8E87509E7B770559c0C353",
@@ -952,6 +1241,527 @@
     "file runs/campaign-v4-sample.json"
    ],
    "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1822372851,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0x7831060398953BF2644E8753360a69de502bB0ae",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "NotPayersAgent",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x6a74A19422b02766C4e21a32af1103Cebe1Beb58",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "NotPayersAgent",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json",
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "BadAgentSignature",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "NotPayersAgent",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xDFD1f60b4e0904d2c026AB8A2bDCB1eb64D5d3a8",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "4162235",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xB1aE6C54959E8eeA0e4F76F18432a78AA4759780",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0x65a3df36d6fe62ff83dfd7c4989e3317dd745a8b3d779fed2b1d91e77ba6bd32",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xda6A3074A5f843006F16eCE53Cf8De126C6FF83F",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xf51735bb6e43bde28a6e6c4eb70bf24f6f5c3c57bc4d46e6bf027c2906d86a6c",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0x4CE94D8ef3319e989D345cF3462af08705E24721",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "NotPayersAgent",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xaaf898cba8492f4228a068a7bf7a68f580932abf8d7834e7e27d8f3e3c5bd43d",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "5480970",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "1000000",
+   "id": "0xbeb95b4c9273b0e45e4cc5e030428fa38198970ad4f94126bf79e68c4fa23189",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "file runs/campaign-v5-sample.json"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
   }
  ]
 }

@@ -1,8 +1,8 @@
 {
  "chain": "qorechain-diana",
- "block": 10794188,
- "at": "2026-11-26T14:52:39.952Z",
- "passed": 119,
+ "block": 10802706,
+ "at": "2026-11-26T18:15:17.937Z",
+ "passed": 121,
  "failed": 0,
  "checks": [
   {
@@ -450,6 +450,18 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
+   "check": "2,000 dry-run attacks on the live InvoiceDeskV5: 0 would pay. A compromised agent with its signer: refused by the vendor's signature and the desk's rules. The agent's key without its signer (signatures made for other payments, expired ones, ones for another due date or vendor signature, V4-style ones): 1008 of 1008 refused (950 BadAgentSignature, 58 AgentSignatureExpired). 40 sampled attacks asked again now: 6 answer as recorded, 34 are AgentSignatureExpired since their deadline passed",
+   "detail": "(control now: its signature past its deadline, so it pays nothing)"
+  },
+  {
+   "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
+   "ok": true,
+   "check": "compromised agent on the live InvoiceDeskV5: 16 attempts, the classical key alone first (on an unpaid invoice: BadAgentSignature), 3 genuine invoices paid (17 fUSD), 13 refused, 0 to Mallory; each re-read, the desk's 7 refusals decoded from the chain's record",
+   "detail": "(series MWXQ5NAZ)"
+  },
+  {
+   "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
+   "ok": true,
    "check": "InvoiceDeskV5, live: the classical key alone, an expired signature, the signature for a forged copy, and the signature for the invoice presented with its reissue (later due date) were all refused; on V4 the last two would have paid. The signed payment paid once; again, and the reissue: AlreadyPaid. Each of the 7 transactions re-read, the refusals decoded from the chain's record",
    "detail": "(runs/probes/v5-bindings.json)"
   },
@@ -468,7 +480,7 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "every public agent signature on the V4 desks (75: relayed transactions, EVM-lane transactions, records here), sent again now by its agent's classical key alone: none would pay. None could later either: each is void, or its invoice id is paid",
+   "check": "every public agent signature on the V4 desks (125: relayed transactions, EVM-lane transactions, records here), sent again now by its agent's classical key alone: none would pay. None could later either: each is void, or its invoice id is paid",
    "detail": "(scripts/signature-sweep.mjs)"
   },
   {
@@ -534,7 +546,7 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "live agent: each of its 14 logged transactions re-read from the chain agrees; it last ran 9 h ago (must be < 72 h)",
+   "check": "live agent: each of its 14 logged transactions re-read from the chain agrees; it last ran 13 h ago (must be < 72 h)",
    "detail": "(desk 0x6A3f514e…, .github/workflows/live.yml)"
   },
   {

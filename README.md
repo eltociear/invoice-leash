@@ -24,7 +24,7 @@ Environment) and signs only what the desk would pay right then.
 > npm install && npm run verify
 > ```
 >
-> 119 checks against the live testnet: the deployed contracts are byte-for-byte this source, every
+> 121 checks against the live testnet: the deployed contracts are byte-for-byte this source, every
 > recorded transaction is re-read, every attack is replayed. Last run: [`runs/verify-latest.txt`](runs/verify-latest.txt)
 > ([JSON](runs/verify-latest.json)). CI runs it daily, with 213 Foundry tests and 25 invariants.
 
@@ -35,33 +35,32 @@ Environment) and signs only what the desk would pay right then.
   a fresh address ([779FAF6E…](https://explore.qore.network/tx/779FAF6E8871B3FFF1D0D2D129AC904529E78E5198718C1DD630676E05AD4CEC),
   [details](#what-we-found-a-spending-rule-bounds-amounts-not-destinations)). So the agent got its own
   account, which holds no money and may make one call: the desk's `pay`.
-- **What that buys.** On InvoiceDeskV4 (the live desk until 2026-11-26), a decider that obeys every email made 16 attempts
+- **What that buys.** On the live InvoiceDeskV5, a decider that obeys every email made 16 attempts
   (forgeries, an edited amount, Mallory's own valid invoice, injections, the agent's classical key alone,
-  a replay, both limits) and got only the 3 genuine invoices paid, 0 to the attacker
-  ([`runs/v4-compromised.json`](runs/v4-compromised.json)). 2,000 dry-run attacks on the V4 desk, half of them with the agent's key but not its signer: 0 would pay.
-- **After Q-Day.** With four accounts' classical keys alone, 16 attacks were refused, including
-  swapping a vendor's ML-DSA-87 key. On InvoiceDeskV4 the agent's own classical key alone pays nothing
-  its ML-DSA-87 signer did not sign for that exact invoice ([live](runs/probes/v4-agent-sig.json)). On InvoiceDeskV5 not even a
-  signed one can be reused: a signature past its deadline, one made for a forged copy, and one presented
-  with the invoice reissued at a later due date were all refused on chain; on V4 the last two would have
-  paid ([`runs/probes/v5-bindings.json`](runs/probes/v5-bindings.json)). The signer
-  signs only a payment the desk would make right then, and `npm run verify` sends every agent signature ever
-  made public again, as the classical key alone: none would pay ([`runs/signature-sweep.json`](runs/signature-sweep.json)). An ordinary EVM wallet with no post-quantum key cannot send
-  anything at all on this chain. And we publish one account's classical private key: try to take its
-  QOR ([lab §6](https://eltociear.github.io/invoice-leash/lab.html#shor)).
+  a replay, both limits): only the 3 genuine invoices were paid, 0 to the attacker
+  ([`runs/v5-compromised.json`](runs/v5-compromised.json); on V4: [`runs/v4-compromised.json`](runs/v4-compromised.json)).
+  2,000 dry-run attacks on each of the V4 and V5 desks: 0 would pay ([`runs/campaign-v5.json`](runs/campaign-v5.json)).
+- **After Q-Day.** With four accounts' classical keys alone, 16 attacks were refused before any block. The
+  agent's own classical key alone pays nothing its ML-DSA-87 signer did not sign, and on V5 a signature
+  pays one exact invoice, once, within 15 minutes: an expired one, a forged copy's and a reissue's were
+  refused on chain ([`runs/probes/v5-bindings.json`](runs/probes/v5-bindings.json)). `npm run verify` sends every agent
+  signature ever made public again, as the classical key alone: none would pay
+  ([`runs/signature-sweep.json`](runs/signature-sweep.json)). An ordinary EVM wallet with no post-quantum key cannot send
+  anything on this chain. And one account's classical private key is published: try to take its QOR
+  ([lab §6](https://eltociear.github.io/invoice-leash/lab.html#shor)).
 - **It runs, and you can run it.** GitHub Actions runs the agent daily with an obey-everything decider
-  and its key in GitHub Secrets on purpose; the signer is a separate job with its own secret
-  ([`runs/live/`](runs/live/); [where each day ran](runs/live/README.md#where-each-day-ran): so far GitHub
-  has not started the schedule, so the days were started by hand). `desk.mjs` sets up a desk for your own
-  company; a second company was set up that way from nothing.
+  and its key in GitHub Secrets on purpose; the signer is a separate job in its own Environment
+  ([`runs/live/`](runs/live/); [where each day ran](runs/live/README.md#where-each-day-ran): GitHub starts schedules
+  late or not at all, so some days were started by hand). `desk.mjs` sets up a desk for your own company;
+  two more companies were set up that way from nothing.
 
 ## The rubric, and where to look
 
 | Criterion | Evidence |
 |---|---|
-| **Works** (25) | `npm run verify` (119 checks); the [live agent](runs/live/); a [third company set up from nothing on V4](runs/own-company-v4/) with `desk.mjs` (and a [second](runs/own-company-v3/), on V3); the [Desk Console](runs/console-e2e-v4.json) driven in a real browser; 100% coverage and 27 Halmos proofs ([`runs/halmos.txt`](runs/halmos.txt)) |
+| **Works** (25) | `npm run verify` (121 checks); the [live agent](runs/live/); a [third company set up from nothing on V4](runs/own-company-v4/) with `desk.mjs` (and a [second](runs/own-company-v3/), on V3); the [Desk Console](runs/console-e2e-v4.json) driven in a real browser; 100% coverage and 27 Halmos proofs ([`runs/halmos.txt`](runs/halmos.txt)) |
 | **QoreChain tech** (25) | the ML-DSA-87 precompiles `0x…0a01`/`0a02` inside the contract; hybrid accounts; an authenticator with a spending rule; EVM windows with `allowed_targets`; `MsgExecuteEVM` relaying; QoreSign; QoreSeal ML-KEM-1024 and the KEM registry; `MsgConvertCoin`/`MsgConvertERC20`; the AMM; QoreScan; QoreChain's MCP server |
-| **Post-quantum** (20) | [QUANTUM_READINESS.md](QUANTUM_READINESS.md): every algorithm in the system, the Q-Day drill, Shor's gift, no classical-only lane; on InvoiceDeskV4 and V5 the agent's classical key alone pays nothing its signer did not sign, even inside its own EVM window ([`runs/probes/window-v4.json`](runs/probes/window-v4.json)); its signer runs on a separate host and signs nothing the desk would refuse; none of the 70 public agent signatures would pay again ([sweep](runs/signature-sweep.json)); `desk.mjs signer rotate` voids them all at once; on V5 each signature also expires in minutes and binds the vendor's signature and due date ([live](runs/probes/v5-bindings.json)) |
+| **Post-quantum** (20) | [QUANTUM_READINESS.md](QUANTUM_READINESS.md): every algorithm in the system, the Q-Day drill, Shor's gift, no classical-only lane; on InvoiceDeskV4 and V5 the agent's classical key alone pays nothing its signer did not sign, even inside its own EVM window ([`runs/probes/window-v4.json`](runs/probes/window-v4.json)); its signer runs on a separate host and signs nothing the desk would refuse; none of the 125 public agent signatures would pay again ([sweep](runs/signature-sweep.json)); `desk.mjs signer rotate` voids them all at once; on V5 each signature also expires in minutes and binds the vendor's signature and due date ([live](runs/probes/v5-bindings.json)) |
 | **Originality** (15) | the finding above, and the redesign it forced; an agent whose key is kept where it can leak, on purpose |
 | **Clarity** (15) | the [site](https://eltociear.github.io/invoice-leash/), [JUDGES.md](JUDGES.md), [GETTING_STARTED.md](GETTING_STARTED.md), [THREAT_MODEL.md](THREAT_MODEL.md), [DECISIONS.md](DECISIONS.md); the track's requirements one by one: [EVIDENCE.md](EVIDENCE.md#the-tracks-requirements-and-where-each-one-is-shown-on-chain) |
 
@@ -142,9 +141,11 @@ account holds no fUSD and its key may move nothing; the company's money moves on
 | What | Result | Record |
 |---|---|---|
 | InvoiceDeskV5, live: the classical key alone; a signer's signature past its deadline; the signature for a forged copy; the signature for an invoice presented with its reissue (later due date) | all refused (`BadAgentSignature`, `AgentSignatureExpired`); on V4 the last two would have paid. The signed payment paid once | [`runs/probes/v5-bindings.json`](runs/probes/v5-bindings.json) |
-| A decider that obeys every email, on InvoiceDeskV4 (forgeries, edits, Mallory's own valid key, injections, the agent's classical key alone, a replay, both limits) | 3 genuine invoices paid (17 fUSD), 13 refused, 0 to the attacker | [`runs/v4-compromised.json`](runs/v4-compromised.json), [site](https://eltociear.github.io/invoice-leash/#v4run) |
+| A decider that obeys every email, on the live InvoiceDeskV5 (forgeries, edits, Mallory's own valid key, injections, the agent's classical key alone first, a replay, both limits) | 3 genuine invoices paid (17 fUSD), 13 refused, 0 to the attacker | [`runs/v5-compromised.json`](runs/v5-compromised.json) |
+| The same, on InvoiceDeskV4 (forgeries, edits, Mallory's own valid key, injections, the agent's classical key alone, a replay, both limits) | 3 genuine invoices paid (17 fUSD), 13 refused, 0 to the attacker | [`runs/v4-compromised.json`](runs/v4-compromised.json), [site](https://eltociear.github.io/invoice-leash/#v4run) |
 | The same, recorded earlier on InvoiceDeskV2 | 3 paid, 13 refused, 0 to the attacker | [EVIDENCE.md](EVIDENCE.md#the-demo-inbox-v2-fusd) |
 | The live agent, daily in GitHub Actions | each day: the genuine invoice paid; a forgery, a raised amount, a prompt-injected transfer and (on V4 and V5) the agent's classical key alone refused | [`runs/live/`](runs/live/), [site](https://eltociear.github.io/invoice-leash/#live) |
+| 2,000 dry-run attacks on the live InvoiceDeskV5: a compromised agent with its signer tampering with a genuine invoice, and the agent's key without its signer holding the signer's signatures for other payments (1,008: missing, tampered, expired, a moved deadline, another due date or vendor signature, V4-style) | 0 would pay; all 1,008 refused (950 `BadAgentSignature`, 58 `AgentSignatureExpired`) | [`runs/campaign-v5.json`](runs/campaign-v5.json) |
 | 2,000 dry-run attacks on InvoiceDeskV4 (then live): a compromised agent with its signer tampering with a genuine invoice, and the agent's key without its signer (985 tampered or missing agent signatures) | 0 would pay; every agent-signature attack `BadAgentSignature` | [`runs/campaign-v4.json`](runs/campaign-v4.json) |
 | 2,000 dry-run tamperings of 10 kinds, plus 23 signed attacks, against InvoiceDeskV3 | 0 would pay; each refusal the expected one | [`runs/campaign.json`](runs/campaign.json) |
 | The Q-Day drill: four accounts' classical keys alone | 16 attacks refused | [QUANTUM_READINESS.md](QUANTUM_READINESS.md) |
