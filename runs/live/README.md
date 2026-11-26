@@ -30,6 +30,7 @@ each result as it goes, and that day was rerun as `LIVE-20261124-b`, the log's f
 |---|---|---|---|
 | 2026-11-24 | V3 | the author's machine, with only the keys CI holds | before the upgrade to V4; 1 paid, 3 refused. The first GitHub Actions run that day found the day already logged and did nothing |
 | 2026-11-25 | V4 | GitHub Actions, [run 45554630612](https://github.com/eltociear/invoice-leash/actions/runs/45554630612), committed by the job ([`3df2c33`](https://github.com/eltociear/invoice-leash/commit/3df2c33)) | GitHub never started the 01:10 schedule that day, so the workflow was started by hand at 05:35 UTC; backup schedules were added. The 09:23 backup then started by itself at 09:44 ([run 45588337214](https://github.com/eltociear/invoice-leash/actions/runs/45588337214), trigger `schedule`) and, the day being logged, did nothing. 1 paid, 4 refused, including `BadAgentSignature` |
+| 2026-11-26 | V4 | GitHub Actions, [run 45761350210](https://github.com/eltociear/invoice-leash/actions/runs/45761350210), the first as three jobs (plan, sign in the `agent-signer` Environment, relay) | GitHub started none of the day's schedules by 05:00 UTC (the 09:23 run of 11-25 started at 19:26), so it was started by hand at 05:24; four more schedules a day were added. The classical key alone went first, on the unpaid invoice (`BadAgentSignature`); 1 paid, 4 refused. Then the live desk's signer was rotated ([`signer-rotate.log`](signer-rotate.log)) and its new key given to the Environment |
 
-From 2026-11-26 the days come from the schedule; the Actions page shows each run's trigger.
+The Actions page shows each run's trigger.
 

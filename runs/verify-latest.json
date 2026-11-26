@@ -1,7 +1,7 @@
 {
  "chain": "qorechain-diana",
- "block": 10742073,
- "at": "2026-11-25T18:12:17.122Z",
+ "block": 10772581,
+ "at": "2026-11-26T06:18:12.044Z",
  "passed": 117,
  "failed": 0,
  "checks": [
@@ -433,12 +433,12 @@
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
    "check": "compromised agent on InvoiceDeskV4: 16 attempts, 3 genuine invoices paid (17 fUSD), 13 refused (forgeries, edits, Mallory, limits, injections, the classical key alone, a replay), 0 to Mallory; each re-read",
-   "detail": "(series MWUWZRIS)"
+   "detail": "(series MWX5FK2C)"
   },
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "InvoiceDeskV4's refusals, read from the chain's own record: for each of 10 refused payments, the revert bytes in the transaction's result decode (with the contract's ABI) to the error the log states (AlreadyPaid, BadAgentSignature, BadSignature, OverDailyLimit, OverPerPaymentLimit, UnknownVendor)",
+   "check": "InvoiceDeskV4's refusals, read from the chain's own record: for each of 13 refused payments, the revert bytes in the transaction's result decode (with the contract's ABI) to the error the log states (AlreadyPaid, BadAgentSignature, BadSignature, OverDailyLimit, OverPerPaymentLimit, UnknownVendor)",
    "detail": "(tx_response.data)"
   },
   {
@@ -450,19 +450,19 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "2,000 dry-run attacks on the live InvoiceDeskV4: 0 would pay. A compromised agent with its signer (invoice tamperings): refused by the vendor's signature and the desk's rules. The agent's key without its signer: 985 of 985 BadAgentSignature. 40 of 40 sampled attacks asked again now: same answers",
-   "detail": "(control now: past both signature checks, and settled in person since, so its public signature pays nothing)"
+   "check": "2,000 dry-run attacks on the live InvoiceDeskV4: 0 would pay. A compromised agent with its signer (invoice tamperings): refused by the vendor's signature and the desk's rules. The agent's key without its signer: 985 of 985 BadAgentSignature. 40 sampled attacks asked again now: 19 answer as recorded, 21 are BadAgentSignature since the signer that signed them was rotated away",
+   "detail": "(control now: its signer rotated away, so its public signature pays nothing)"
   },
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "every public agent signature on the V4 desks (57: relayed transactions, EVM-lane transactions, records here), sent again now by its agent's classical key alone: none would pay. 2 could only if the company itself acted first (approves vendor 0x37F35dDeFb85A16A0c13A2567DF57a50474a4609; raises the agent's per-payment limit to 15 fUSD), before their invoices fall due",
+   "check": "every public agent signature on the V4 desks (70: relayed transactions, EVM-lane transactions, records here), sent again now by its agent's classical key alone: none would pay. None could later either",
    "detail": "(scripts/signature-sweep.mjs)"
   },
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "a third company set up from nothing with desk.mjs on InvoiceDeskV4 (byte-for-byte this source): 5 paid by the agent (with its signer's ML-DSA-87 signature), 2 by the company in person; each payment re-read and paid() true; its agent's classical key alone: BadAgentSignature. Its signer then rotated (every signature the old one made void): the desk names the new one, and the agent paid 1 with it",
+   "check": "a third company set up from nothing with desk.mjs on InvoiceDeskV4 (byte-for-byte this source): 6 paid by the agent (with its signer's ML-DSA-87 signature), 2 by the company in person; each payment re-read and paid() true; its agent's classical key alone: BadAgentSignature. Its signer then rotated (every signature the old one made void): the desk names the new one, and the agent paid 1 with it",
    "detail": "(0xd8a723c9…, runs/own-company-v4/)"
   },
   {
@@ -481,7 +481,7 @@
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
    "check": "InvoiceDeskV4, live: the agent's classical key alone was refused (BadAgentSignature); with its signer's ML-DSA-87 signature the same invoice was paid",
-   "detail": "(7858502E…, 2ED77180…; signer 0x3430d5a0… has a proven ML-DSA-87 key)"
+   "detail": "(7858502E…, 2ED77180…; signer 0x19F64D9F… has a proven ML-DSA-87 key)"
   },
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
@@ -510,19 +510,19 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "live agent log: 9 rows over 2 day(s), hash-chained (SHA3-256), each day signed with the relayer's on-chain ML-DSA-87 key; each day the genuine invoice paid and every attack refused (on V4 days, also the agent's classical key alone)",
-   "detail": "(2026-11-24 … 2026-11-25)"
+   "check": "live agent log: 14 rows over 3 day(s), hash-chained (SHA3-256), each day signed with the relayer's on-chain ML-DSA-87 key; each day the genuine invoice paid and every attack refused (on V4 days, also the agent's classical key alone)",
+   "detail": "(2026-11-24 … 2026-11-26)"
   },
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "live agent, V4 days: the classical-key-alone attempt is sent before the genuine invoice is paid (block heights), so only the missing ML-DSA-87 signature can refuse it: none yet, pending the first day in this order (2026-11-26)",
-   "detail": "(from 2026-11-26; on 2026-11-25 it was sent after the payment)"
+   "check": "live agent, V4 days: the classical-key-alone attempt is sent before the genuine invoice is paid (block heights), so only the missing ML-DSA-87 signature can refuse it: 1 day(s)",
+   "detail": "(2026-11-26)"
   },
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "live agent: each of its 9 logged transactions re-read from the chain agrees; it last ran 13 h ago (must be < 72 h)",
+   "check": "live agent: each of its 14 logged transactions re-read from the chain agrees; it last ran 1 h ago (must be < 72 h)",
    "detail": "(desk 0x235dA591…, .github/workflows/live.yml)"
   },
   {

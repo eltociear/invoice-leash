@@ -457,12 +457,15 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
     {
       const c4 = json("runs/campaign-v4.json"), s4 = json("runs/campaign-v4-sample.json");
       const ask4 = async (from, data, value = "0") => { try { await provider.call({ from, to: s4.desk, data, value: BigInt(value) }); return "PAID"; } catch (e) { try { return desk4.parseError(e.data ?? e.info?.error?.data)?.name ?? "Reverted"; } catch { return "Reverted"; } } };
-      let same = 0;
-      for (const x of s4.sample) if ((await ask4(x.from, x.data, x.value)) === x.outcome) same++;
+      // since the campaign the live desk's signer was rotated (runs/live/desk.json signerRotations): every
+      // signature its old signer made, the samples' and the control's included, is BadAgentSignature now
+      const rotated = (liveRec.signerRotations ?? []).some((r) => r.at > c4.at);
+      let same = 0, voided = 0;
+      for (const x of s4.sample) { const now = await ask4(x.from, x.data, x.value); if (now === x.outcome) same++; else if (rotated && now === "BadAgentSignature") voided++; }
       const ctl = await ask4(s4.control.from, s4.control.data);
-      ok(s4.desk === liveRec.invoiceDesk && c4.paid === 0 && c4.network === 0 && c4.control === "PAID" && c4.agentsig.badAgentSignature === c4.agentsig.count && same === s4.sample.length && ["PAID", "OverDailyLimit", "AlreadyPaid"].includes(ctl),
-        `${c4.count.toLocaleString()} dry-run attacks on the live InvoiceDeskV4: 0 would pay. A compromised agent with its signer (invoice tamperings): refused by the vendor's signature and the desk's rules. The agent's key without its signer: ${c4.agentsig.badAgentSignature} of ${c4.agentsig.count} BadAgentSignature. ${same} of ${s4.sample.length} sampled attacks asked again now: same answers`,
-        `(control now: ${ctl === "PAID" ? "would pay" : ctl === "AlreadyPaid" ? "past both signature checks, and settled in person since, so its public signature pays nothing" : "past both signature checks, today's limit used"})`);
+      ok(s4.desk === liveRec.invoiceDesk && c4.paid === 0 && c4.network === 0 && c4.control === "PAID" && c4.agentsig.badAgentSignature === c4.agentsig.count && same + voided === s4.sample.length && (rotated ? ctl === "BadAgentSignature" : ["PAID", "OverDailyLimit", "AlreadyPaid"].includes(ctl)),
+        `${c4.count.toLocaleString()} dry-run attacks on the live InvoiceDeskV4: 0 would pay. A compromised agent with its signer (invoice tamperings): refused by the vendor's signature and the desk's rules. The agent's key without its signer: ${c4.agentsig.badAgentSignature} of ${c4.agentsig.count} BadAgentSignature. ${s4.sample.length} sampled attacks asked again now: ${same} answer as recorded${voided ? `, ${voided} are BadAgentSignature since the signer that signed them was rotated away` : ""}`,
+        `(control now: ${ctl === "PAID" ? "would pay" : ctl === "BadAgentSignature" ? "its signer rotated away, so its public signature pays nothing" : ctl === "AlreadyPaid" ? "settled in person since" : "today's limit used"})`);
     }
     // every agent ML-DSA-87 signature ever made public on a V4 desk (relayed calldata, EVM-lane calldata, this
     // repository's records), dry-run again as its agent now: the agent's classical key alone gets none paid

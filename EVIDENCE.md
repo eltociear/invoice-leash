@@ -44,10 +44,16 @@ direct transfers (the spending rule: no QOR, no fUSD, one call); `approveVendor`
 over the per-payment and daily limits; a replay (`AlreadyPaid`); and the agent's classical key alone
 (`BadAgentSignature`).
 
-**One correction, kept in the record.** In the first pass, four injections were refused for the wrong
-reason: the relaying transaction provisioned less gas than the agent signed (a bug in `lib/agent.mjs`).
-So the spending rule was never asked. The bug was fixed and those four were run again. The chain's answer
-is now the rule's. The first answers are kept under `superseded`.
+This is the run as redone on 2026-11-26 (series `MWX5FK2C`). The classical key alone goes first, against
+an invoice `paid()` shows unpaid, so only the missing ML-DSA-87 signature can refuse it; the public test
+vendor is not approved. The first run, on 2026-11-25, had two flaws a review found: that attempt came after
+the invoice was paid, and four injections were refused because the relay provisioned less gas than the agent
+signed (a bug, since fixed; kept in [`runs/probes/relay-gas-mismatch.json`](runs/probes/relay-gas-mismatch.json)).
+
+Its attacker holds the agent's signer too, so its refused payments left valid agent signatures behind
+(an over-limit one, Mallory's invoice). Afterwards the company named a new signer for the live desk
+(`desk.mjs signer rotate`, [`runs/live/signer-rotate.log`](runs/live/signer-rotate.log)) and gave its key to the signer's GitHub
+Environment: every signature the old signer made is `BadAgentSignature` now.
 
 ## The demo inbox (v2, fUSD)
 
@@ -143,11 +149,11 @@ this repository. Each is sent again as its agent, by dry run. `npm run verify` r
 
 | | |
 |---|---|
-| public agent signatures | 57, on the live desk and the third company's |
+| public agent signatures | 70, on the live desk and the third company's |
 | would pay now, first sweep | 3: the compromised run's `OverDailyLimit` refusal (10 fUSD), the campaign's signed control (1 fUSD), an early V4 probe that ran out of gas (1 fUSD) |
-| what was done | the company paid those three in person, so they answer `AlreadyPaid` ([`0x47c9edd7…`](https://explore.qore.network/tx/0x47c9edd7b395e558c6d734051049cbbdb496b1101a95530cd5a245ec6154ff0d), [`0x15d52551…`](https://explore.qore.network/tx/0x15d525512ff31b94a9e7362e7267f1949f9566feedb87f7c0bc910be20d98ed5), [`0x1f5b2a21…`](https://explore.qore.network/tx/0x1f5b2a21088984cc206722dc100077ddc78a45744db13762a76f9a7503895550)); the third company rotated its signer ([`signer-rotate.log`](runs/own-company-v4/signer-rotate.log)), so the old signer's signatures are all `BadAgentSignature` now |
+| what was done | the company paid those three in person, so they answer `AlreadyPaid` ([`0x47c9edd7…`](https://explore.qore.network/tx/0x47c9edd7b395e558c6d734051049cbbdb496b1101a95530cd5a245ec6154ff0d), [`0x15d52551…`](https://explore.qore.network/tx/0x15d525512ff31b94a9e7362e7267f1949f9566feedb87f7c0bc910be20d98ed5), [`0x1f5b2a21…`](https://explore.qore.network/tx/0x1f5b2a21088984cc206722dc100077ddc78a45744db13762a76f9a7503895550)); both desks then rotated their signers ([live](runs/live/signer-rotate.log), [third company](runs/own-company-v4/signer-rotate.log), and once more from the Desk Console in a browser: [`runs/console-rotate-v4.json`](runs/console-rotate-v4.json)), so every signature an old signer made is `BadAgentSignature` now |
 | would pay now | **0** ([`runs/signature-sweep.json`](runs/signature-sweep.json)) |
-| could pay later | 2, only if the company itself acted first, before 2026-12-24: approving Mallory as a vendor, or raising the agent's per-payment limit to 15 fUSD. Both come from the compromised run, whose attacker holds the signer |
+| could pay later | **0** (before the live rotation: 2, which needed the company itself to approve Mallory or raise the limit) |
 | so that no more arise | the signer signs only what the desk would pay right then, or can never pay (`lib/agent.mjs` `signerMay`; the live signer job, `desk.mjs run`, the MCP server's `check_invoice` all use it) |
 
 ## The MCP server, and the sessions recorded through it

@@ -13,6 +13,9 @@ on:
     # for a day already in the log does nothing (scripts/live-agent.mjs).
     - cron: "47 4 * * *"
     - cron: "23 9 * * *"
+    # GitHub starts scheduled runs late or not at all under load (2026-11-25: the 09:23 run started at 19:26;
+    # 2026-11-26: none by 05:00). More chances a day; a day already logged does nothing (about a minute)
+    - cron: "37 3,7,12,15,18,21 * * *"
   workflow_dispatch:
 
 permissions:

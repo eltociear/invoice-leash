@@ -175,11 +175,11 @@ person approving each day's run). The signer is a second key, not a second
    refusal and the campaign's signed control would both have paid. Both were then settled in person,
    the signer got its check (`lib/agent.mjs` `signerMay`, asked without making a signature), and
    `npm run verify` now sends every agent signature ever made public again as the classical key alone
-   ([`runs/signature-sweep.json`](runs/signature-sweep.json): 57, none would pay). The rest could pay only if the company
-   itself first approved that vendor or raised the limit. To void every signature a signer ever made, the
-   company names a new one: `desk.mjs signer rotate`, done on the third company
-   ([`runs/own-company-v4/signer-rotate.log`](runs/own-company-v4/signer-rotate.log)). A V5 would put an expiry in the
-   agent's message itself.
+   ([`runs/signature-sweep.json`](runs/signature-sweep.json): 70, none would pay, none could later). To void every
+   signature a signer ever made, the company names a new one: `desk.mjs signer rotate`, done on the live desk
+   after the compromised run ([`runs/live/signer-rotate.log`](runs/live/signer-rotate.log)) and on the third company, once from
+   the Desk Console ([`runs/console-rotate-v4.json`](runs/console-rotate-v4.json)). A V5 would put an expiry in the agent's
+   message itself.
 2. **An open EVM window.** A quantum attacker with a classical key can act inside a window while it is
    open, within its caps. Every window names one target. The agent account's window is 300 blocks, at
    most 3 transactions and 0.4 QOR, to the desk. The company's windows admit one action and close in

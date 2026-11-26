@@ -177,4 +177,4 @@ desk that does not approve it. **An owner who approves it lets anyone bill that 
 approve it only on a desk you use to try the console. It was approved on the live V4 desk for the first
 compromised-agent run on 2026-11-25 and removed afterwards
 ([0x5e93ddba…](https://explore.qore.network/tx/0x5e93ddbaab92e179860db4195b21d9128d7088ed5606330d8810b8d49419dbd3));
-that run is redone without it on 2026-11-26 (the desk's daily limit was spent on 2026-11-25).
+that run was redone without it on 2026-11-26 (series `MWX5FK2C`).
