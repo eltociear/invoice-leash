@@ -1,7 +1,7 @@
 {
  "chain": "qorechain-diana",
- "block": 10772581,
- "at": "2026-11-26T06:18:12.044Z",
+ "block": 10775047,
+ "at": "2026-11-26T07:17:44.215Z",
  "passed": 117,
  "failed": 0,
  "checks": [
@@ -456,7 +456,7 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "every public agent signature on the V4 desks (70: relayed transactions, EVM-lane transactions, records here), sent again now by its agent's classical key alone: none would pay. None could later either",
+   "check": "every public agent signature on the V4 desks (70: relayed transactions, EVM-lane transactions, records here), sent again now by its agent's classical key alone: none would pay. None could later either: each is void, or its invoice id is paid",
    "detail": "(scripts/signature-sweep.mjs)"
   },
   {
@@ -522,7 +522,7 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "live agent: each of its 14 logged transactions re-read from the chain agrees; it last ran 1 h ago (must be < 72 h)",
+   "check": "live agent: each of its 14 logged transactions re-read from the chain agrees; it last ran 2 h ago (must be < 72 h)",
    "detail": "(desk 0x235dA591…, .github/workflows/live.yml)"
   },
   {

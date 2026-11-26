@@ -134,8 +134,10 @@ on 2026-11-25:
 
 The compromised run is the exception by design: its attacker holds the signer, so nothing checks what it
 signs, and it leaves such signatures behind. The answer to that is to rotate the signer afterwards.
-We did not deploy a V5 with an expiry in the agent's message six days before the deadline. The signer's
-check and the rotation close the same hole without moving the live desk.
+We did not deploy a V5 six days before the deadline. A V5 would bind into the agent's message what V4 leaves
+out: the due date, a hash of the vendor's signature, and a deadline minutes away. The signer's check, the
+sweep and the rotation close the same hole without moving the live desk; what remains is the minutes
+between signing and relaying (THREAT_MODEL.md).
 
 ## 9. Show, don't claim: everything is re-checked from the chain
 
