@@ -154,6 +154,7 @@
   $("a-off").onclick = () => act("agent off", "POST", "/agent?do=off");
   $("a-freeze").onclick = () => act("freeze", "POST", "/freeze");
   $("a-unfreeze").onclick = () => act("unfreeze", "POST", "/unfreeze");
+  $("a-rotate").onclick = () => act("new agent signer (every signature the old one made is void)", "POST", "/signer");
   $("v-add").onclick = () => act("approve vendor", "POST", `/vendor?do=add&address=${encodeURIComponent($("vaddr").value.trim())}&name=${encodeURIComponent($("vname").value.trim() || "vendor")}`);
   $("v-pub").onclick = () => act("approve the public test vendor", "POST", `/vendor?do=add&address=${D.publicVendor.evm}&name=${encodeURIComponent("Public Test Vendor")}`);
   $("l-set").onclick = () => act("set limits", "POST", `/limits?per=${encodeURIComponent($("lper").value)}&daily=${encodeURIComponent($("lday").value)}`);

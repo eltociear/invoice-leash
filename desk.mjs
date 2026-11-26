@@ -119,10 +119,15 @@ async function companyWindow(targets, maxTxs, fn) {
   try { return await fn(new Wallet(o.privateKey, provider)); }
   finally { await broadcast(o, [sdk.closeEvmWindowMsg(o.cosmos)], "leash desk: close window").catch(() => {}); }
 }
-async function sendEvm(label, p) { const tx = await p; const rc = await tx.wait(); if (rc.status !== 1) fail(`${label}: reverted`); say(`  ${label.padEnd(26)} ${tx.hash}`); return tx.hash; }
+// waits at most three minutes for the receipt: a dropped connection must end in an answer, not a hang
+async function sendEvm(label, p) {
+  const tx = await p;
+  const rc = await tx.wait(1, 180_000).catch(async (e) => (await provider.getTransactionReceipt(tx.hash).catch(() => null)) ?? fail(`${label}: sent as ${tx.hash}, but no receipt yet (${e.shortMessage ?? e.message}). Check it on https://explore.qore.network/tx/${tx.hash}, then run the same command again: it asks the chain first.`));
+  if (rc.status !== 1) fail(`${label}: reverted`); say(`  ${label.padEnd(26)} ${tx.hash}`); return tx.hash;
+}
 async function needQor(addr, min, what) { const b = BigInt(await balance(addr)); if (b < toUqor(min)) fail(`${what} ${addr} holds ${fmt(b)}; it needs at least ${min} QOR. ${what === "the company" ? "Use the faucet (https://dashboard.qorechain.io/faucet or the QoreX wallet) for this address." : ""}`); }
-async function registerPqc(role) {
-  const acc = await account(role);
+async function registerPqc(role, acc) {
+  acc ??= await account(role); // a caller that just made a new key for this role passes it (account() caches)
   if ((await sdk.fetchPqcStatus({ rest: REST, address: acc.cosmos })).registered) return false;
   const pop = sdk.signProofOfPossession({ chainId: CHAIN_ID, account: acc.cosmos, keypair: acc.pqc });
   const r = await broadcast(acc, [sdk.buildRegisterPqcKeyMsg(acc.cosmos, { pqcKeypair: acc.pqc, proofOfPossession: pop })], "leash desk: register ML-DSA-87", "classical");
@@ -317,13 +322,16 @@ const cmds = {
     const o = await account("owner"), aa = await account("agentacct"), KEYS = join(HOME, "keys.env");
     const before = chain.readKeys().agentsigner ? await chain.accountFromKey("agentsigner") : null;
     const [named] = await view(d.invoiceDesk, new Interface(art().abi), "agentSigner", [o.evmAddr, aa.evmAddr]);
-    // resumable: a key made by an earlier, interrupted rotate (not yet named in the desk) is used, not replaced
-    if (before && getAddress(before.evmAddr) === getAddress(named)) {
+    const proven = async (a) => { const [reg, alg, , pr] = await view("0x0000000000000000000000000000000000000a02", STATUS, "pqcKeyStatus", [a]); return reg && pr && Number(alg) === 1; };
+    // resumable: a key made by an earlier, interrupted rotate is used, not replaced: one not yet named in the
+    // desk, or one named but whose ML-DSA-87 key is not proven yet (the agent could pay nothing meanwhile)
+    if (before && getAddress(before.evmAddr) === getAddress(named) && (await proven(named))) {
       const stamp = new Date().toISOString().replace(/[-:]/g, "").slice(0, 13);
       writeFileSync(KEYS, readFileSync(KEYS, "utf8").replace(/^agentsigner=/m, `agentsigner_retired_${stamp}=`), { mode: 0o600 });
       say(`the old signer ${before.evmAddr} kept in keys.env as agentsigner_retired_${stamp}`);
     }
     chain.ensureRoleKey("agentsigner");
+    chain.forgetAccount("agentsigner"); // this process (desk.mjs serve) signs with the new key from now on
     const sg = await chain.accountFromKey("agentsigner");
     say(`1. the new signer ${sg.evmAddr}: fee money and its ML-DSA-87 key on chain`);
     if (BigInt(await balance(sg.cosmos)) < toUqor("0.05")) {
@@ -331,7 +339,9 @@ const cmds = {
       if (r.code) fail(`funding the signer was refused: ${r.rawLog}`);
       await sleep(5000);
     }
-    if (!(await registerPqc("agentsigner"))) say("  already registered");
+    if (!(await registerPqc("agentsigner", sg))) say("  already registered");
+    if (!(await proven(sg.evmAddr))) fail(`the new signer's ML-DSA-87 key is not proven on chain yet: run node desk.mjs signer rotate again (it resumes); the desk still names ${named}`);
+    if (getAddress(named) === getAddress(sg.evmAddr)) return say(`\nthe desk names ${sg.evmAddr}, its ML-DSA-87 key proven: the agent can pay again. Give the key to the signer's host.`);
     say("2. name it in the desk (one-transaction window)");
     const tx = await companyWindow([d.invoiceDesk], 1, (w) => sendEvm("setAgentSigner(new)", new Contract(d.invoiceDesk, art().abi, w).setAgentSigner(aa.evmAddr, sg.evmAddr)));
     save({ signerRotations: [...(d.signerRotations ?? []), { at: new Date().toISOString(), from: named, to: sg.evmAddr, tx }] });
@@ -631,6 +641,7 @@ const cmds = {
       "POST /pay": (q) => run(() => cmds.pay(q.get("n"))),
       "POST /agent": (q) => run(() => cmds.agent(q.get("do"), q.get("hours") ?? "168")),
       "POST /freeze": () => run(() => cmds.freeze()),
+      "POST /signer": () => run(() => cmds.signer("rotate")),
       "POST /unfreeze": () => run(() => cmds.unfreeze()),
       "POST /vendor": (q) => run(() => cmds.vendor(q.get("do"), q.get("address"), q.get("name") ?? "")),
       "POST /limits": (q) => run(() => cmds.limits(q.get("per"), q.get("daily"))),
@@ -638,7 +649,7 @@ const cmds = {
       "POST /inbox": (q, body) => run(async () => { const f = join(tmpdir(), `leash-inbox-${Date.now()}.json`); writeFileSync(f, body); await cmds.inbox("add", f); }),
       "GET /export": async () => { const f = join(tmpdir(), `leash-export-${Date.now()}.csv`); const r = await run(() => cmds.export(f)); return { ...r, value: existsSync(f) ? readFileSync(f, "utf8") : "" }; },
     };
-    createServer(async (req, res) => {
+    const server = createServer(async (req, res) => {
       const origin = req.headers.origin;
       if (origin && ALLOWED.has(origin)) {
         res.setHeader("access-control-allow-origin", origin);
@@ -654,7 +665,11 @@ const cmds = {
       if (!route) return send(404, { ok: false, error: `no route ${req.method} ${u.pathname}` });
       let body = ""; for await (const c of req) body += c;
       try { send(200, await route(u.searchParams, body)); } catch (e) { send(500, { ok: false, error: e.message }); }
-    }).listen(Number(port), "127.0.0.1", () => {
+    });
+    // a step can take minutes (setup, a new signer: several testnet transactions); Node would close the
+    // request after five, and the page would report a failure for a step that was still running
+    server.requestTimeout = 0; server.headersTimeout = 60_000;
+    server.listen(Number(port), "127.0.0.1", () => {
       console.log(`Desk Console signer for ${D().invoiceDesk ?? "(no desk yet)"} on http://127.0.0.1:${port}`);
       console.log(`open: https://eltociear.github.io/invoice-leash/app.html#local=http://127.0.0.1:${port}&token=${token}`);
       console.log("Your keys stay on this machine. Ctrl-C to stop.");

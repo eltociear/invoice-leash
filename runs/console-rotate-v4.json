@@ -1,0 +1,25 @@
+{
+ "what": "the Desk Console driven in a real browser (Playwright) against desk.mjs serve",
+ "at": "2026-11-26T06:06:02.392Z",
+ "steps": [
+  {
+   "step": "rotate",
+   "page": "new agent signer (every signature the old one made is void): done the old signer 0xc836cb31ff5683a1d377d7fda7699407f2294c66 kept in keys.env as agentsigner_retired_20261126T0606 1. the new signer 0xbbb329c625d20ec5b4977f9bc91b032cb5c81b2e: fee money and its ML-DSA-87 key on chain agentsigner ML-DSA-87 key registered 51D3892D88E19C1D5A3171E27713D0C6C829FB43A0A6D2CECC231EE87ABABE3E 2. name it in the desk (one-transaction window) setAgentSigner(new) 0xc5d1c08361e22f90cc94c1b71b51331682d88b273f9930a8c3fc58af975f2f3b every signature 0xc836CB31FF5683A1D377D7fda7699407f2294C66 made is void now. Give the new key to the signer's host (LEASH_AGENTSIGNER, or its keys.env). new agent signer (every signature the old one made is void): working (each step is a real testnet transaction)… Nothing yet."
+  },
+  {
+   "step": "triage",
+   "page": "#InvoiceAmountVerdict0HC-1011Harbor Cloud3 fUSDAGENT PAYSapproved vendor, valid ML-DSA-87 signature, unpaid, not past due, within the agent's limits"
+  },
+  {
+   "step": "run",
+   "page": "the agent pays what triage allows: done PAID HC-1011 3 fUSD https://explore.qore.network/tx/894164F133E3F6E1EB37D646621C0E3D115DAC382D4860EF3819220781A307CE the agent pays what triage allows: working (each step is a real testnet transaction)… triage: done 0 AGENT PAYS HC-1011 3 fUSD Harbor Cloud approved vendor, valid ML-DSA-87 signature, unpaid, not past due, within the agent's limits saved to /Users/ikkoashimine/.config/leash-c4/triage.json. next: node desk.mjs run (pays only AGENT PAYS) triage: working (each step is a real testnet transaction)… new agent signer (every signature the old one made is void): done the old signer 0xc836cb31ff5683a1d377d7fda7699407f2294c66 kept in keys.env as agentsigner_retired_20261126T0606 1. the new signer 0xbbb329c625d20ec5b4977f9bc91b032cb5c81b2e: fee money and its ML-DSA-87 key on chain agentsigner ML-DSA-87 key registered 51D3892D88E19C1D5A3171E27713D0C6C829FB43A0A6D2CECC231EE87ABABE3E 2. name it in the desk (one-transaction window) setAgentSigner(new) 0xc5d1c08361e22f90cc94c1b71b51331682d88b273f9930a8c3fc58af975f2f3b every signature 0xc836CB31FF5683A1D377D7fda7699407f2294C66 made is void now. Give the new key to the signer's host (LEASH_AGENTS"
+  },
+  {
+   "step": "export",
+   "page": "paid_at_utcvendor_nameinvoice_refamountpaid_by2026-11-26T06:07:08.000ZHarbor CloudHC-10113.0agent2026-11-25T16:36:38.000ZHarbor CloudHC-10104.0agent2026-11-25T14:19:54.000ZPTV-OPGDYM2.0agent2026-11-25T14:19:48.000ZPTV-ZEBADY2.0agent2026-11-25T14:04:56.000ZHarbor CloudHC-100245.0company2026-11-25T14:02:07.000ZHarbor CloudHC-095012.0company2026-11-25T14:00:13.000ZHarbor CloudHC-100315.0agent2026-11-25T14:00:09.000ZHarbor CloudHC-100120.0agent Download payments.csv"
+  }
+ ],
+ "statusBefore": "qor179rwmt7p9auns58ryy0r0epvqwhvla8slywqh4your company (hybrid keys, 2.200874 QOR) InvoiceDeskV40xd8a723c91A… ONagent in the desk · key linked until 2026-12-25T13:57Z 30 fUSD / 60 fUSDagent limits · 60 fUSD left today 16 fUSDfloat (ERC-20) · treasury 14 fUSD Next: waiting for a person: node desk.mjs pay 0 (after triage again)",
+ "statusAfter": "qor179rwmt7p9auns58ryy0r0epvqwhvla8slywqh4your company (hybrid keys, 1.537583 QOR) InvoiceDeskV40xd8a723c91A… ONagent in the desk · key linked until 2026-12-25T13:57Z 30 fUSD / 60 fUSDagent limits · 57 fUSD left today 13 fUSDfloat (ERC-20) · treasury 14 fUSD Next: add invoices: node desk.mjs inbox add <file.json>; payments so far: node desk.mjs export",
+ "pageErrors": []
+}

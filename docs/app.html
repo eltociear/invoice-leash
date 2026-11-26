@@ -44,8 +44,8 @@ node desk.mjs serve                            # prints: …/app.html#local=http
 
 <div id="mine" style="display:none">
 <div class="card"><h3>The agent</h3>
-<div class="btns"><button id="a-on">Agent on</button><button id="a-off">Agent off</button><button class="main" id="a-freeze">Freeze everything</button><button id="a-unfreeze">Unfreeze</button></div>
-<p class="dim small">Freeze: the agent off in the desk, its key revoked on chain, any EVM window closed, in one go.</p></div>
+<div class="btns"><button id="a-on">Agent on</button><button id="a-off">Agent off</button><button class="main" id="a-freeze">Freeze everything</button><button id="a-unfreeze">Unfreeze</button><button id="a-rotate" title="Name a new ML-DSA-87 signer for the agent: every agent signature the old one made stops verifying">New agent signer</button></div>
+<p class="dim small">Freeze: the agent off in the desk, its key revoked on chain, any EVM window closed, in one go. New agent signer: a fresh ML-DSA-87 key named in the desk, so every agent signature the old one ever made stops verifying (use it if the signer may have leaked).</p></div>
 
 <div class="card"><h3>Vendors</h3><div id="vlist" class="small"></div>
 <div class="row"><div><label for="vaddr">Vendor address (0x… or qor1…)</label><input id="vaddr"></div><div><label for="vname">Name</label><input id="vname"></div></div>

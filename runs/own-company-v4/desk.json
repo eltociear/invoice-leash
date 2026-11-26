@@ -35,6 +35,25 @@
         "from": "0x8F26B6cC28e5F1697cfF1a77a62Aa130917EB8c3",
         "to": "0x6aa7f0959c3321730cdb061d03855ce8a5b32582",
         "tx": "0xd870094f52e8a115fd02e453c4acfe4d040c3e35599a67cb3ffa1336a3a15a92"
+      },
+      {
+        "at": "2026-11-26T04:51:17.738Z",
+        "from": "0x6aA7f0959c3321730cDb061d03855CE8A5B32582",
+        "to": "0xff80e5daf75098386fd48c5d74ed6dc5c81eed68",
+        "tx": "0x599736fc3b4b74614c9cc198e866b0a74aa8fd51a664a1a9d2290447db48d5e2"
+      },
+      {
+        "at": "2026-11-26T06:05:27.000Z",
+        "from": "0xff80e5daf75098386fd48c5d74ed6dc5c81eed68",
+        "to": "0xc836cb31ff5683a1d377d7fda7699407f2294c66",
+        "tx": "0x86d081d4cffca5d8d64023b800918e77cedc5d6d77b436589e74ac870210a0c8",
+        "note": "named by hand after desk.mjs signer rotate lost its connection at this step (the fix: sendEvm waits at most three minutes)"
+      },
+      {
+        "at": "2026-11-26T06:06:49.454Z",
+        "from": "0xc836CB31FF5683A1D377D7fda7699407f2294C66",
+        "to": "0xbbb329c625d20ec5b4977f9bc91b032cb5c81b2e",
+        "tx": "0xc5d1c08361e22f90cc94c1b71b51331682d88b273f9930a8c3fc58af975f2f3b"
       }
     ]
   }
