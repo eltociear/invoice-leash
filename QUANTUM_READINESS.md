@@ -167,9 +167,11 @@ a MetaMask-style wallet.
    of both hosts, or of push access to `main` (the signer's Environment admits only runs on `main`:
 [`runs/probes/signer-env.json`](runs/probes/signer-env.json); required reviewers would close that too, at the price of a
 person approving each day's run). The signer is a second key, not a second
-   judge, but it does check one thing before it signs: that the desk would pay this request right then
-   (or can never pay it). The reason: an agent signature has no expiry of its own. It binds one invoice
-   and holds until that invoice is paid or past due, and it is public (in the relaying transaction). One
+   judge, but it does check one thing before it signs: that the desk would pay this request right then.
+   The reason: an agent signature has no expiry of its own and does not bind the due date or the vendor's
+   signature. It holds until that vendor's invoice id is paid, and it is public (in the relaying
+   transaction). Not even a forgery gets one: its agent signature would pay a genuine invoice with the same
+   vendor, amount and id (a seventh review pointed this out; the signer first signed "never payable" ones). One
    made for a payment the desk refused, over today's limit say, could be sent again on a later day by the
    classical key alone. A fifth review found exactly that: the compromised run's `OverDailyLimit`
    refusal and the campaign's signed control would both have paid. Both were then settled in person,

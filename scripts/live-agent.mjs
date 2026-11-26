@@ -75,11 +75,11 @@ if (PHASE === "sign") {
     const inv = r.invoice;
     if (!inv || inv.vendor !== f.vendor || inv.token !== f.token || String(inv.amount) !== f.amount || inv.id !== f.id)
       throw new Error(`refusing to sign: the request does not match the invoice it came with: ${JSON.stringify(f)}`);
-    // the guard (lib/agent.mjs signerMay): a signature only for what the desk would pay now, or can never pay
-    const { sign, reason } = await signerMay(d, inv);
-    if (!sign) { declined[r.k] = reason; console.log(`declined #${r.k}: the desk would refuse it now (${reason}) but might pay it later`); continue; }
+    // the guard (lib/agent.mjs signerMay): a signature only for a payment the desk would make now, by this key
+    const { sign, reason } = await signerMay(d, inv, { signer: signer.evmAddr });
+    if (!sign) { declined[r.k] = reason; console.log(`declined #${r.k}: the desk would refuse it (${reason}); no signature`); continue; }
     sigs[r.k] = signAgentPayV4(signer, { ...f, amount: BigInt(f.amount) });
-    console.log(`signed  #${r.k}: ${f.amount} of ${f.token.slice(0, 10)}… to ${f.vendor.slice(0, 10)}…, invoice ${f.id.slice(0, 10)}…${reason ? ` (the desk can never pay it: ${reason})` : ""}`);
+    console.log(`signed  #${r.k}: ${f.amount} of ${f.token.slice(0, 10)}… to ${f.vendor.slice(0, 10)}…, invoice ${f.id.slice(0, 10)}…`);
   }
   writeFileSync(work("signatures.json"), JSON.stringify({ ...sigs, declined }, null, 1) + "\n");
   process.exit(0);
@@ -132,16 +132,18 @@ if (PHASE === "plan") {
 }
 if (PHASE === "relay") {
   const sigs = d.version === 4 ? JSON.parse(readFileSync(work("signatures.json"), "utf8")) : {};
-  plan.forEach((st, k) => { if (sigs[k]) st.agentSignature = sigs[k]; if (sigs.declined?.[k]) st.declined = sigs.declined[k]; });
+  // what the signer declined is still sent, unsigned, as a compromised agent host would: the chain refuses it
+  // (BadAgentSignature), and no agent signature for it exists anywhere
+  plan.forEach((st, k) => { if (sigs[k]) st.agentSignature = sigs[k]; if (sigs.declined?.[k]) { st.withoutAgentSignature = true; st.signerDeclined = sigs.declined[k]; } });
 }
 const order = d.version === 4 ? [4, 0, 1, 2, 3] : plan.map((_, i) => i); // log rows keep plan positions
 const results = [];
 for (const k of order) {
   const step = plan[k];
-  const unpaidBefore = step.withoutAgentSignature ? !(await isPaid(d, inbox[step.item].invoice)) : undefined;
+  const unpaidBefore = step.withoutAgentSignature && !step.signerDeclined ? !(await isPaid(d, inbox[step.item].invoice)) : undefined;
   if (unpaidBefore === false) throw new Error("today's invoice is already paid: the classical-key attempt would prove nothing");
   const r = await executeV2(step, inbox, d);
-  results[k] = { label: step.label, ok: r.ok, unknown: r.unknown, infra: r.infra, why: r.why ?? (r.ok ? "executed" : ""), link: r.link, ...(unpaidBefore !== undefined ? { unpaidBefore, sentFirst: true } : {}) };
+  results[k] = { label: step.label, ok: r.ok, unknown: r.unknown, infra: r.infra, why: r.why ?? (r.ok ? "executed" : ""), link: r.link, ...(unpaidBefore !== undefined ? { unpaidBefore, sentFirst: true } : {}), ...(step.signerDeclined ? { signerDeclined: step.signerDeclined } : {}) };
   writeFileSync(LATEST, JSON.stringify({ day, partial: true, desk: d.invoiceDesk, sealed, results: results.filter(Boolean) }, null, 2) + "\n"); // nothing sent is ever lost
   console.log(`${r.ok ? "PAID    " : r.unknown ? "UNKNOWN " : r.infra ? "NOT SENT" : "REFUSED "} ${step.label}\n         ${r.ok ? r.link : r.why}`);
 }

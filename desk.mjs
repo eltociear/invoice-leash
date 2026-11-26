@@ -323,16 +323,21 @@ const cmds = {
     const before = chain.readKeys().agentsigner ? await chain.accountFromKey("agentsigner") : null;
     const [named] = await view(d.invoiceDesk, new Interface(art().abi), "agentSigner", [o.evmAddr, aa.evmAddr]);
     const proven = async (a) => { const [reg, alg, , pr] = await view("0x0000000000000000000000000000000000000a02", STATUS, "pqcKeyStatus", [a]); return reg && pr && Number(alg) === 1; };
-    // resumable: a key made by an earlier, interrupted rotate is used, not replaced: one not yet named in the
-    // desk, or one named but whose ML-DSA-87 key is not proven yet (the agent could pay nothing meanwhile)
-    if (before && getAddress(before.evmAddr) === getAddress(named) && (await proven(named))) {
-      const stamp = new Date().toISOString().replace(/[-:]/g, "").slice(0, 13);
+    // Resumable, but only with the key an interrupted rotate recorded as pending in desk.json. Any other local
+    // key (the one named now, or an older one) is set aside, never named again: naming a voided signer would
+    // bring every signature it ever made back to life. Retired keys stay in keys.env under another name.
+    const retired = new Set([...(d.signerRotations ?? []).map((r) => getAddress(r.from))]);
+    const resume = before && d.pendingSigner && getAddress(before.evmAddr) === getAddress(d.pendingSigner) && !retired.has(getAddress(before.evmAddr));
+    if (before && !resume) {
+      const stamp = new Date().toISOString().replace(/[-:.]/g, "").slice(0, 17);
       writeFileSync(KEYS, readFileSync(KEYS, "utf8").replace(/^agentsigner=/m, `agentsigner_retired_${stamp}=`), { mode: 0o600 });
       say(`the old signer ${before.evmAddr} kept in keys.env as agentsigner_retired_${stamp}`);
     }
     chain.ensureRoleKey("agentsigner");
     chain.forgetAccount("agentsigner"); // this process (desk.mjs serve) signs with the new key from now on
     const sg = await chain.accountFromKey("agentsigner");
+    if (retired.has(getAddress(sg.evmAddr))) fail(`${sg.evmAddr} was a signer before and is void: it will not be named again`);
+    if (!resume) save({ pendingSigner: sg.evmAddr });
     say(`1. the new signer ${sg.evmAddr}: fee money and its ML-DSA-87 key on chain`);
     if (BigInt(await balance(sg.cosmos)) < toUqor("0.05")) {
       const r = await broadcast(o, [bankSend(o.cosmos, sg.cosmos, toUqor("0.3"))], "leash desk: fee money for the new agent signer");
@@ -341,10 +346,10 @@ const cmds = {
     }
     if (!(await registerPqc("agentsigner", sg))) say("  already registered");
     if (!(await proven(sg.evmAddr))) fail(`the new signer's ML-DSA-87 key is not proven on chain yet: run node desk.mjs signer rotate again (it resumes); the desk still names ${named}`);
-    if (getAddress(named) === getAddress(sg.evmAddr)) return say(`\nthe desk names ${sg.evmAddr}, its ML-DSA-87 key proven: the agent can pay again. Give the key to the signer's host.`);
+    if (getAddress(named) === getAddress(sg.evmAddr)) { save({ pendingSigner: null }); return say(`\nthe desk names ${sg.evmAddr}, its ML-DSA-87 key proven: the agent can pay again. Give the key to the signer's host.`); }
     say("2. name it in the desk (one-transaction window)");
     const tx = await companyWindow([d.invoiceDesk], 1, (w) => sendEvm("setAgentSigner(new)", new Contract(d.invoiceDesk, art().abi, w).setAgentSigner(aa.evmAddr, sg.evmAddr)));
-    save({ signerRotations: [...(d.signerRotations ?? []), { at: new Date().toISOString(), from: named, to: sg.evmAddr, tx }] });
+    save({ pendingSigner: null, signerRotations: [...(D().signerRotations ?? []), { at: new Date().toISOString(), from: named, to: sg.evmAddr, tx }] });
     say(`\nevery signature ${named} made is void now. Give the new key to the signer's host (LEASH_AGENTSIGNER, or its keys.env).`);
   },
 

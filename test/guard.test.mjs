@@ -1,9 +1,11 @@
 // Offline checks of the agent signer's guard (lib/agent.mjs wouldRefuse / signerMay), against a stand-in for
 // the chain: an InvoiceDeskV4 whose state each case sets. No network. The guard must sign only a payment the
-// desk would make now, or one it can never make, and must never sign when it cannot get an answer.
+// desk would make now, by the signer the desk names, and must never sign when it cannot get an answer. Not even
+// a payment refused "for good": the agent's message does not bind the due date or the vendor's signature, so
+// a forged copy's agent signature would pay a genuine invoice with the same fields.
 import { strict as assert } from "node:assert";
 import { AbiCoder, Interface } from "ethers";
-import { deskV4, signerMay, wouldRefuse, NEVER_PAYABLE } from "../lib/agent.mjs";
+import { deskV4, signerMay, wouldRefuse } from "../lib/agent.mjs";
 
 const PAYER = "0x1ad0909a70b4baa9deeffee606378665c5f83bb1", AGENT = "0x4e5bfe5f83cf722378a4c5f73fed9bf474c496b0";
 const DESK = "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4", SIGNER = "0x3430d5a0000000000000000000000000000000aa";
@@ -66,21 +68,22 @@ for (const [name, state, o, reason] of [
   assert.deepEqual([r.sign, r.reason], [false, reason]);
 });
 for (const [name, state, o, reason] of [
-  ["a vendor signature that does not verify (a forgery, an edited copy)", { payerPay: ["BadSignature"] }, {}, "BadSignature"],
+  ["a vendor signature that does not verify (its agent signature would pay a genuine invoice with these fields)", { payerPay: ["BadSignature"] }, {}, "BadSignature"],
   ["already paid (a replay)", { payerPay: ["AlreadyPaid", "0x" + "11".repeat(32)] }, {}, "AlreadyPaid"],
   ["zero", { payerPay: ["ZeroAmount"] }, {}, "ZeroAmount"],
   ["native QOR (an agent may never pay it)", {}, { token: "0x0000000000000000000000000000000000000000" }, "AgentCannotPayNative"],
-  ["already past due", {}, { dueBy: NOW / 1000 - 60 }, "PastDue"],
-]) await t(`signs, since the desk can never pay it: ${name}`, async () => {
+  ["already past due (a reissue with a later due date would take its agent signature)", {}, { dueBy: NOW / 1000 - 60 }, "PastDue"],
+]) await t(`declines, though the desk would refuse it anyway: ${name}`, async () => {
   const r = await ask(state, o);
-  assert.deepEqual([r.sign, r.reason], [true, reason]);
+  assert.deepEqual([r.sign, r.reason], [false, reason]);
+});
+await t("declines when the key about to sign is not the signer the desk names (a half-finished rotation)", async () => {
+  const r = await signerMay(d, inv(), { provider: chain(), now: NOW, signer: "0x00000000000000000000000000000000000000bb" });
+  assert.deepEqual([r.sign, r.reason], [false, "NotTheNamedSigner"]);
+  assert.equal((await signerMay(d, inv(), { provider: chain(), now: NOW, signer: SIGNER })).sign, true);
 });
 await t("no answer from the chain: no signature (it throws, the caller signs nothing)", async () => {
   await assert.rejects(() => signerMay(d, inv(), { provider: chain({ down: true }), now: NOW }));
-});
-await t("the never-payable list is exactly the reasons no later action of the company undoes", () => {
-  assert.deepEqual([...NEVER_PAYABLE].sort(), ["AgentCannotPayNative", "AlreadyPaid", "BadSignature", "ZeroAmount"]);
-  for (const e of NEVER_PAYABLE) assert.ok(deskV4.getError(e), `${e} is one of InvoiceDeskV4's errors`);
 });
 await t("wouldRefuse reads the agent-only rules from the desk, not from the request", async () => {
   assert.equal(await wouldRefuse(d, inv({ amount: "11000000" }), { provider: chain(), now: NOW }), "OverPerPaymentLimit");

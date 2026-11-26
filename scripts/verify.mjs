@@ -474,7 +474,7 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
       const { rows } = await sweep();
       const now = rows.filter((r) => r.now === "PAID"), dormant = rows.filter((r) => /^(only|on a later)/.test(r.later));
       ok(rows.length >= 50 && now.length === 0 && rows.every((r) => !r.later.startsWith("unclassified")),
-        `every public agent signature on the V4 desks (${rows.length}: relayed transactions, EVM-lane transactions, records here), sent again now by its agent's classical key alone: none would pay. ${dormant.length ? `${dormant.length} could only if the company itself acted first (${dormant.map((r) => r.later.replace(/ before .*/, "").replace(/^only if the company /, "")).join("; ")}), before their invoices fall due` : "None could later either"}`,
+        `every public agent signature on the V4 desks (${rows.length}: relayed transactions, EVM-lane transactions, records here), sent again now by its agent's classical key alone: none would pay. ${dormant.length ? `${dormant.length} could only if someone acted first (${dormant.map((r) => r.later.replace(/^only if /, "")).join("; ")})` : "None could later either: each is void, or its invoice id is paid"}`,
         "(scripts/signature-sweep.mjs)");
     }
     // the third company, set up from nothing on InvoiceDeskV4 (runs/own-company-v4/)

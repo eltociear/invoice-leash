@@ -36,25 +36,34 @@ async function get(path) {
 // For one the desk refuses now: can it ever pay? "never", or the one thing the company itself would have to do.
 const PQC = new Interface(["function pqcKeyStatus(address) view returns (bool registered, uint8 algorithmId, bytes pubkey, bool possessionProven)", "function pqcVerify(bytes pubkey, bytes signature, bytes message) view returns (bool valid)"]);
 const call = async (i, to, fn, args) => i.decodeFunctionResult(fn, await retry(() => provider.call({ to, data: i.encodeFunctionData(fn, args) })));
+// The agent's message binds desk, payer, agent, vendor, token, amount and invoice id, NOT the due date or the
+// vendor's signature. So a refusal is "never" only if no later invoice with these fields could pass: the agent
+// signature itself is void, or this vendor's invoice id is paid (that record never clears), or the fields
+// themselves can never be paid by an agent. Otherwise it names who would have to act: the company, or the vendor.
 async function later(row, a, d) {
   const due = new Date(row.dueBy * 1000).toISOString().slice(0, 10);
   if (row.now === "PAID") return "now";
-  if (row.dueBy * 1000 < Date.now()) return "never: past due (an agent may not pay late)";
-  if ((await call(desk, d.invoiceDesk, "paid", [a[0], a[2], a[4]]))[0]) return "never: the invoice is paid";
-  if (["AlreadyPaid", "BadSignature", "BadAgentSignature", "ZeroAmount", "AgentCannotPayNative", "WrongAmount", "Reverted"].includes(row.now)) return `never: ${row.now}`;
+  const [payer, token, vendor, amount, id] = a;
+  const [named] = await call(desk, d.invoiceDesk, "agentSigner", [payer, row.from]);
+  if (!/^0x0{40}$/i.test(named)) {
+    const [reg, alg, pk] = await call(PQC, "0x0000000000000000000000000000000000000a02", "pqcKeyStatus", [named]);
+    const [m] = await call(desk, d.invoiceDesk, "agentMessage", [payer, row.from, token, vendor, amount, id]);
+    const ok = reg && Number(alg) === 1 && (await call(PQC, "0x0000000000000000000000000000000000000a01", "pqcVerify", [pk, a[7], m]))[0];
+    if (!ok) return "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again";
+  }
+  if ((await call(desk, d.invoiceDesk, "paid", [payer, vendor, id]))[0]) return "never: this vendor's invoice id is paid, and that record never clears";
+  if (amount === 0n) return "never: zero";
+  if (token === "0x0000000000000000000000000000000000000000") return "never: an agent may not pay native QOR";
+  if (row.now === "NotPayersAgent") return /^0x0{40}$/i.test(named) ? `only if the company makes ${row.from} an agent and names this signer for it` : `only if the company switches agent ${row.from} on again`;
   if (row.now === "UnknownVendor") {
-    const [reg, alg, pk, proven] = await call(PQC, "0x0000000000000000000000000000000000000a02", "pqcKeyStatus", [a[2]]);
-    if (!reg || !proven || Number(alg) !== 1) return "never: the vendor has no proven ML-DSA-87 key";
-    const [msg] = await call(desk, d.invoiceDesk, "invoiceMessage", [a[0], a[2], a[1], a[3], a[4], a[5]]);
-    const [valid] = await call(PQC, "0x0000000000000000000000000000000000000a01", "pqcVerify", [pk, a[6], msg]);
-    return valid ? `only if the company approves vendor ${a[2]} before ${due}` : "never: the vendor's signature does not verify";
+    const [reg, alg, pk, proven] = await call(PQC, "0x0000000000000000000000000000000000000a02", "pqcKeyStatus", [vendor]);
+    if (!reg || !proven || Number(alg) !== 1) return `only if ${vendor} registers an ML-DSA-87 key, signs these fields, and the company approves it`;
+    return `only if the company approves vendor ${vendor}`;
   }
-  if (row.now === "OverPerPaymentLimit") return `only if the company raises the agent's per-payment limit to ${Number(a[3]) / 1e6} fUSD before ${due}`;
-  if (row.now === "OverDailyLimit") return `on a later day before ${due}: today's limit is used`;
-  if (row.now === "NotPayersAgent") {
-    const [isAg] = await call(desk, d.invoiceDesk, "isAgent", [a[0], row.from]), [signer] = await call(desk, d.invoiceDesk, "agentSigner", [a[0], row.from]);
-    return /^0x0{40}$/i.test(signer) ? `only if the company makes ${row.from} an agent and names this signer for it, before ${due}` : `only if the company switches agent ${row.from} on again before ${due}`;
-  }
+  if (row.now === "BadSignature") return `only if vendor ${vendor} signs an invoice with this id, token and amount (any due date)`;
+  if (row.now === "PastDue" || row.dueBy * 1000 < Date.now()) return `only if vendor ${vendor} reissues this invoice id with a later due date`;
+  if (row.now === "OverPerPaymentLimit") return `only if the company raises the agent's per-payment limit to ${Number(amount) / 1e6} fUSD`;
+  if (row.now === "OverDailyLimit") return `on a later day: today's limit is used (due ${due})`;
   return `unclassified: ${row.now}`;
 }
 

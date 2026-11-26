@@ -77,8 +77,9 @@ What `pay` checks, all on chain, in this order:
    invoice id, verified with the precompile against the key of the signer the company named
    (`AgentSignerNotSet`, `AgentKeyNotProven`, `BadAgentSignature`). So the agent's classical key alone pays
    nothing its signer did not sign, after Q-Day included ([live](runs/probes/v4-agent-sig.json)). The
-   signature has no expiry of its own: it holds until its invoice is paid or past due. So the signer signs
-   only what the desk would pay right then, or can never pay (`lib/agent.mjs` `signerMay`), and the company
+   signature has no expiry of its own and does not bind the due date or the vendor's signature: it holds
+   until that vendor's invoice id is paid. So the signer signs only a payment the desk would make right
+   then (`lib/agent.mjs` `signerMay`), and the company
    can void every signature its signer ever made by naming a new one (`desk.mjs signer rotate`)
 3. the vendor is on the company's approved list (`UnknownVendor`)
 4. the vendor's **ML-DSA-87** key is registered with proof of possession, read live from the PQC module at

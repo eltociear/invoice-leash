@@ -1,6 +1,6 @@
 {
  "what": "every public agent ML-DSA-87 signature on an InvoiceDeskV4 (relayed calldata, EVM-lane calldata, calldata in this repository), dry-run again as its agent: could the agent's classical key alone get it paid now?",
- "at": "2026-11-26T06:10:18.809Z",
+ "at": "2026-11-26T07:11:50.850Z",
  "desks": [
   "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
   "0xd8a723c91Af58A885d8E87509E7B770559c0C353"
@@ -25,7 +25,7 @@
    "where": [
     "tx DDF9344404EDB336157EA0E63DFD52DA968A200EC3DF6A750366CC3DA295A659"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -38,7 +38,7 @@
    "where": [
     "tx 2ED771805A73B521EA2248A694723710EDA7072F21E9AC58C0103F672B3F3004"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -53,7 +53,7 @@
     "tx 90D7A8C089153D464BDD4650A6674B5856AFD969B901B623F52B44A138CA3C44",
     "tx 90D7A8C089153D464BDD4650A6674B5856AFD969B901B623F52B44A138CA3C44"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -66,7 +66,7 @@
    "where": [
     "tx 717089590975F47121F4E80D070DB8B756C4270C9645BEE5C49094BBF7010947"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -80,7 +80,7 @@
     "tx 3582D4B64D198E3A654F72EF92666B4F48F7981C124508AB6AF6C39B31D497D1",
     "tx 3582D4B64D198E3A654F72EF92666B4F48F7981C124508AB6AF6C39B31D497D1"
    ],
-   "later": "never: BadAgentSignature"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -94,7 +94,7 @@
     "tx 919B998CC2F13B411607A8DE1A4918DD9BF833D76A78AD481122AB80316E01CB",
     "tx 919B998CC2F13B411607A8DE1A4918DD9BF833D76A78AD481122AB80316E01CB"
    ],
-   "later": "never: BadAgentSignature"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -108,7 +108,7 @@
     "tx CE0A1E9F263514D5E26153E738EE393C2FFDE2F8AE876F92B308F87F5557E894",
     "tx CE0A1E9F263514D5E26153E738EE393C2FFDE2F8AE876F92B308F87F5557E894"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -122,7 +122,7 @@
     "tx 59D75D4B14A8220729950CADD9ED868014E0DDBFEF6E480D379AD4BBA49785BE",
     "tx 59D75D4B14A8220729950CADD9ED868014E0DDBFEF6E480D379AD4BBA49785BE"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -136,7 +136,7 @@
     "tx EB088875D58FBF474D8A186EDC6C3A08A620D8A26EEDF1092707434F7D02F004",
     "tx EB088875D58FBF474D8A186EDC6C3A08A620D8A26EEDF1092707434F7D02F004"
    ],
-   "later": "never: BadAgentSignature"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -149,7 +149,7 @@
    "where": [
     "tx E3C3699EB5752484906997182E693350584FA584238691A96C1C50E72D200017"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -163,7 +163,7 @@
     "tx 6E88AC529A07BBAFE53CF695D5CF7A86C813C31376A476D6160E5675C5572A42",
     "tx 6E88AC529A07BBAFE53CF695D5CF7A86C813C31376A476D6160E5675C5572A42"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -176,7 +176,7 @@
    "where": [
     "tx 953A89D65707A29E124E802D78549987281774D32975E581993DB2CED16E7B4E"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -190,7 +190,7 @@
     "tx C2FFAC711015C81A22D3C5D0872D2A2B93F645697E6E61DC6F8207CE9AD44AC0",
     "tx C2FFAC711015C81A22D3C5D0872D2A2B93F645697E6E61DC6F8207CE9AD44AC0"
    ],
-   "later": "never: BadAgentSignature"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -204,7 +204,7 @@
     "tx 6D4BCD9CEC819B54009CDC1E99BA91F08DCF55970655C3834EA3C98ABDB57EE2",
     "tx 6D4BCD9CEC819B54009CDC1E99BA91F08DCF55970655C3834EA3C98ABDB57EE2"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -217,7 +217,7 @@
    "where": [
     "tx 3B4C3321F1D3B9EEEBFF658BF52F58737A4BECB5E12B25B3B031E93CF11E9C2A"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -231,7 +231,7 @@
     "tx 54C12EA23C8598FE6B2C5A1065630A4C294303F4FF0E99A1927665EA59933687",
     "tx 54C12EA23C8598FE6B2C5A1065630A4C294303F4FF0E99A1927665EA59933687"
    ],
-   "later": "never: BadAgentSignature"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -245,7 +245,7 @@
     "tx 5C9967B6CA2D41706AC0364C99EC0A3491ECBF8E07AFD6ABBE8A6A6BA4CF0FC3",
     "tx 5C9967B6CA2D41706AC0364C99EC0A3491ECBF8E07AFD6ABBE8A6A6BA4CF0FC3"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -258,7 +258,7 @@
    "where": [
     "tx 4C6661504EBE0673C196A1F406AF1ECECD90A7B3331513D96290FD7D2EF759DB"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -272,7 +272,7 @@
     "tx D62FD932F8D5A35EC78A8993888117FA575014A7E19DA50D9620C255F92B419E",
     "tx D62FD932F8D5A35EC78A8993888117FA575014A7E19DA50D9620C255F92B419E"
    ],
-   "later": "never: BadAgentSignature"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -286,7 +286,7 @@
     "tx 843C34B40F5F88FFFA263F3B748AE19717FDD6365F14E97F2D861D2F82B1D77F",
     "tx 843C34B40F5F88FFFA263F3B748AE19717FDD6365F14E97F2D861D2F82B1D77F"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -301,7 +301,7 @@
     "tx 99EE72DAD312F6012E9B1B5B1BCE5D16F1236CD1B8707B37B549E510C1EF23C9",
     "tx 99EE72DAD312F6012E9B1B5B1BCE5D16F1236CD1B8707B37B549E510C1EF23C9"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -314,7 +314,7 @@
    "where": [
     "tx E605993C28B6A5348F05BE36CCAC62D4768AA909418B8ACA5E476F42D75C93E3"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -328,7 +328,7 @@
     "tx 5EF5442987DF3236C64B1162E9E70AEF05CAB42AB146CCD4B2EF00D49C4BEF5C",
     "tx 5EF5442987DF3236C64B1162E9E70AEF05CAB42AB146CCD4B2EF00D49C4BEF5C"
    ],
-   "later": "never: BadAgentSignature"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -342,7 +342,7 @@
     "tx 48A2126E5D90A2AC0F5C507BB553D13CBA20BAA3A073875A8C54D8B332798C78",
     "tx 48A2126E5D90A2AC0F5C507BB553D13CBA20BAA3A073875A8C54D8B332798C78"
    ],
-   "later": "never: BadAgentSignature"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -356,7 +356,7 @@
     "tx B2B08217D02DBA77CBC58F3D4FA30B21CF95DAF4A576C71FFA214266A17CB961",
     "tx B2B08217D02DBA77CBC58F3D4FA30B21CF95DAF4A576C71FFA214266A17CB961"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -370,7 +370,7 @@
     "tx A6D5EE459192010BB6054811CED76B698AF0587386351ADE5D65D7ABDA47A9BD",
     "tx A6D5EE459192010BB6054811CED76B698AF0587386351ADE5D65D7ABDA47A9BD"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -384,7 +384,7 @@
     "tx 391A3ED78853389D32990127AE4CA3845CF97D5EE72FF48EDA9EA37155326C10",
     "tx 391A3ED78853389D32990127AE4CA3845CF97D5EE72FF48EDA9EA37155326C10"
    ],
-   "later": "never: BadAgentSignature"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -397,7 +397,7 @@
    "where": [
     "tx E5832EA2538CD4D7FAF36468C4EB876DACF9F3F13203F665C54AE686FC239194"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -411,7 +411,7 @@
     "tx 5B639205EE308DE1D23A7E64857C6E7C58A8813AA088856ED0999AD59EF347DC",
     "tx 5B639205EE308DE1D23A7E64857C6E7C58A8813AA088856ED0999AD59EF347DC"
    ],
-   "later": "never: BadAgentSignature"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0xd8a723c91Af58A885d8E87509E7B770559c0C353",
@@ -424,7 +424,7 @@
    "where": [
     "tx 5091582A591EF6959333409ADB4351F053554A0A55BD50C40B7687A60A225ACC"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0xd8a723c91Af58A885d8E87509E7B770559c0C353",
@@ -437,7 +437,7 @@
    "where": [
     "tx 653874C4ADF442B5A5084107C229386B3E96BA9BCB90AF20BEECC22C92E6792B"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0xd8a723c91Af58A885d8E87509E7B770559c0C353",
@@ -450,7 +450,7 @@
    "where": [
     "tx 0958BB245BEE9238A8A453FB12F92F921B107E378176E4AA6FBCA5F89640B5EB"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0xd8a723c91Af58A885d8E87509E7B770559c0C353",
@@ -463,7 +463,7 @@
    "where": [
     "tx ECAAB15A2FAD0B37935826B9C1462BF5466EC0DE57A486280A59C17E728FBD11"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0xd8a723c91Af58A885d8E87509E7B770559c0C353",
@@ -477,7 +477,7 @@
     "tx A83FE269EA0CC883351BB4F02C2355B94397908FCC8A78008521895DD5DC1C67",
     "tx A83FE269EA0CC883351BB4F02C2355B94397908FCC8A78008521895DD5DC1C67"
    ],
-   "later": "never: BadAgentSignature"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0xd8a723c91Af58A885d8E87509E7B770559c0C353",
@@ -490,7 +490,7 @@
    "where": [
     "tx F65D3ED270DE2A8E9228AF38829B39E00822930851AC048B7AC55427430238CA"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0xd8a723c91Af58A885d8E87509E7B770559c0C353",
@@ -503,7 +503,7 @@
    "where": [
     "tx 894164F133E3F6E1EB37D646621C0E3D115DAC382D4860EF3819220781A307CE"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: this vendor's invoice id is paid, and that record never clears"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -516,7 +516,7 @@
    "where": [
     "evm 0x5de63315712239ef3cf03832680e863e31713e4054fa30bc658c1bb69dd926dd"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -529,7 +529,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -542,7 +542,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: this vendor's invoice id is paid, and that record never clears"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -559,7 +559,7 @@
     "file runs/campaign-v4-sample.json",
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -572,7 +572,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -585,7 +585,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -598,7 +598,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -611,7 +611,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: BadAgentSignature"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -624,7 +624,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: BadAgentSignature"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -637,7 +637,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -650,7 +650,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: this vendor's invoice id is paid, and that record never clears"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -663,7 +663,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -676,7 +676,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -689,7 +689,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -704,7 +704,7 @@
     "file runs/campaign-v4-sample.json",
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -717,7 +717,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -730,7 +730,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -743,7 +743,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -756,7 +756,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -769,7 +769,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -782,7 +782,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: BadAgentSignature"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -795,7 +795,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: BadAgentSignature"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -808,7 +808,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -821,7 +821,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -834,7 +834,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -847,7 +847,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -860,7 +860,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -873,7 +873,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -886,7 +886,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: BadAgentSignature"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -899,7 +899,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -912,7 +912,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: this vendor's invoice id is paid, and that record never clears"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -925,7 +925,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -938,7 +938,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: the invoice is paid"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   },
   {
    "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
@@ -951,7 +951,7 @@
    "where": [
     "file runs/campaign-v4-sample.json"
    ],
-   "later": "never: BadAgentSignature"
+   "later": "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again"
   }
  ]
 }

@@ -55,6 +55,7 @@ jobs:
           name: plan
           path: /home/runner/work-live/
           if-no-files-found: ignore
+          retention-days: 1
 
   sign:
     needs: plan
@@ -91,6 +92,8 @@ jobs:
           name: signatures
           path: /home/runner/work-live/signatures.json
           if-no-files-found: ignore
+          # the repository is public, and so are its artifacts: the agent signatures live one day, not ninety
+          retention-days: 1
 
   relay:
     needs: sign

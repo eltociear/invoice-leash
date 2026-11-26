@@ -120,8 +120,12 @@ public. A fifth review sent two of ours again as the agent (dry runs) and both w
 compromised run's `OverDailyLimit` refusal (the next day had room) and the campaign's signed control. So,
 on 2026-11-25:
 - the three such invoices found were settled by the company in person, so they answer `AlreadyPaid`;
-- the signer signs only a payment the desk would make right then, or one it can never make (a vendor
-  signature that does not verify, already paid, zero, native QOR, past due): `lib/agent.mjs` `signerMay`.
+- the signer signs only a payment the desk would make right then: `lib/agent.mjs` `signerMay`. (At first
+  it also signed payments the desk could "never" make, a forgery or a past-due invoice. A seventh review
+  showed that is not never: the agent's message does not bind the due date or the vendor's signature, so
+  such a signature would pay a genuine invoice with the same vendor, amount and id. Since 2026-11-26 it
+  signs nothing the desk would refuse, and only with the key the desk names. What it declines, the live
+  agent sends unsigned, so the chain still refuses it on the record: `BadAgentSignature`.)
   It asks without making a signature, by a dry run of the company's own `pay` plus the agent-only rules
   read from the desk, since an `eth_call` would hand the signature to the RPC node;
 - `npm run verify` collects every agent signature ever made public (relayed calldata, EVM-lane calldata,
