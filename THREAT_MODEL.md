@@ -4,10 +4,11 @@ Invoice Leash assumes the agent will be fooled or stolen, and asks one question:
 a fully hostile agent can do with the company's money?** The answer has to come from the chain, not
 from the agent's code, because the agent's code is the part we assume is lost.
 
-This describes the current design: fUSD invoices through [`InvoiceDeskV4`](contracts/InvoiceDeskV4.sol)
-(the live agent's desk and what `desk.mjs` deploys). V2 and V3 have the same checks except where marked:
-V3 added per-vendor invoice ids and late settlement by the company, V4 the agent's own ML-DSA-87
-signature. v1, and why it was replaced, are at the end.
+This describes the current design: fUSD invoices through [`InvoiceDeskV5`](contracts/InvoiceDeskV5.sol)
+(the live agent's desk since 2026-11-26 and what `desk.mjs` deploys). V2, V3 and V4 have the same checks
+except where marked: V3 added per-vendor invoice ids and late settlement by the company, V4 the agent's own
+ML-DSA-87 signature, V5 that signature over the whole invoice and the vendor's signature, with a deadline.
+Most rows were recorded on V4, the live desk until then ("V4 run"); V5 keeps every V4 check. v1, and why it was replaced, are at the end.
 
 ## Who holds what
 
@@ -64,8 +65,8 @@ testnet, or the Foundry tests (`test/InvoiceDeskV2.t.sol` … `InvoiceDeskV4.t.s
 | Agent pays in native QOR | `AgentCannotPayNative` (and the agent account cannot move QOR anyway) | tests |
 | Vendor key never proven / other algorithm / rotated | `VendorKeyNotProven` / `BadSignature` (the key is read at payment time) | tests (v2 and v1) |
 | A token that returns `false`, or an address with no code | `TransferFailed`, all rolled back | tests |
-| A quantum computer derives the agent's ed25519 key from its public key (after Q-Day) | on an InvoiceDeskV4 the key alone pays nothing: each agent payment also needs the agent signer's ML-DSA-87 signature over this exact invoice (`BadAgentSignature`). On V2/V3: bounded like a stolen key | `runs/probes/v4-agent-sig.json`; the live agent tries it daily; Foundry, Halmos |
-| ... and sends again an agent signature that is already public (a V4 agent signature has no expiry of its own and does not bind the due date or the vendor's signature: it holds until that vendor's invoice id is paid, or its signer is rotated away) | the signer signs only a payment the desk would make right then, a forgery's or a past-due invoice's not even (`lib/agent.mjs` `signerMay`, asked without making a signature); a key not handed over, or not yet named, does not sign; `desk.mjs signer rotate` voids every signature the old signer made. Residual: a signature an attacker who holds the signer makes, until the company rotates it; and the minutes between signing and relaying (a payment that passes when signed and is refused when relayed, because the company or another agent spent today's limit meanwhile, leaves its signature valid; `npm run verify` would show it, rotation voids it). A V5 would bind the due date, the vendor's signature and a short deadline into the agent's message | `runs/signature-sweep.json` (verify sends all 70 again: none would pay, none could later); `runs/live/signer-rotate.log`, `runs/own-company-v4/signer-rotate.log` |
+| A quantum computer derives the agent's ed25519 key from its public key (after Q-Day) | on an InvoiceDeskV4 or V5 the key alone pays nothing: each agent payment also needs the agent signer's ML-DSA-87 signature over this exact invoice (`BadAgentSignature`). On V2/V3: bounded like a stolen key | `runs/probes/v4-agent-sig.json`; the live agent tries it daily; Foundry, Halmos |
+| ... and sends again an agent signature that is already public | **V5**: a signature pays one exact signed invoice (its digest, due date included, and the hash of the vendor's signature), once, before its deadline 15 minutes ahead (`AgentSignatureExpired`); a forged copy's signature and a reissue at a later due date are `BadAgentSignature`. **V4** (no deadline, binds vendor, token, amount, id only): the signer signs only a payment the desk would make right then (`lib/agent.mjs` `signerMay`, on V5 too), a key not handed over or not yet named does not sign, and `desk.mjs signer rotate` voids every signature a signer made. Residual on V5: the 15 minutes; on V4: the minutes between signing and relaying | `runs/probes/v5-bindings.json` (live, re-read by verify); `runs/signature-sweep.json` (verify sends all public agent signatures again: none would pay, none could later); `runs/live/signer-rotate.log` |
 | The agent keeps going after it is caught | `desk.mjs freeze`: the agent off in the desk, its key revoked on chain and any window closed, in one command (run live, `runs/own-company-v3/freeze.log`); or either step alone | v1 run (revoke); v2 live: `kill-switch-v2` (`NotPayersAgent`), verify §9; tests |
 | An email whose text lies about the amount (`fusd: "5"` next to a signed 95) | the agent and the MCP tools are shown the **signed** amount, in the signed token's units; a label that disagrees is flagged as a warning | `test/agent.test.mjs` |
 | A lost answer from the chain (timeout after sending) | reported as OUTCOME UNKNOWN, never as refused or not sent; for a payment, the desk's `paid()` settles it | `lib/agent.mjs` `settle` |
@@ -106,13 +107,13 @@ Said plainly, because a judge, an auditor or a customer will ask.
   cause. Remedy today: `removeVendor`, and vendor-prefixed numbers (every invoice in this repo has one).
   **Fixed in InvoiceDeskV3**, which keys `paid[payer][vendor][id]`: two vendors' INV-2001 were both paid
   on the testnet (`runs/own-company-v3/`). The demo's V2 desk stays as recorded, so its runs remain
-  checkable; new desks (`desk.mjs setup`) are V4, and `desk.mjs upgrade` moves a V2 or V3 company.
+  checkable; new desks (`desk.mjs setup`) are V5, and `desk.mjs upgrade` moves a V2, V3 or V4 company.
 - **A compromised company key.** The company can do anything; that is what an owner is. It is a
   hybrid ML-DSA-87 key, so a quantum computer alone does not get it.
 - **Paying a genuine invoice the company did not want.** Within the limits, the agent decides. The
   Claude runs show a careful model still making mistakes; the limits are what bound them.
 - **Draining the gas wallet.** A hostile agent can spend the gas wallet's fees on refused requests
-  (0.15 QOR each on V3, 0.24 on V4). It cannot touch the company's money this way. Keep the gas wallet small.
+  (0.15 QOR each on V3, 0.24 on V4 and V5). It cannot touch the company's money this way. Keep the gas wallet small.
 - **The allowance is shared.** The desk pulls the company's in-person payments from the same
   allowance as the agent's, so a big human-approved payment shrinks what the agent can use; the
   agent's daily limit still applies on top.

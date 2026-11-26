@@ -20,7 +20,11 @@ const ROOT = new URL("../", import.meta.url);
 const REST = process.env.QORE_REST ?? "https://api-testnet.qore.host";
 const provider = new JsonRpcProvider(process.env.QORE_EVM_RPC ?? "https://evm-testnet.qore.host", 9800, { staticNetwork: true });
 const desk = new Interface(JSON.parse(readFileSync(new URL("build/InvoiceDeskV4.json", ROOT), "utf8")).abi);
-const SEL = desk.getFunction("pay").selector;
+const desk5 = new Interface(JSON.parse(readFileSync(new URL("build/InvoiceDeskV5.json", ROOT), "utf8")).abi);
+const SEL = desk.getFunction("pay").selector, SEL5 = desk5.getFunction("pay").selector;
+// pay() calldata of either version, as one shape: V5 adds the deadline (validUntil) as a tenth field
+const decodePay = (data) => data.startsWith(SEL5) ? [...desk5.decodeFunctionData("pay", data)] : [...desk.decodeFunctionData("pay", data), null];
+const isPay = (v) => typeof v === "string" && (v.startsWith(SEL) || v.startsWith(SEL5));
 const json = (p) => JSON.parse(readFileSync(new URL(p, ROOT), "utf8"));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // the testnet's endpoints drop requests now and then: a read is tried again before it counts as an answer
@@ -43,11 +47,15 @@ const call = async (i, to, fn, args) => i.decodeFunctionResult(fn, await retry((
 async function later(row, a, d) {
   const due = new Date(row.dueBy * 1000).toISOString().slice(0, 10);
   if (row.now === "PAID") return "now";
-  const [payer, token, vendor, amount, id] = a;
+  const [payer, token, vendor, amount, id, dueBy, vsig, , validUntil] = a;
+  // V5: a signature past its deadline pays nothing, ever (the deadline is in the signed message)
+  if (d.version === 5 && Number(validUntil) * 1000 < Date.now()) return "never: past its deadline (InvoiceDeskV5)";
   const [named] = await call(desk, d.invoiceDesk, "agentSigner", [payer, row.from]);
   if (!/^0x0{40}$/i.test(named)) {
     const [reg, alg, pk] = await call(PQC, "0x0000000000000000000000000000000000000a02", "pqcKeyStatus", [named]);
-    const [m] = await call(desk, d.invoiceDesk, "agentMessage", [payer, row.from, token, vendor, amount, id]);
+    const [m] = d.version === 5
+      ? await call(desk5, d.invoiceDesk, "agentMessage", [payer, row.from, keccak256((await call(desk5, d.invoiceDesk, "invoiceMessage", [payer, vendor, token, amount, id, dueBy]))[0]), keccak256(vsig), validUntil])
+      : await call(desk, d.invoiceDesk, "agentMessage", [payer, row.from, token, vendor, amount, id]);
     const ok = reg && Number(alg) === 1 && (await call(PQC, "0x0000000000000000000000000000000000000a01", "pqcVerify", [pk, a[7], m]))[0];
     if (!ok) return "never: its agent signature does not verify under the signer the desk names (rotated away, or no valid signature); desk.mjs never names a voided signer again";
   }
@@ -68,13 +76,15 @@ async function later(row, a, d) {
 }
 
 export async function sweep() {
-const desks = ["runs/live/desk.json", "runs/own-company-v4/desk.json"].map((p) => ({ record: p, ...json(p).v2 })).filter((d) => d.version === 4);
+// every desk of version 4 or later: the live desk now and before (desk-v4.json), the third company's
+const desks = ["runs/live/desk.json", "runs/live/desk-v4.json", "runs/own-company-v4/desk.json"].map((p) => ({ record: p, ...json(p).v2 })).filter((d) => d.version >= 4)
+  .filter((d, i, all) => all.findIndex((x) => getAddress(x.invoiceDesk) === getAddress(d.invoiceDesk)) === i);
 const byDesk = new Map(desks.map((d) => [getAddress(d.invoiceDesk), d]));
 const found = new Map(); // one entry per (desk, calldata)
 const add = (deskAddr, from, data, where) => {
   const d = byDesk.get(getAddress(deskAddr));
-  if (!d || !data.startsWith(SEL)) return;
-  const a = desk.decodeFunctionData("pay", data);
+  if (!d || !isPay(data) || (d.version === 5) !== data.startsWith(SEL5)) return;
+  const a = decodePay(data);
   if (a[7] === "0x") return; // no agent signature: nothing to replay
   const key = `${d.invoiceDesk}|${keccak256(data)}`;
   const e = found.get(key) ?? { desk: d.invoiceDesk, from: getAddress(from), data, where: [] };
@@ -120,7 +130,7 @@ const files = (dir) => readdirSync(new URL(dir, ROOT)).flatMap((f) => {
 });
 for (const f of [...files("runs/"), ...files("docs/")]) {
   const walk = (v, ctx) => {
-    if (typeof v === "string" && v.startsWith(SEL)) add(ctx.to ?? ctx.desk ?? json(f).desk ?? "", ctx.from ?? byDesk.get(getAddress(ctx.to ?? ctx.desk ?? json(f).desk))?.agentAccountEvm, v, `file ${f}`);
+    if (isPay(v)) add(ctx.to ?? ctx.desk ?? json(f).desk ?? "", ctx.from ?? byDesk.get(getAddress(ctx.to ?? ctx.desk ?? json(f).desk))?.agentAccountEvm, v, `file ${f}`);
     else if (v && typeof v === "object") for (const x of Object.values(v)) walk(x, Array.isArray(v) ? ctx : { ...ctx, ...v });
   };
   try { walk(json(f), {}); } catch { /* not a desk's calldata */ }
@@ -131,7 +141,7 @@ async function ask(from, to, data) {
   for (let i = 0; ; i++) {
     try { await provider.call({ from, to, data }); return "PAID"; }
     catch (e) {
-      try { const n = desk.parseError(e.data ?? e.info?.error?.data)?.name; if (n) return n; } catch { /* not the desk's */ }
+      try { const n = desk5.parseError(e.data ?? e.info?.error?.data)?.name; if (n) return n; } catch { /* not the desk's */ }
       if (/execution reverted/i.test(e.shortMessage ?? "")) return "Reverted";
       if (i >= 4) throw e;
       await sleep(1500 * (i + 1));
@@ -140,7 +150,7 @@ async function ask(from, to, data) {
 }
 const rows = [];
 for (const e of found.values()) {
-  const a = desk.decodeFunctionData("pay", e.data);
+  const a = decodePay(e.data);
   const row = { desk: e.desk, from: e.from, vendor: a[2], amount: a[3].toString(), id: a[4], dueBy: Number(a[5]), now: await ask(e.from, e.desk, e.data), where: e.where };
   row.later = await later(row, a, byDesk.get(getAddress(e.desk)));
   rows.push(row);
@@ -165,7 +175,7 @@ const out = process.argv.indexOf("--invoices");
 if (out > 0 && live.length) {
   const dir = process.argv[out + 1]; mkdirSync(dir, { recursive: true });
   for (const r of live) {
-    const a = desk.decodeFunctionData("pay", [...found.values()].find((e) => e.desk === r.desk && desk.decodeFunctionData("pay", e.data)[4] === r.id).data);
+    const a = decodePay([...found.values()].find((e) => e.desk === r.desk && decodePay(e.data)[4] === r.id).data);
     const fusd = (Number(a[3]) / 1e6).toString();
     writeFileSync(`${dir}/${r.id.slice(2, 12)}.json`, JSON.stringify({ subject: "settle in person: an agent signature for this invoice is public (scripts/signature-sweep.mjs)", invoice: { v: 2, token: a[1], vendor: a[2], fusd, amount: a[3].toString(), ref: `SETTLE-${r.id.slice(2, 10)}`, id: a[4], dueBy: Number(a[5]), signature: a[6] } }, null, 1) + "\n");
   }

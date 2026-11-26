@@ -85,7 +85,7 @@ window, its classical key could not move fUSD, QOR or the treasury.
 **Why.** A window without targets admits any call within its caps. An independent review found the
 company's first windows had none.
 
-## 8. The agent's key stays classical (ed25519), and InvoiceDeskV4 makes it insufficient
+## 8. The agent's key stays classical (ed25519), and InvoiceDeskV4 (then V5) makes it insufficient
 
 **Decision.** We accept the classical relaying key, and from InvoiceDeskV4 we require the agent's own
 ML-DSA-87 signature on every agent payment. It covers the desk, the payer, the agent, the vendor, the token,
@@ -134,10 +134,15 @@ on 2026-11-25:
 
 The compromised run is the exception by design: its attacker holds the signer, so nothing checks what it
 signs, and it leaves such signatures behind. The answer to that is to rotate the signer afterwards.
-We did not deploy a V5 six days before the deadline. A V5 would bind into the agent's message what V4 leaves
-out: the due date, a hash of the vendor's signature, and a deadline minutes away. The signer's check, the
-sweep and the rotation close the same hole without moving the live desk; what remains is the minutes
-between signing and relaying (THREAT_MODEL.md).
+At first we did not want to move the live desk six days before the deadline, and closed the hole off chain
+(the signer's check, the sweep, the rotation). Then we did: **InvoiceDeskV5** binds into the agent's message
+what V4 leaves out, the whole invoice (its digest, the due date included), the hash of the vendor's
+signature, and a deadline the signer sets 15 minutes ahead. The live desk moved to it on 2026-11-26
+(`desk.mjs upgrade --keep-old`: the V4 desk stays deployed, unchanged, so every V4 record can still be
+checked against it), and seven attempts relayed for real show each binding hold
+([`runs/probes/v5-bindings.json`](runs/probes/v5-bindings.json)). The off-chain measures stay: on V5 they cover the
+15 minutes. The price: pay() takes one more argument, so the agent's spending rule names V5's `pay`
+selector, and relayed calldata is 32 bytes longer.
 
 ## 9. Show, don't claim: everything is re-checked from the chain
 

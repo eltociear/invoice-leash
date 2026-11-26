@@ -22,7 +22,7 @@ import { pathToFileURL } from "node:url";
 import { Interface, JsonRpcProvider, formatUnits } from "ethers";
 import { fetchAuthenticators, fetchSpendingRules } from "@qorechain/sdk";
 import { EVM_CHAIN_ID, EVM_RPC, REST, account, agentKey, balance, fmt, hasKeys, hex, readDeployment } from "../lib/chain.mjs";
-import { deskV2, deskV3, deskV4, describeV2, executeV2, payData, wouldRefuse } from "../lib/agent.mjs";
+import { deskV2, deskV3, deskV4, deskV5, describeV2, executeV2, payData, wouldRefuse } from "../lib/agent.mjs";
 import { FUSD, invoiceFacts, validateInvoiceV2 } from "../lib/invoices.mjs";
 import { verifyCompanyMessage } from "../lib/messages.mjs";
 import { openInvoice } from "../lib/sealed.mjs";
@@ -136,14 +136,14 @@ server.registerTool("check_invoice", {
   let verdict = "WOULD PAY (vendor approved, ML-DSA-87 signature valid, unpaid, not past due, within your limits)";
   // On an InvoiceDeskV4, asked without making an agent signature (lib/agent.mjs wouldRefuse): the same
   // answer with or without the signer's key, and no signature handed to the RPC node.
-  for (let i = 0; D.version === 4; i++) {
+  for (let i = 0; D.version >= 4; i++) {
     try { const n = await wouldRefuse(D, v); if (n) verdict = `WOULD REFUSE: ${n}`; break; }
     catch (e) { if (i < 3) { await new Promise((r) => setTimeout(r, 1500 * (i + 1))); continue; } verdict = `COULD NOT ASK (a network problem, not a decision by the desk): ${e.shortMessage || e.message || e.code || String(e)}. Ask again: nothing was sent.`; break; }
   }
-  for (let i = 0; D.version !== 4; i++) {
+  for (let i = 0; !(D.version >= 4); i++) {
     try { await provider.call({ from: acct.evmAddr, to: D.invoiceDesk, data: await payData(D, v, { asAgent: !RO }) }); break; }
     catch (e) {
-      const d = e.data ?? e.info?.error?.data; let n = null; try { n = deskV4.parseError(d).name; } catch { /* not a desk error */ }
+      const d = e.data ?? e.info?.error?.data; let n = null; try { n = deskV5.parseError(d).name; } catch { /* not a desk error */ }
       if (n) { verdict = `WOULD REFUSE: ${n}${n === "BadAgentSignature" && RO ? " (this read-only server holds no agent signer key; with it, the agent signs each payment)" : ""}`; break; }
       if (i < 3) { await new Promise((r) => setTimeout(r, 1500 * (i + 1))); continue; }
       verdict = `COULD NOT ASK (a network problem, not a decision by the desk): ${e.shortMessage || e.message || e.code || String(e)}. Ask again: nothing was sent.`; break;

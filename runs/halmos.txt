@@ -26,3 +26,18 @@ Sanity check, the same day: with the per-payment check and the agent's due-date 
 [PASS] check_strangers_never_pay(address,uint256,bytes32,uint64) (paths: 3, time: 0.03s, bounds: [])
 [PASS] check_unapproved_vendor_never_paid(address,bool,uint256,bytes32,uint64) (paths: 5, time: 0.04s, bounds: [])
 Symbolic test result: 9 passed; 0 failed; time: 1.70s
+
+===== InvoiceDeskV5 (2026-11-26): V4's nine, plus: an agent payment after its signature's validUntil never succeeds (the payer's, at the same moment, does)
+[PASS] check_agent_daily_limit(uint256,uint256,bytes32,bytes32,uint32) (paths: 16, time: 0.31s, bounds: [])
+[PASS] check_agent_needs_a_named_signer(uint256,bytes32,uint64) (paths: 2, time: 0.01s, bounds: [])
+[PASS] check_agent_never_pays_after_validUntil(uint256,bytes32,uint64,uint32) (paths: 5, time: 0.34s, bounds: [])
+[PASS] check_agent_never_pays_late(uint256,bytes32,uint64,uint32) (paths: 6, time: 0.27s, bounds: [])
+[PASS] check_agent_per_payment_limit(uint256,bytes32,uint64) (paths: 3, time: 0.03s, bounds: [])
+[PASS] check_exact_amount_moves(bool,uint256,bytes32) (paths: 8, time: 0.12s, bounds: [])
+[PASS] check_paid_at_most_once(bool,bool,uint256,bytes32) (paths: 16, time: 0.32s, bounds: [])
+[PASS] check_settings_are_the_payers_alone(address,address,uint256,uint256) (paths: 4, time: 0.07s, bounds: [])
+[PASS] check_strangers_never_pay(address,uint256,bytes32,uint64) (paths: 3, time: 0.02s, bounds: [])
+[PASS] check_unapproved_vendor_never_paid(address,bool,uint256,bytes32,uint64) (paths: 5, time: 0.04s, bounds: [])
+Symbolic test result: 10 passed; 0 failed; time: 1.60s
+
+Sanity check, the same day: with the validUntil check removed from the contract, Halmos fails exactly that property, with a counterexample (validUntil = 0, paid 0x80000000 s later). The contract was restored.

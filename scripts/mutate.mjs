@@ -2,13 +2,14 @@
 //   node scripts/mutate.mjs      > runs/mutation.txt      (InvoiceDeskV2)
 //   node scripts/mutate.mjs v3   > runs/mutation-v3.txt   (InvoiceDeskV3: V2's mutants, adapted, plus V3's own)
 //   node scripts/mutate.mjs v4   > runs/mutation-v4.txt   (InvoiceDeskV4: V3's, adapted, plus the agent signature's)
+//   node scripts/mutate.mjs v5   > runs/mutation-v5.txt   (InvoiceDeskV5: V4's, adapted, plus the agent message's bindings and deadline)
 // Restores the contract after every mutant (and on any error). Needs Foundry (forge on PATH or ~/.foundry/bin).
 // Never run it while `npm run verify` runs: it edits the contract in place.
 import { readFileSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 
-const V4 = process.argv[2] === "v4", V3 = process.argv[2] === "v3" || V4;
-const NAME = V4 ? "InvoiceDeskV4" : V3 ? "InvoiceDeskV3" : "InvoiceDeskV2";
+const V5 = process.argv[2] === "v5", V4 = process.argv[2] === "v4" || V5, V3 = process.argv[2] === "v3" || V4;
+const NAME = V5 ? "InvoiceDeskV5" : V4 ? "InvoiceDeskV4" : V3 ? "InvoiceDeskV3" : "InvoiceDeskV2";
 const FILE = new URL(`../contracts/${NAME}.sol`, import.meta.url);
 const ORIGINAL = readFileSync(FILE, "utf8");
 const forge = spawnSync("sh", ["-c", "command -v forge || echo ~/.foundry/bin/forge"]).stdout.toString().trim();
@@ -17,12 +18,12 @@ const PAID = V3 ? "paid[payer][vendor][id]" : "paid[payer][id]";
 const PAID_CHECK = `        if (${PAID}) revert AlreadyPaid(id);\n`;
 const MUTANTS = [
   ["signature check removed", (s) => s.replace("if (!PQC_VERIFY.pqcVerify(", "if (false && !PQC_VERIFY.pqcVerify(")],
-  ["replay check moved before the signature", (s) => V4 ? s.replace(PAID_CHECK, "").replace("        _vendorSignature(", PAID_CHECK + "        _vendorSignature(") : s.replace(PAID_CHECK, "").replace("        if (!approved[payer][vendor])", PAID_CHECK + "        if (!approved[payer][vendor])")],
+  ["replay check moved before the signature", (s) => V5 ? s.replace(PAID_CHECK, "").replace("            _vendorSignature(", "    " + PAID_CHECK + "            _vendorSignature(") : V4 ? s.replace(PAID_CHECK, "").replace("        _vendorSignature(", PAID_CHECK + "        _vendorSignature(") : s.replace(PAID_CHECK, "").replace("        if (!approved[payer][vendor])", PAID_CHECK + "        if (!approved[payer][vendor])")],
   ["vendor key: proof of possession not required", (s) => s.replace("if (!registered || !proven || alg != ALG_ML_DSA_87) revert VendorKeyNotProven", "if (!registered || alg != ALG_ML_DSA_87) revert VendorKeyNotProven")],
   ["vendor key: algorithm not checked", (s) => s.replace("|| alg != ALG_ML_DSA_87) revert VendorKeyNotProven", ") revert VendorKeyNotProven")],
   ["currency left out of the signed bytes", (s) => s.replace("payer, vendor, token, amount, id, dueBy);\n    }", "payer, vendor, amount, id, dueBy);\n    }")],
   ["ERC-20 return value ignored", (s) => s.replace("if (!ok || (ret.length != 0 && !abi.decode(ret, (bool))))", "if (!ok)")],
-  ["QOR sent along with an fUSD invoice accepted", (s) => s.replace("if (msg.value != native)", "if (false && msg.value != native)")],
+  ["QOR sent along with an fUSD invoice accepted", (s) => V5 ? s.replace("if (msg.value != (token == address(0) ? amount : 0))", "if (false && msg.value != (token == address(0) ? amount : 0))") : s.replace("if (msg.value != native)", "if (false && msg.value != native)")],
   ["any account may pay for any payer", (s) => s.replace("if (byAgent && !isAgent[payer][msg.sender])", "if (false && byAgent && !isAgent[payer][msg.sender])")],
   ["agents' daily spend not recorded", (s) => s.replace("spentByAgents[payer][token][day] = s + amount;", "spentByAgents[payer][token][day] = s;")],
   ["per-payment limit ignored", (s) => s.replace("if (amount > l.perPayment)", "if (false && amount > l.perPayment)")],
@@ -40,14 +41,37 @@ const MUTANTS = [
     ["V3: what the vendor received not checked", (s) => s.replace("if (_balanceOf(token, vendor) != before + amount) revert TransferFailed();", "")],
   ] : []),
   ...(V4 ? [
-    ["V4: the agent's signature not checked", (s) => s.replace("if (byAgent) _agentSignature(", "if (false) _agentSignature(")],
+    ["V4: the agent's signature not checked", (s) => V5 ? s.replace("_agentSignature(payer, agentMessage(", "if (false) _agentSignature(payer, agentMessage(") : s.replace("if (byAgent) _agentSignature(", "if (false) _agentSignature(")],
     ["V4: the agent signer's key: proof of possession not required", (s) => s.replace("if (!registered || !proven || alg != ALG_ML_DSA_87) revert AgentKeyNotProven", "if (!registered || alg != ALG_ML_DSA_87) revert AgentKeyNotProven")],
     ["V4: no signer named is not refused", (s) => s.replace("if (signer == address(0)) revert AgentSignerNotSet(msg.sender);", "")],
+  ] : []),
+  ...(V4 && !V5 ? [
     ["V4: the agent's signed bytes omit the amount", (s) => s.replace("payer, agent, vendor, token, amount, id);", "payer, agent, vendor, token, uint256(0), id);")],
     ["V4: the agent's signed bytes omit the invoice id", (s) => s.replace("payer, agent, vendor, token, amount, id);", "payer, agent, vendor, token, amount, bytes32(0));")],
     ["V4: the agent's signed bytes omit the token", (s) => s.replace("payer, agent, vendor, token, amount, id);", "payer, agent, vendor, address(0), amount, id);")],
     ["V4: the agent's signed bytes omit the agent", (s) => s.replace("payer, agent, vendor, token, amount, id);", "payer, address(0), vendor, token, amount, id);")],
   ] : []),
+  ...(V5 ? (() => {
+    const CALL = "agentMessage(payer, msg.sender, keccak256(invoice), keccak256(signature), validUntil)";
+    const EXPIRY = "                if (block.timestamp > validUntil) revert AgentSignatureExpired(validUntil);\n";
+    return [
+      ["V5: the agent's signed bytes omit the agent", (s) => s.replace(CALL, CALL.replace("msg.sender", "address(0)"))],
+      ["V5: the agent's signed bytes omit the invoice", (s) => s.replace(CALL, CALL.replace("keccak256(invoice)", "bytes32(0)"))],
+      // the invoice digest with its last word (dueBy) zeroed: V4's fields only. A helper, because a second
+      // invoiceMessage(...) call in pay() is "stack too deep".
+      ["V5: the agent's signed bytes omit the due date (V4's fields only)", (s) => s.replace(CALL, CALL.replace("keccak256(invoice)", "_noDue(invoice)")).replace(/\n}\n$/, "\n    function _noDue(bytes memory b) internal pure returns (bytes32 h) { assembly { let p := add(b, 288) let w := mload(p) mstore(p, 0) h := keccak256(add(b, 32), mload(b)) mstore(p, w) } }\n}\n")],
+      ["V5: the agent's signed bytes omit the vendor's signature", (s) => s.replace(CALL, CALL.replace("keccak256(signature)", "bytes32(0)"))],
+      ["V5: the agent's signed bytes omit validUntil", (s) => s.replace(CALL, CALL.replace("validUntil)", "uint64(0))"))],
+      ["V5: agentMessage() omits validUntil", (s) => s.replace("payer, agent, invoiceDigest, vendorSigHash, validUntil);", "payer, agent, invoiceDigest, vendorSigHash, uint64(0));")],
+      ["V5: agentMessage() omits the vendor's signature", (s) => s.replace("payer, agent, invoiceDigest, vendorSigHash, validUntil);", "payer, agent, invoiceDigest, bytes32(0), validUntil);")],
+      ["V5: V4's agent domain", (s) => s.replace('keccak256("LEASH-AGENT-PAY-v2")', 'keccak256("LEASH-AGENT-PAY-v1")')],
+      ["V5: validUntil not enforced", (s) => s.replace(EXPIRY, "")],
+      ["V5: expiry off by one (refused at validUntil itself)", (s) => s.replace("if (block.timestamp > validUntil)", "if (block.timestamp >= validUntil)")],
+      ["V5: expiry checked after the signature", (s) => s.replace(EXPIRY, "").replace("            _vendorSignature(", "            if (byAgent && block.timestamp > validUntil) revert AgentSignatureExpired(validUntil);\n            _vendorSignature(")],
+      ["V5: the due date taken as the deadline", (s) => s.replace("if (block.timestamp > validUntil)", "if (block.timestamp > dueBy)")],
+      ["V5: validUntil enforced on the payer too", (s) => s.replace(EXPIRY, "").replace("            if (byAgent) {\n                _agentSignature(", "            if (block.timestamp > validUntil) revert AgentSignatureExpired(validUntil);\n            if (byAgent) {\n                _agentSignature(")],
+    ];
+  })() : []),
 ];
 
 const test = () => {

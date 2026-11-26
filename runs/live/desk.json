@@ -1,16 +1,16 @@
 {
   "v2": {
-    "version": 4,
-    "invoiceDesk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+    "version": 5,
+    "invoiceDesk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
     "token": "0x97143B771D34ddb9130b807b135Ae675A5a963CA",
     "payer": "qor1rtgfpxnskja2nhh0lmnqvduxvhzlswa34h84tu",
     "payerEvm": "0x1ad0909a70b4baa9deeffee606378665c5f83bb1",
     "agentAccount": "qor1fedluhureaezx79ychmnlmvm736vf94sv5rp0k",
     "agentAccountEvm": "0x4e5bfe5f83cf722378a4c5f73fed9bf474c496b0",
     "gas": "qor1f7uaz6vwxmv70x9p9d2djd0j3z8d9mvktz77zg",
-    "deployedAt": "2026-11-24T09:30:45.201Z",
-    "deployBlock": 10659714,
-    "deployTx": "0xb9427ff2585c455e34ce6fd67ef0a80f2dfa8c97297dc963abbb318fc5450825",
+    "deployedAt": "2026-11-26T08:24:25.974Z",
+    "deployBlock": 10778027,
+    "deployTx": "0x15d4fa6820efbf514e70d393b4685940552b4ebf3ba22e7734105495f768bcc9",
     "vendors": {
       "0xCf115B0035C6432f315C21BA5BE128fE0E617374": "Daily Hosting Co"
     },
@@ -24,10 +24,10 @@
         "erc20/0x4604e7e45b2ecdbfbdc157103f5b2b62cb16451a"
       ],
       "allowedEvmCalls": [
-        "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4/0xe07cc3c1"
+        "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d/0x02378ba6"
       ],
       "hours": "720",
-      "linkTx": "C0D7967D16E62CDA85D3E78CE31F7E430A94D7B645612BF03E5BCBA7AA0E9178"
+      "linkTx": "A6790DD5826B1ED94D45B9BA2CB60BAF950AD81DCBD652EC40010BCCBEB84099"
     },
     "previous": [
       {
@@ -35,9 +35,15 @@
         "invoiceDesk": "0x54bdEa75F3eD7ac23bC47F29c1E4029ecA5E7887",
         "deployBlock": 10650352,
         "deployedAt": "2026-11-24T05:43:23.792Z"
+      },
+      {
+        "version": 4,
+        "invoiceDesk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
+        "deployBlock": 10659714,
+        "deployedAt": "2026-11-24T09:30:45.201Z"
       }
     ],
-    "upgradedAt": "2026-11-24T09:30:45.201Z",
+    "upgradedAt": "2026-11-26T08:24:25.975Z",
     "signerRotations": [
       {
         "at": "2026-11-26T06:09:00.567Z",

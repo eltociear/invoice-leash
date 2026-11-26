@@ -1,11 +1,12 @@
 # The live agent's log
 
-[`scripts/live-agent.mjs`](../../scripts/live-agent.mjs) runs daily in GitHub Actions (scheduled at 01:10 UTC, with two backup
-times, since a run for a day already logged does nothing)
+[`scripts/live-agent.mjs`](../../scripts/live-agent.mjs) runs daily in GitHub Actions (scheduled at 01:10 UTC, with eight backup
+times, since GitHub starts schedules late or not at all and a run for a day already logged does nothing)
 ([`.github/workflows/live.yml`](../../.github/workflows/live.yml)), unattended, against a real
-InvoiceDeskV4 since 2026-11-24 ([`desk.json`](desk.json); set up with `desk.mjs`, upgraded from V3). The agent's key and the relayer's key
+InvoiceDeskV5 since 2026-11-26 ([`desk.json`](desk.json); set up with `desk.mjs`, upgraded from V3 to V4 on 2026-11-24
+([`desk-v4.json`](desk-v4.json)) and to V5 on 2026-11-26). The agent's key and the relayer's key
 are GitHub Secrets on purpose. Invoice Leash assumes the agent's key leaks, so it runs it where it could.
-The decider obeys every email. From 2026-11-26 the job is split in three (plan, sign, relay): the agent signer's ML-DSA-87 key lives only in the signer's job and its own GitHub Environment, so the agent's jobs' secrets alone pay nothing on V4. The test vendor's key is a secret too, so the job can send itself the
+The decider obeys every email. From 2026-11-26 the job is split in three (plan, sign, relay): the agent signer's ML-DSA-87 key lives only in the signer's job and its own GitHub Environment, so the agent's jobs' secrets alone pay nothing on V4 or V5. The test vendor's key is a secret too, so the job can send itself the
 day's invoice: a leak of the secrets is also a stolen approved-vendor key, bounded by the same limits
 (10 fUSD a payment, 25 a day, to that vendor's own address).
 
@@ -30,7 +31,7 @@ each result as it goes, and that day was rerun as `LIVE-20261124-b`, the log's f
 |---|---|---|---|
 | 2026-11-24 | V3 | the author's machine, with only the keys CI holds | before the upgrade to V4; 1 paid, 3 refused. The first GitHub Actions run that day found the day already logged and did nothing |
 | 2026-11-25 | V4 | GitHub Actions, [run 45554630612](https://github.com/eltociear/invoice-leash/actions/runs/45554630612), committed by the job ([`3df2c33`](https://github.com/eltociear/invoice-leash/commit/3df2c33)) | GitHub never started the 01:10 schedule that day, so the workflow was started by hand at 05:35 UTC; backup schedules were added. The 09:23 backup then started by itself at 09:44 ([run 45588337214](https://github.com/eltociear/invoice-leash/actions/runs/45588337214), trigger `schedule`) and, the day being logged, did nothing. 1 paid, 4 refused, including `BadAgentSignature` |
-| 2026-11-26 | V4 | GitHub Actions, [run 45761350210](https://github.com/eltociear/invoice-leash/actions/runs/45761350210), the first as three jobs (plan, sign in the `agent-signer` Environment, relay) | GitHub started none of the day's schedules by 05:00 UTC (the 09:23 run of 11-25 started at 19:26), so it was started by hand at 05:24; four more schedules a day were added. The classical key alone went first, on the unpaid invoice (`BadAgentSignature`); 1 paid, 4 refused. Then the live desk's signer was rotated ([`signer-rotate.log`](signer-rotate.log)) and its new key given to the Environment; a run started by hand at 06:19 ([run 45767446127](https://github.com/eltociear/invoice-leash/actions/runs/45767446127)) showed, from GitHub's runner, that the Environment's key is the signer the desk now names: `signer check: 0x19f64d9f… is the agent signer the desk names, its ML-DSA-87 key proven` |
+| 2026-11-26 | V4 | GitHub Actions, [run 45761350210](https://github.com/eltociear/invoice-leash/actions/runs/45761350210), the first as three jobs (plan, sign in the `agent-signer` Environment, relay) | GitHub started none of the day's schedules by 05:00 UTC (the 09:23 run of 11-25 started at 19:26), so it was started by hand at 05:24; four more schedules a day were added. The classical key alone went first, on the unpaid invoice (`BadAgentSignature`); 1 paid, 4 refused. Then the live desk's signer was rotated ([`signer-rotate.log`](signer-rotate.log)) and its new key given to the Environment; a run started by hand at 06:19 ([run 45767446127](https://github.com/eltociear/invoice-leash/actions/runs/45767446127)) showed, from GitHub's runner, that the Environment's key is the signer the desk now names: `signer check: 0x19f64d9f… is the agent signer the desk names, its ML-DSA-87 key proven`. Then the desk was upgraded to InvoiceDeskV5 ([`upgrade-v5.log`](upgrade-v5.log); `desk.mjs upgrade --keep-old`, the V4 desk unchanged: [`desk-v4.json`](desk-v4.json)), and its bindings probed live ([`../probes/v5-bindings.json`](../probes/v5-bindings.json)). From 2026-11-27 the days run on V5 |
 
 The Actions page shows each run's trigger.
 

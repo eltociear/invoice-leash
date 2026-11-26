@@ -396,7 +396,7 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
       settings: { optimizer: { enabled: true, runs: 200 }, evmVersion: "paris", outputSelection: { "*": { InvoiceDeskV3: ["abi", "evm.deployedBytecode.object"] } } } })));
     const c3 = out3.contracts["InvoiceDeskV3.sol"].InvoiceDeskV3, desk3 = new Interface(c3.abi);
     ok((await provider.getCode(D3)).slice(2) === c3.evm.deployedBytecode.object, `InvoiceDeskV3: bytecode at ${D3} == contracts/InvoiceDeskV3.sol`);
-    const liveRec = json("runs/live/desk.json").v2, DL3 = getAddress(liveRec.previous?.find((p) => p.version === 3)?.invoiceDesk ?? liveRec.invoiceDesk);
+    const liveRec = json("runs/live/desk-v4.json").v2, DL3 = getAddress(liveRec.previous?.find((p) => p.version === 3)?.invoiceDesk ?? liveRec.invoiceDesk);
     ok((await provider.getCode(DL3)).slice(2) === c3.evm.deployedBytecode.object, `InvoiceDeskV3, the live agent's first desk (kept for the attack campaign): bytecode at ${DL3} == contracts/InvoiceDeskV3.sol`);
     // InvoiceDeskV4: the live agent's desk now. The agent's own ML-DSA-87 signature is required too.
     const out4 = JSON.parse(solc.compile(JSON.stringify({ language: "Solidity", sources: { "InvoiceDeskV4.sol": { content: readFileSync(new URL("contracts/InvoiceDeskV4.sol", root), "utf8") } },
@@ -435,6 +435,35 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
     for (const x of deskRefusals) { const n = await revertOf(x.link); if (n && x.why === `InvoiceDesk: ${n}`) { decodedOk++; names.add(n); } }
     ok(deskRefusals.length > 0 && decodedOk === deskRefusals.length,
       `InvoiceDeskV4's refusals, read from the chain's own record: for each of ${deskRefusals.length} refused payments, the revert bytes in the transaction's result decode (with the contract's ABI) to the error the log states (${[...names].sort().join(", ")})`, "(tx_response.data)");
+    // InvoiceDeskV5, the live agent's desk since 2026-11-26: the agent's signature binds the whole invoice, the
+    // vendor's signature and a deadline (runs/probes/v5-bindings.json, every attempt relayed for real)
+    {
+      const live5 = json("runs/live/desk.json").v2, DL5 = getAddress(live5.invoiceDesk);
+      const out5 = JSON.parse(solc.compile(JSON.stringify({ language: "Solidity", sources: { "InvoiceDeskV5.sol": { content: readFileSync(new URL("contracts/InvoiceDeskV5.sol", root), "utf8") } },
+        settings: { optimizer: { enabled: true, runs: 200 }, evmVersion: "paris", outputSelection: { "*": { InvoiceDeskV5: ["abi", "evm.deployedBytecode.object"] } } } })));
+      const c5 = out5.contracts["InvoiceDeskV5.sol"].InvoiceDeskV5, desk5 = new Interface(c5.abi);
+      const code5 = live5.version === 5 && (await provider.getCode(DL5)).slice(2) === c5.evm.deployedBytecode.object;
+      const v5call = async (fn, args) => desk5.decodeFunctionResult(fn, await provider.call({ to: DL5, data: desk5.encodeFunctionData(fn, args) }));
+      const [named5] = await v5call("agentSigner", [getAddress(live5.payerEvm), getAddress(live5.agentAccountEvm)]);
+      const [ks5] = [status.decodeFunctionResult("pqcKeyStatus", await provider.call({ to: "0x0000000000000000000000000000000000000a02", data: status.encodeFunctionData("pqcKeyStatus", [named5]) }))];
+      const rule5 = (live5.agentRule?.allowedEvmCalls ?? []).join() === `${DL5}/${desk5.getFunction("pay").selector}`;
+      ok(code5 && ks5[0] && ks5[3] && Number(ks5[1]) === 1 && rule5 && (live5.previous ?? []).some((p) => p.version === 4 && getAddress(p.invoiceDesk) === DL4),
+        `InvoiceDeskV5, the live agent's desk since 2026-11-26: bytecode at ${DL5} == contracts/InvoiceDeskV5.sol; its agent signer ${named5.slice(0, 10)}… has a proven ML-DSA-87 key; the agent's key may call only its pay`, "(upgraded from V4 with desk.mjs upgrade)");
+      const pr5 = json("runs/probes/v5-bindings.json");
+      let asSaid = 0;
+      for (const st of pr5.steps) {
+        const t = (await rest(`/cosmos/tx/v1beta1/txs/${st.link.slice(-64)}`))?.tx_response;
+        const failed = t?.events?.some((e) => e.type === "abstractaccount_execution_failed");
+        if (st.expect === "PAID") { if (t?.code === 0 && !failed) asSaid++; continue; }
+        const raw = await (async () => { const any = t?.data && pb(Buffer.from(t.data, "hex")).find(([f]) => f === 2)?.[1]; const val = any && pb(any).find(([f]) => f === 2)?.[1]; const ret = val && pb(val).find(([f, v]) => f === 2 && v instanceof Uint8Array)?.[1]; return ret?.length ? "0x" + Buffer.from(ret).toString("hex") : null; })();
+        let n = null; try { n = raw && desk5.parseError(raw)?.name; } catch { /* not the desk's */ }
+        if (t?.code === 0 && failed && n === st.expect) asSaid++;
+      }
+      const [paidA] = await v5call("paid", [getAddress(live5.payerEvm), getAddress(pr5.invoice.vendor), pr5.invoice.id]);
+      ok(pr5.desk === live5.invoiceDesk && pr5.unpaidBefore === true && pr5.steps.length === 7 && asSaid === 7 && paidA,
+        `InvoiceDeskV5, live: the classical key alone, an expired signature, the signature for a forged copy, and the signature for the invoice presented with its reissue (later due date) were all refused; on V4 the last two would have paid. The signed payment paid once; again, and the reissue: AlreadyPaid. Each of the 7 transactions re-read, the refusals decoded from the chain's record`,
+        "(runs/probes/v5-bindings.json)");
+    }
     // the agent account's own scoped EVM window on the live V4 desk (runs/probes/window-v4.json)
     {
       const wv = json("runs/probes/window-v4.json"), st = (k) => wv.steps.find((x) => x.step.startsWith(k));
@@ -457,7 +486,7 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
     {
       const c4 = json("runs/campaign-v4.json"), s4 = json("runs/campaign-v4-sample.json");
       const ask4 = async (from, data, value = "0") => { try { await provider.call({ from, to: s4.desk, data, value: BigInt(value) }); return "PAID"; } catch (e) { try { return desk4.parseError(e.data ?? e.info?.error?.data)?.name ?? "Reverted"; } catch { return "Reverted"; } } };
-      // since the campaign the live desk's signer was rotated (runs/live/desk.json signerRotations): every
+      // since the campaign the live desk's signer was rotated (runs/live/desk-v4.json signerRotations): every
       // signature its old signer made, the samples' and the control's included, is BadAgentSignature now
       const rotated = (liveRec.signerRotations ?? []).some((r) => r.at > c4.at);
       let same = 0, voided = 0;

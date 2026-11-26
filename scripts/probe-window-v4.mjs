@@ -9,14 +9,14 @@
 //   3. fUSD.transfer(Mallory, 1)   -> expected: refused by the window (target not allowed)
 //   4. 0.01 QOR to Mallory          -> expected: refused by the window (target not allowed)
 // Then the window is closed, and a pay-shaped call is refused: no window.
-//   LEASH_DIR=<keys: agentacct, agentsigner, vendor> LEASH_DEPLOYMENT=runs/live/desk.json node scripts/probe-window-v4.mjs
+//   LEASH_DIR=<keys: agentacct, agentsigner, vendor> LEASH_DEPLOYMENT=runs/live/desk-v4.json node scripts/probe-window-v4.mjs
 // Writes runs/probes/window-v4.json.
 import { writeFileSync, readFileSync } from "node:fs";
 import { Contract, Interface, JsonRpcProvider, Wallet, parseEther } from "ethers";
 import { openEvmWindowMsg, closeEvmWindowMsg, fetchEvmWindow } from "@qorechain/sdk";
 
 const ROOT = new URL("../", import.meta.url);
-process.env.LEASH_DEPLOYMENT ??= new URL("runs/live/desk.json", ROOT).pathname;
+process.env.LEASH_DEPLOYMENT ??= new URL("runs/live/desk-v4.json", ROOT).pathname;
 const { EVM_CHAIN_ID, EVM_RPC, REST, account, broadcast, readDeployment } = await import("../lib/chain.mjs");
 const { FUSD, signInvoiceV2, signAgentPayV4 } = await import("../lib/invoices.mjs");
 const { isPaid } = await import("../lib/agent.mjs");

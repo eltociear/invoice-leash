@@ -137,7 +137,7 @@ a MetaMask-style wallet.
 |---|---|---|---|---|
 | Company, agent-account, relayer and vendor **transactions** | hybrid: secp256k1 + **ML-DSA-87** (FIPS 204, level 5); the chain requires the ML-DSA-87 layer once a PQC key is registered | ML-DSA-87: safe. secp256k1: broken, but **alone it is refused** | nothing | drill (code 20); every recorded tx shows `pqc_hybrid_verify: verified` |
 | **EVM transactions** (secp256k1 only) | accepted only inside an EVM window, which only an ML-DSA-87-signed transaction can open | breakable | only what an *open* window admits: its tx count, value cap, expiry and (for the agent account) its one target, the desk | drill ("no open EVM authorisation window"); [`runs/probes/window.json`](runs/probes/window.json) (target), [`runs/probes/window-caps.json`](runs/probes/window-caps.json) (count, value) |
-| **Vendor invoices** | **ML-DSA-87**, verified on chain by `pqcVerify` (`0x…0a01`) against the key in `pqcKeyStatus` (`0x…0a02`), proof of possession required | safe | — | demo inbox, verify §4/§9, 152 Foundry tests, 17 invariants |
+| **Vendor invoices** | **ML-DSA-87**, verified on chain by `pqcVerify` (`0x…0a01`) against the key in `pqcKeyStatus` (`0x…0a02`), proof of possession required | safe | — | demo inbox, verify §4/§9, 213 Foundry tests, 25 invariants |
 | **Company instructions** to the agent | QoreSign message-signing-v1: secp256k1 (ADR-36) + **ML-DSA-87** over `qorechain-msg-v1\|chain\|text` | ML-DSA-87 half: safe | a valid classical half is not enough: the Q-Day forgery is refused | [`runs/messages.json`](runs/messages.json), the lab |
 | **Sealed invoices** | **ML-KEM-1024** (FIPS 203, level 5), `mlkem` mode (no X25519), HKDF with SHA3-256, AES-256-GCM | safe against "harvest now, decrypt later"; AES-256 keeps about 128-bit strength under Grover | — | [`runs/sealed.json`](runs/sealed.json) |
 | **The agent's key**, on InvoiceDeskV4 | **ed25519** to relay (authenticators accept only ed25519 / secp256k1 today) **plus the agent signer's ML-DSA-87** on every payment | the ed25519 half: broken; the ML-DSA-87 half: safe | nothing from a derived ed25519 key alone (`BadAgentSignature`), nor from the agent's host alone (the signer runs in its own job). Both hosts stolen: what a stolen agent key gets | [`runs/probes/v4-agent-sig.json`](runs/probes/v4-agent-sig.json), [`runs/probes/window-v4.json`](runs/probes/window-v4.json), the live agent's daily attempt, [985 tampered or missing agent signatures](runs/campaign-v4.json) (all `BadAgentSignature`), Foundry, Halmos |
@@ -180,8 +180,10 @@ person approving each day's run). The signer is a second key, not a second
    ([`runs/signature-sweep.json`](runs/signature-sweep.json): 70, none would pay, none could later). To void every
    signature a signer ever made, the company names a new one: `desk.mjs signer rotate`, done on the live desk
    after the compromised run ([`runs/live/signer-rotate.log`](runs/live/signer-rotate.log)) and on the third company, once from
-   the Desk Console ([`runs/console-rotate-v4.json`](runs/console-rotate-v4.json)). A V5 would put an expiry in the agent's
-   message itself.
+   the Desk Console ([`runs/console-rotate-v4.json`](runs/console-rotate-v4.json)). Since 2026-11-26 the live desk is
+   InvoiceDeskV5, which puts the whole invoice, the vendor's signature and a 15-minute deadline in the agent's
+   message itself: a forged copy's signature, a reissue's, and an expired one are refused on chain
+   ([`runs/probes/v5-bindings.json`](runs/probes/v5-bindings.json)).
 2. **An open EVM window.** A quantum attacker with a classical key can act inside a window while it is
    open, within its caps. Every window names one target. The agent account's window is 300 blocks, at
    most 3 transactions and 0.4 QOR, to the desk. The company's windows admit one action and close in

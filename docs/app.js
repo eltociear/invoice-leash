@@ -6,7 +6,7 @@
   const h = (x) => String(x ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const D = await (await fetch("app-data.json")).json();
   const ZERO = "0x0000000000000000000000000000000000000000", CHAIN_HEX = "0x" + D.chain.chainId.toString(16);
-  const i2 = new E.Interface(D.abiV2), i3 = new E.Interface(D.abiV3), i4 = new E.Interface(D.abiV4);
+  const i2 = new E.Interface(D.abiV2), i3 = new E.Interface(D.abiV3), i4 = new E.Interface(D.abiV4), i5 = new E.Interface(D.abiV5);
   const erc = new E.Interface(["function balanceOf(address) view returns (uint256)", "function allowance(address,address) view returns (uint256)"]);
   const pqc = new E.Interface(["function pqcKeyStatus(address) view returns (bool registered,uint8 algorithmId,bytes pubkey,bool possessionProven)"]);
   const DOMAIN = E.keccak256(E.toUtf8Bytes("LEASH-INVOICE-v2"));
@@ -74,7 +74,7 @@
   let watching = null; // the desk last picked: a slower answer for an earlier pick is dropped
   async function watch(k) {
     watching = k;
-    const d = D.desks[k], iface = d.version === 4 ? i4 : d.version === 3 ? i3 : i2;
+    const d = D.desks[k], iface = d.version === 5 ? i5 : d.version === 4 ? i4 : d.version === 3 ? i3 : i2;
     $("watch").innerHTML = `<span class="dim">reading ${h(d.desk)} from the chain…</span>`;
     let from = d.deployBlock;
     if (!from && d.deployTx) from = parseInt((await rpc("eth_getTransactionReceipt", [d.deployTx])).result.blockNumber, 16);

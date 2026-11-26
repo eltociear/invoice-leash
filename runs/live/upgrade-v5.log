@@ -1,0 +1,16 @@
+upgrading 0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4 (V4) to InvoiceDeskV5: 1 vendor(s), limits 10 fUSD/25 fUSD, allowance 938 fUSD
+1. the agent's ML-DSA-87 signer: fee money and its key on chain
+  already registered
+2. deploy InvoiceDeskV5 (its own one-transaction window)
+  deployed at 0x6A3f514e2b70bBc9B88534784cc94828e5dC668d           0x15d4fa6820efbf514e70d393b4685940552b4ebf3ba22e7734105495f768bcc9
+3. the same settings on the new desk, and the agent's signer (a window scoped to it and fUSD)
+  approveVendor(Daily Hosting Co) 0xdc84547ecbac2292a991233060d47484688bf13974d45353e516d529f52087ed
+  setAgent(agent account)    0xd0c89b2ee8d2a38a1b0af92d972878698cb68f103e395aebbaa6a36761a897e9
+  setAgentSigner(ML-DSA-87)  0x7c15c83110a86739d2f9121fca27ba96b5b2e41042cdbe079d69ae823caa3b29
+  setLimit(10.0, 25.0)       0xf61b6d03fdbb9d2105d0602747708932b75ee235becae335ad2a02df64aa6b07
+  fUSD.approve(new desk, 938.0) 0xecd3507edc3622d56e56d483dd89a95bdffb424876ca937ff40978a0762d1a36
+4. the old desk stays as it is (--keep-old): its records can still be checked against it
+5. relink the agent's key to the new desk's pay
+  agent key linked for 720 h: only 0x6A3f514e2b70bBc9B88534784cc94828e5dC668d.pay  A6790DD5826B1ED94D45B9BA2CB60BAF950AD81DCBD652EC40010BCCBEB84099
+
+done: InvoiceDeskV5 at 0x6A3f514e2b70bBc9B88534784cc94828e5dC668d. The agent's payments need its ML-DSA-87 signature over the whole invoice, valid for minutes. Tell your vendors the new desk address.

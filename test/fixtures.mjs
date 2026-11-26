@@ -138,4 +138,61 @@ console.log(`test/fixtures/mldsa.json: ${cases.length} cases, ${cases.filter((c)
   if (Object.values(agentSigs).flat().some((x) => !x.valid) || v4.foreign.valid) throw new Error("v4 agent signatures: real ML-DSA-87 disagrees");
   writeFileSync(new URL("./fixtures/mldsa-v4.json", import.meta.url), JSON.stringify(v4, null, 1) + "\n");
   console.log(`test/fixtures/mldsa-v4.json: ${cases2.length} cases, ${AGENTS.length * cases2.length} agent signatures (real ML-DSA-87), 1 foreign`);
+
+  // ---------------------------------------------------------------- v5 (the agent signs the whole invoice, its vendor signature and a deadline)
+  // The same v3 cases. The agent signer signs agentMessage(payer, agent, keccak256(invoiceMessage(...)),
+  // keccak256(vendor signature), validUntil) for each, for both test agents. validUntil is fixed (the file
+  // must reproduce byte for byte) and lies a week after the fixtures' due date, so the older tests (past
+  // due, limits, ...) still reach the check they are about; the tests warp past it to test the expiry.
+  const { agentMessageV5 } = await import("../lib/invoices.mjs");
+  const VALID_UNTIL = due + 7 * 86400; // 2028-01-08
+  const AGENT_DOMAIN_V5 = keccak256(toUtf8Bytes("LEASH-AGENT-PAY-v2"));
+  const agentMsg5 = (c, agent, validUntil = VALID_UNTIL) => {
+    const digest = keccak256(m2({ desk: c.desk ?? b2.desk, payer: c.payer, vendor: c.vendor, token: c.token, amount: BigInt(c.amount), id: c.id, dueBy: c.dueBy }));
+    const m = Uint8Array.from(Buffer.from(AbiCoder.defaultAbiCoder().encode(
+      ["bytes32", "uint256", "address", "address", "address", "bytes32", "bytes32", "uint64"],
+      [AGENT_DOMAIN_V5, 9800, c.desk ?? b2.desk, c.payer, agent, digest, keccak256(c.signature), validUntil]).slice(2), "hex"));
+    // the same bytes as lib/invoices.mjs agentMessageV5 (what desk.mjs signs)
+    const lib = agentMessageV5({ desk: c.desk ?? b2.desk, payer: c.payer, agent, invoice: c, validUntil });
+    if (hexlify(lib) !== hexlify(m)) throw new Error(`v5: lib agentMessageV5 disagrees for ${c.name}`);
+    return m;
+  };
+  const agentSigs5 = {};
+  for (const agent of AGENTS) agentSigs5[agent] = cases2.map((c) => { const m = agentMsg5(c, agent), sg = pqcSign(signer.secretKey, m); return { name: c.name, message: hexlify(m), signature: hexlify(sg), valid: pqcVerify(signer.publicKey, m, sg) }; });
+  const g5m = agentMsg5(g, AGENTS[0]), foreign5 = pqcSign(keys.mallory.secretKey, g5m);
+  // V4's extras, plus the genuine invoice reissued by Hostline with a due date 30 days later (genuinely signed).
+  const reissue = { dueBy: due + 30 * 86400 };
+  const extras5 = [...extras, ...[["hostline_reissued_due_later", reissue]].map(([name, o]) => { const m = m2(o), sg = s2("hostline", o); return { name, pubkey: hexlify(keys.hostline.publicKey), signature: hexlify(sg), message: hexlify(m), valid: pqcVerify(keys.hostline.publicKey, m, sg),
+    payer: b2.payer, vendor: b2.vendor, token: b2.token, amount: String(b2.amount), id: b2.id, dueBy: o.dueBy }; })];
+  if (extras5.some((x) => !x.valid)) throw new Error("v5 extras: real ML-DSA-87 disagrees");
+  // The agent's own signatures for the extras (agent 0xA9E7): each genuinely payable by the agent on its own.
+  const extraAgentSigs = extras5.map((x) => { const m = agentMsg5(x, AGENTS[0]), sg = pqcSign(signer.secretKey, m); return { name: x.name, message: hexlify(m), signature: hexlify(sg), valid: pqcVerify(signer.publicKey, m, sg) }; });
+  // What the new bindings refuse, each as presented to the desk: the invoice fields and vendor signature in
+  // calldata, the agent signature attached, the validUntil in calldata, and the agent message the desk builds
+  // from them. `valid` is real ML-DSA-87 on (agent signer's key, agentSignature, message).
+  const sigOf = (name) => agentSigs5[AGENTS[0]][cases2.findIndex((c) => c.name === name)].signature;
+  const forged = cases2.find((c) => c.name === "forged_by_mallory_as_hostline");
+  const reissued = extras5.find((x) => x.name === "hostline_reissued_due_later");
+  const binding = (name, note, inv, agentSignature, validUntil, at) => {
+    const m = agentMsg5(inv, AGENTS[0], validUntil);
+    return { name, note, payer: inv.payer, vendor: inv.vendor, token: inv.token, amount: String(inv.amount), id: inv.id, dueBy: inv.dueBy, signature: inv.signature,
+      agentSignature, validUntil, ...(at ? { at } : {}), message: hexlify(m), valid: pqcVerify(signer.publicKey, m, Uint8Array.from(Buffer.from(agentSignature.slice(2), "hex"))) };
+  };
+  const bindings = [
+    binding("forged_copy_agent_sig_on_genuine_invoice", "the agent signature made for forged_by_mallory_as_hostline (same fields, a bad vendor signature), presented with genuine_fusd's genuine vendor signature",
+      g, sigOf(forged.name), VALID_UNTIL),
+    binding("old_agent_sig_on_due_later_reissue", "genuine_fusd's agent signature, presented with Hostline's genuine reissue of the same invoice due 30 days later",
+      reissued, sigOf("genuine_fusd"), VALID_UNTIL),
+    binding("validUntil_changed_in_calldata", "genuine_fusd's agent signature, presented with validUntil + 1",
+      g, sigOf("genuine_fusd"), VALID_UNTIL + 1),
+    binding("after_validUntil", "genuine_fusd's agent signature, unchanged and valid, presented one second after validUntil: the desk refuses it by time",
+      g, sigOf("genuine_fusd"), VALID_UNTIL, VALID_UNTIL + 1),
+  ];
+  const expect5 = { forged_copy_agent_sig_on_genuine_invoice: false, old_agent_sig_on_due_later_reissue: false, validUntil_changed_in_calldata: false, after_validUntil: true };
+  for (const b of bindings) if (b.valid !== expect5[b.name]) throw new Error(`v5 binding ${b.name}: real ML-DSA-87 says ${b.valid}`);
+  const v5 = { note: out.note, chainId: 9800, addresses: A, tokens: T3, keys: { ...out.keys, agentsigner: hexlify(signer.publicKey) }, validUntil: VALID_UNTIL, cases: cases2, extras: extras5, extraAgentSigs, agentSigs: agentSigs5,
+    foreign: { name: "genuine_fusd signed by a key that is not the agent signer's", message: hexlify(g5m), signature: hexlify(foreign5), valid: pqcVerify(signer.publicKey, g5m, foreign5) }, bindings };
+  if ([...Object.values(agentSigs5).flat(), ...extraAgentSigs].some((x) => !x.valid) || v5.foreign.valid) throw new Error("v5 agent signatures: real ML-DSA-87 disagrees");
+  writeFileSync(new URL("./fixtures/mldsa-v5.json", import.meta.url), JSON.stringify(v5, null, 1) + "\n");
+  console.log(`test/fixtures/mldsa-v5.json: ${cases2.length} cases, ${AGENTS.length * cases2.length} agent signatures (real ML-DSA-87), ${extraAgentSigs.length} for the extras, 1 foreign, ${bindings.length} bindings`);
 }

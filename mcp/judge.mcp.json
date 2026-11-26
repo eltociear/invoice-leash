@@ -8,7 +8,7 @@
       "env": {
         "LEASH_READONLY": "1",
         "LEASH_DEPLOYMENT": "runs/live/desk.json",
-        "LEASH_INBOX2": "inbox/inbox-v4-MCP.json"
+        "LEASH_INBOX2": "inbox/inbox-v5-MCP.json"
       }
     },
     "qorechain": {

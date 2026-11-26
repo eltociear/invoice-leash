@@ -39,12 +39,12 @@ const H = (text) => hex(sha3_256(new TextEncoder().encode(text))); // SHA3-256 o
 // The signer's host checks, every run (a day already logged included), that its key is the one the desk names
 // and that its ML-DSA-87 key is proven on chain: after a rotation, a key not handed over fails here, visibly.
 if (PHASE === "sign") {
-  const { deskV4 } = await import("../lib/agent.mjs");
+  const { deskOf } = await import("../lib/agent.mjs");
   const { Interface, JsonRpcProvider, getAddress } = await import("ethers");
   const { EVM_RPC, EVM_CHAIN_ID } = await import("../lib/chain.mjs");
   const pv = new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID, { staticNetwork: true });
   const me = await account("agentsigner");
-  const [named] = deskV4.decodeFunctionResult("agentSigner", await pv.call({ to: d.invoiceDesk, data: deskV4.encodeFunctionData("agentSigner", [d.payerEvm, d.agentAccountEvm]) }));
+  const [named] = deskOf(d).decodeFunctionResult("agentSigner", await pv.call({ to: d.invoiceDesk, data: deskOf(d).encodeFunctionData("agentSigner", [d.payerEvm, d.agentAccountEvm]) }));
   const ks = new Interface(["function pqcKeyStatus(address) view returns (bool registered, uint8 algorithmId, bytes pubkey, bool possessionProven)"]);
   const [reg, alg, , proven] = ks.decodeFunctionResult("pqcKeyStatus", await pv.call({ to: "0x0000000000000000000000000000000000000a02", data: ks.encodeFunctionData("pqcKeyStatus", [me.evmAddr]) }));
   if (getAddress(named) !== getAddress(me.evmAddr)) throw new Error(`this host's signer ${me.evmAddr} is not the one the desk names (${named}): hand the current key to LEASH_AGENTSIGNER`);
@@ -65,9 +65,8 @@ if (rows.some((l) => JSON.parse(l).day === day)) { console.log(`already ran for 
 const WORK = new URL(`file://${process.env.LEASH_WORK ?? "/tmp/leash-live-work"}/`);
 const work = (f) => new URL(f, WORK);
 if (PHASE === "sign") {
-  const { signAgentPayV4 } = await import("../lib/invoices.mjs");
   const reqs = JSON.parse(readFileSync(work("requests.json"), "utf8")), signer = await account("agentsigner"), sigs = {}, declined = {};
-  const { signerMay } = await import("../lib/agent.mjs");
+  const { signerMay, signAgentPay } = await import("../lib/agent.mjs");
   for (const r of reqs) {
     const f = r.fields;
     if (f.desk.toLowerCase() !== d.invoiceDesk.toLowerCase() || f.payer.toLowerCase() !== d.payerEvm.toLowerCase() || f.agent.toLowerCase() !== d.agentAccountEvm.toLowerCase())
@@ -78,7 +77,8 @@ if (PHASE === "sign") {
     // the guard (lib/agent.mjs signerMay): a signature only for a payment the desk would make now, by this key
     const { sign, reason } = await signerMay(d, inv, { signer: signer.evmAddr });
     if (!sign) { declined[r.k] = reason; console.log(`declined #${r.k}: the desk would refuse it (${reason}); no signature`); continue; }
-    sigs[r.k] = signAgentPayV4(signer, { ...f, amount: BigInt(f.amount) });
+    // V5: over the whole invoice (the vendor's signature by its hash) and a deadline 15 minutes ahead
+    sigs[r.k] = await signAgentPay(d, inv, signer);
     console.log(`signed  #${r.k}: ${f.amount} of ${f.token.slice(0, 10)}… to ${f.vendor.slice(0, 10)}…, invoice ${f.id.slice(0, 10)}…`);
   }
   writeFileSync(work("signatures.json"), JSON.stringify({ ...sigs, declined }, null, 1) + "\n");
@@ -114,7 +114,7 @@ const plan = [
   // only the agent's (classical, ed25519) key gets, for example after deriving it with a quantum computer.
   // It is tried FIRST, while today's genuine invoice is still unpaid (checked with paid()), so the only thing
   // that can refuse it is the missing signature; then the agent pays the same invoice properly.
-  ...(d.version === 4 ? [{ item: 0, action: "pay", withoutAgentSignature: true, label: `pay ${ref}, still unpaid, with the agent's classical key alone, no ML-DSA-87 signature (as after Q-Day)` }] : []),
+  ...(d.version >= 4 ? [{ item: 0, action: "pay", withoutAgentSignature: true, label: `pay ${ref}, still unpaid, with the agent's classical key alone, no ML-DSA-87 signature (as after Q-Day)` }] : []),
 ];
   return { inbox, plan, sealed };
 }
@@ -124,19 +124,19 @@ const { inbox, plan, sealed } = saved ?? (await today());
 if (PHASE === "plan") {
   mkdirSync(WORK, { recursive: true });
   writeFileSync(work("plan.json"), JSON.stringify({ day, inbox, plan, sealed }, null, 1) + "\n");
-  const requests = plan.map((st, k) => ({ st, k })).filter(({ st }) => st.action === "pay" && !st.withoutAgentSignature && d.version === 4)
+  const requests = plan.map((st, k) => ({ st, k })).filter(({ st }) => st.action === "pay" && !st.withoutAgentSignature && d.version >= 4)
     .map(({ st, k }) => { const inv = inbox[st.item].invoice; return { k, fields: { desk: d.invoiceDesk, payer: d.payerEvm, agent: d.agentAccountEvm, vendor: inv.vendor, token: inv.token, amount: String(inv.amount), id: inv.id }, invoice: inv }; });
   writeFileSync(work("requests.json"), JSON.stringify(requests, null, 1) + "\n");
   console.log(`plan: ${plan.length} attempts, ${requests.length} payment(s) for the signer`);
   process.exit(0);
 }
 if (PHASE === "relay") {
-  const sigs = d.version === 4 ? JSON.parse(readFileSync(work("signatures.json"), "utf8")) : {};
+  const sigs = d.version >= 4 ? JSON.parse(readFileSync(work("signatures.json"), "utf8")) : {};
   // what the signer declined is still sent, unsigned, as a compromised agent host would: the chain refuses it
   // (BadAgentSignature), and no agent signature for it exists anywhere
   plan.forEach((st, k) => { if (sigs[k]) st.agentSignature = sigs[k]; if (sigs.declined?.[k]) { st.withoutAgentSignature = true; st.signerDeclined = sigs.declined[k]; } });
 }
-const order = d.version === 4 ? [4, 0, 1, 2, 3] : plan.map((_, i) => i); // log rows keep plan positions
+const order = d.version >= 4 ? [4, 0, 1, 2, 3] : plan.map((_, i) => i); // log rows keep plan positions
 const results = [];
 for (const k of order) {
   const step = plan[k];

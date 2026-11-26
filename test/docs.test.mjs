@@ -19,6 +19,7 @@ const truth = {
   mutants: Number(read("runs/mutation.txt").match(/(\d+) of \1 mutants caught/)[1]),
   mutantsV3: Number(read("runs/mutation-v3.txt").match(/(\d+) of \1 mutants caught/)[1]),
   mutantsV4: Number(read("runs/mutation-v4.txt").match(/(\d+) of \1 mutants caught/)[1]),
+  mutantsV5: Number(read("runs/mutation-v5.txt").match(/(\d+) of \1 mutants caught/)[1]),
   signatures: JSON.parse(read("runs/signature-sweep.json")).signatures,
 };
 const docs = ["README.md", "EVIDENCE.md", "JUDGES.md", "DECISIONS.md", "GETTING_STARTED.md", "V1.md", "THREAT_MODEL.md", "AI_USAGE.md", "QUANTUM_READINESS.md", "scripts/site.mjs", "scripts/lab.mjs"];
@@ -31,9 +32,10 @@ const rules = [
   ["tests", /(\d+) Foundry tests/g],
   ["tests", /(\d+) tests \+ \d+ invariants/g],
   ["invariants", /(\d+) invariants\b/g],
-  ["mutants", /(?<!V[34]: )\b(\d+) of \1 mutants/g],
+  ["mutants", /(?<!V[345]: )\b(\d+) of \1 mutants/g],
   ["mutantsV3", /V3: (\d+) of \1\b/g],
   ["mutantsV4", /V4: (\d+) of \1\b/g],
+  ["mutantsV5", /V5: (\d+) of \1\b/g],
   ["mutants", /(\d+)-mutant\b/g],
   ["signatures", /(\d+) public agent signatures/g],
   ["signatures", /verify sends all (\d+) again/g],

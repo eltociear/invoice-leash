@@ -22,7 +22,7 @@
 //   node desk.mjs treasury [float]            keep only <float> fUSD in ERC-20; the rest as the bank coin
 //   node desk.mjs inbox add <file.json>       add a vendor's invoice file (from vendor.mjs sign) to the inbox
 //   node desk.mjs inbox archive               set the inbox aside (after an upgrade, old invoices name the old desk)
-//   node desk.mjs upgrade [--keep-old]        move a company to InvoiceDeskV4 (from V2 or V3), settings and agent included
+//   node desk.mjs upgrade [--keep-old]        move a company to InvoiceDeskV5 (from V2, V3 or V4), settings and agent included
 //   node desk.mjs check <file.json>           verify an invoice file: ML-DSA-87 against the vendor's key on chain
 //   node desk.mjs triage                      sort the inbox: AGENT PAYS / NEEDS A PERSON / REJECTED (and why)
 //   node desk.mjs run                         the agent pays what triage marked AGENT PAYS, nothing else
@@ -48,11 +48,14 @@ const { FUSD, toFusd, invoiceFacts, invoiceMessageV2, validateInvoiceV2 } = awai
 const ART2 = JSON.parse(readFileSync(new URL("./build/InvoiceDeskV2.json", import.meta.url), "utf8"));
 const ART3 = JSON.parse(readFileSync(new URL("./build/InvoiceDeskV3.json", import.meta.url), "utf8"));
 const ART4 = JSON.parse(readFileSync(new URL("./build/InvoiceDeskV4.json", import.meta.url), "utf8"));
-const ARTS = { 2: ART2, 3: ART3, 4: ART4 };
+const ART5 = JSON.parse(readFileSync(new URL("./build/InvoiceDeskV5.json", import.meta.url), "utf8"));
+const ARTS = { 2: ART2, 3: ART3, 4: ART4, 5: ART5 };
+const LATEST = 5, ARTN = ART5; // what setup deploys and upgrade moves to
 // New desks are InvoiceDeskV3. A company set up before V3 keeps its V2 desk until `upgrade`.
-// New desks are InvoiceDeskV4 (V3 + the agent's own ML-DSA-87 signature). Older ones keep their version until `upgrade`.
+// New desks are InvoiceDeskV5 (the agent's own ML-DSA-87 signature over the whole invoice, with a deadline).
+// Older ones keep their version until `upgrade`.
 const art = (d = D()) => ARTS[d.version ?? 2];
-const desk = new Interface(ART4.abi); // V4's ABI parses every V2/V3 error too; pay() and paid() differ by version (lib/agent.mjs)
+const desk = new Interface(ART5.abi); // V5's ABI parses every earlier error too; pay() and paid() differ by version (lib/agent.mjs)
 const ERC20 = new Interface(["function approve(address,uint256) returns (bool)", "function allowance(address,address) view returns (uint256)", "function balanceOf(address) view returns (uint256)"]);
 const STATUS = new Interface(["function pqcKeyStatus(address) view returns (bool registered,uint8 algorithmId,bytes pubkey,bool possessionProven)"]);
 const NO_DENOM = "erc20/0x4604e7e45b2ecdbfbdc157103f5b2b62cb16451a"; // fBTC, 1-satoshi cap: the rule must list a denom; the agent holds none
@@ -75,7 +78,8 @@ const REASON = {
   OverDailyLimit: "over what the agent may still pay today (UTC)",
   NotPayersAgent: "the agent is switched off for this company (node desk.mjs agent on)",
   TransferFailed: "the transfer would fail: the fUSD float or the desk's allowance is too low (node desk.mjs status; node desk.mjs treasury <float>, or allowance <fUSD>)",
-  BadAgentSignature: "the agent's own ML-DSA-87 signature is missing or wrong (InvoiceDeskV4)",
+  BadAgentSignature: "the agent's own ML-DSA-87 signature is missing or wrong, or not for this exact invoice (InvoiceDeskV4 and later)",
+  AgentSignatureExpired: "the agent signer's signature is past its deadline (InvoiceDeskV5: it lives minutes); have it sign again",
   AgentSignerNotSet: "no agent signer is named to the desk (node desk.mjs setup)",
   AgentKeyNotProven: "the agent signer's ML-DSA-87 key is not registered with proof of possession",
 };
@@ -168,7 +172,7 @@ const cmds = {
       const link = (await links(aa.cosmos)).find((a) => a.pubkeyHex.toLowerCase() === hex(agentKey().pk));
       const exp = link ? new Date(Number(link.expiryUnix) * 1000) : null;
       let signerNote = "";
-      if ((d.version ?? 2) === 4) {
+      if ((d.version ?? 2) >= 4) {
         const sg = await account("agentsigner").catch(() => null);
         const [named] = await view(d.invoiceDesk, desk, "agentSigner", [o.evmAddr, aa.evmAddr]).catch(() => [null]);
         const ss = sg ? await sdk.fetchPqcStatus({ rest: REST, address: sg.cosmos }).catch(() => null) : null;
@@ -214,21 +218,21 @@ const cmds = {
     for (const r of ["gas", "agentacct", "agentsigner"]) if (!(await registerPqc(r))) say(`  ${r} already registered`);
     let d = D();
     if (!d.invoiceDesk) {
-      say("4. your InvoiceDeskV4 (a contract creation has no target, so it gets its own one-transaction window)");
+      say(`4. your InvoiceDeskV${LATEST} (a contract creation has no target, so it gets its own one-transaction window)`);
       const { addr, block, hash } = await companyWindow(null, 1, async (w) => {
-        const c = await new ContractFactory(ART4.abi, ART4.bytecode, w).deploy(); const rc = await c.deploymentTransaction().wait();
+        const c = await new ContractFactory(ARTN.abi, ARTN.bytecode, w).deploy(); const rc = await c.deploymentTransaction().wait();
         return { addr: await c.getAddress(), block: rc.blockNumber, hash: rc.hash };
       });
       say(`  deployed                   ${hash}`);
-      save({ version: 4, invoiceDesk: addr, token: FUSD, payer: o.cosmos, payerEvm: o.evmAddr, agentAccount: aa.cosmos, agentAccountEvm: aa.evmAddr, gas: g.cosmos, deployedAt: new Date().toISOString(), deployBlock: block, deployTx: hash, vendors: {} });
-      d = D(); say(`  InvoiceDeskV4 at ${addr}`);
+      save({ version: LATEST, invoiceDesk: addr, token: FUSD, payer: o.cosmos, payerEvm: o.evmAddr, agentAccount: aa.cosmos, agentAccountEvm: aa.evmAddr, gas: g.cosmos, deployedAt: new Date().toISOString(), deployBlock: block, deployTx: hash, vendors: {} });
+      d = D(); say(`  InvoiceDeskV${LATEST} at ${addr}`);
     } else say(`4. desk already deployed at ${d.invoiceDesk} (InvoiceDeskV${d.version ?? 2})`);
     say("5. the desk's settings, in one window scoped to the desk and fUSD");
     const [on] = await view(d.invoiceDesk, desk, "isAgent", [o.evmAddr, aa.evmAddr]);
     const lim = await view(d.invoiceDesk, desk, "limits", [o.evmAddr, FUSD]);
     const [allow] = await view(FUSD, ERC20, "allowance", [o.evmAddr, d.invoiceDesk]);
-    const signerSet = d.version === 4 ? (await view(d.invoiceDesk, desk, "agentSigner", [o.evmAddr, aa.evmAddr]))[0] : null;
-    const todo = [!on && "agent", d.version === 4 && getAddress(signerSet) !== getAddress(sg.evmAddr) && "signer", (lim[0] !== toFusd(perPayment) || lim[1] !== toFusd(daily)) && "limits", allow < toFusd(allowance) && "allowance"].filter(Boolean);
+    const signerSet = d.version >= 4 ? (await view(d.invoiceDesk, desk, "agentSigner", [o.evmAddr, aa.evmAddr]))[0] : null;
+    const todo = [!on && "agent", d.version >= 4 && getAddress(signerSet) !== getAddress(sg.evmAddr) && "signer", (lim[0] !== toFusd(perPayment) || lim[1] !== toFusd(daily)) && "limits", allow < toFusd(allowance) && "allowance"].filter(Boolean);
     if (todo.length) await companyWindow([d.invoiceDesk, FUSD], todo.length, async (w) => {
       const c = new Contract(d.invoiceDesk, art().abi, w);
       if (todo.includes("agent")) await sendEvm("setAgent(agent account)", c.setAgent(aa.evmAddr, true));
@@ -311,14 +315,14 @@ const cmds = {
    * Each step is independent, so one failing does not stop the others. Undo with `node desk.mjs unfreeze`.
    */
   /**
-   * Name a new ML-DSA-87 signer for the agent (InvoiceDeskV4). An agent signature has no expiry of its own:
+   * Name a new ML-DSA-87 signer for the agent (InvoiceDeskV4 and later). A V4 agent signature has no expiry of its own:
    * it stays valid until its invoice is paid or past due. The desk reads the signer's key at payment time,
    * so after this every signature the old signer ever made stops verifying, at once. The old key is kept in
    * keys.env under another name. Use it after a signer may have leaked, or to void signatures left public.
    */
   async signer(sub) {
     if (sub !== "rotate") fail("node desk.mjs signer rotate");
-    const d = D(); if (d.version !== 4) fail("signer rotate is for an InvoiceDeskV4 (node desk.mjs upgrade)");
+    const d = D(); if (!(d.version >= 4)) fail("signer rotate is for an InvoiceDeskV4 or later (node desk.mjs upgrade)");
     const o = await account("owner"), aa = await account("agentacct"), KEYS = join(HOME, "keys.env");
     const before = chain.readKeys().agentsigner ? await chain.accountFromKey("agentsigner") : null;
     const [named] = await view(d.invoiceDesk, new Interface(art().abi), "agentSigner", [o.evmAddr, aa.evmAddr]);
@@ -448,7 +452,7 @@ const cmds = {
         continue;
       }
       // on V4, the agent's side is asked without making an agent signature (lib/agent.mjs wouldRefuse)
-      const asAgent = d.version === 4
+      const asAgent = d.version >= 4
         ? await wouldRefuse(d, v).then((r) => r ?? "OK", (e) => `network: ${e.shortMessage ?? e.message}`)
         : await dryRun(aa.evmAddr, d.invoiceDesk, await payData(d, v, { asAgent: true }));
       const asCompany = await dryRun(o.evmAddr, d.invoiceDesk, await payData(d, v, { asAgent: false }));
@@ -491,7 +495,7 @@ const cmds = {
     const d = D(), o = await account("owner"), m = readInbox()[Number(n)] ?? fail(`no inbox item ${n}`);
     const inv = m.invoice ?? (await import("./lib/sealed.mjs")).openInvoice(m.sealed);
     validateInvoiceV2(inv);
-    const c = new Contract(d.invoiceDesk, art().abi, provider), args = [o.evmAddr, inv.token, inv.vendor, inv.amount, inv.id, inv.dueBy, inv.signature, ...(d.version === 4 ? ["0x"] : [])];
+    const c = new Contract(d.invoiceDesk, art().abi, provider), args = [o.evmAddr, inv.token, inv.vendor, inv.amount, inv.id, inv.dueBy, inv.signature, ...(d.version >= 4 ? ["0x"] : []), ...(d.version === 5 ? [0] : [])];
     const { payData } = await import("./lib/agent.mjs");
     const verdict = await dryRun(o.evmAddr, d.invoiceDesk, await payData(d, inv, { asAgent: false }));
     if (verdict !== "OK") fail(/^network/.test(verdict) ? `could not ask the desk (${verdict}); try again` : `the desk would refuse it: ${explain(verdict)}`);
@@ -568,15 +572,15 @@ const cmds = {
    * new desk's pay. The old desk stays in desk.json ("previous"), so export keeps its history.
    */
   async upgrade(...args) {
-    const keepOld = args.includes("--keep-old"), d = D(); if (!d.invoiceDesk) fail("no desk yet: node desk.mjs setup (new desks are already V4)");
-    if (d.version === 4) return say(`already InvoiceDeskV4 at ${d.invoiceDesk}`);
+    const keepOld = args.includes("--keep-old"), d = D(); if (!d.invoiceDesk) fail(`no desk yet: node desk.mjs setup (new desks are already V${LATEST})`);
+    if (d.version === LATEST) return say(`already InvoiceDeskV${LATEST} at ${d.invoiceDesk}`);
     const o = await account("owner"), aa = await account("agentacct"), old = d.invoiceDesk, oldVersion = d.version ?? 2, oi = new Interface(art(d).abi);
     chain.ensureRoleKey("agentsigner");
     const sg = await account("agentsigner");
     const lim = await view(old, oi, "limits", [o.evmAddr, FUSD]), [allow] = await view(FUSD, ERC20, "allowance", [o.evmAddr, old]);
     const vendors = [];
     for (const v of Object.keys(d.vendors ?? {})) if ((await view(old, oi, "approved", [o.evmAddr, v]))[0]) vendors.push(v);
-    say(`upgrading ${old} (V${oldVersion}) to InvoiceDeskV4: ${vendors.length} vendor(s), limits ${fusd(lim[0])}/${fusd(lim[1])}, allowance ${fusd(allow)}`);
+    say(`upgrading ${old} (V${oldVersion}) to InvoiceDeskV${LATEST}: ${vendors.length} vendor(s), limits ${fusd(lim[0])}/${fusd(lim[1])}, allowance ${fusd(allow)}`);
     say("1. the agent's ML-DSA-87 signer: fee money and its key on chain");
     if (BigInt(await balance(sg.cosmos)) < toUqor("0.05")) {
       const r = await broadcast(o, [bankSend(o.cosmos, sg.cosmos, toUqor("0.3"))], "leash desk: fee money for the agent signer");
@@ -584,16 +588,16 @@ const cmds = {
       await sleep(5000);
     }
     if (!(await registerPqc("agentsigner"))) say("  already registered");
-    say("2. deploy InvoiceDeskV4 (its own one-transaction window)");
+    say(`2. deploy InvoiceDeskV${LATEST} (its own one-transaction window)`);
     const { addr, block, hash } = await companyWindow(null, 1, async (w) => {
-      const c = await new ContractFactory(ART4.abi, ART4.bytecode, w).deploy(); const rc = await c.deploymentTransaction().wait();
+      const c = await new ContractFactory(ARTN.abi, ARTN.bytecode, w).deploy(); const rc = await c.deploymentTransaction().wait();
       return { addr: await c.getAddress(), block: rc.blockNumber, hash: rc.hash };
     });
     say(`  deployed at ${addr}           ${hash}`);
-    save({ previous: [...(d.previous ?? []), { version: oldVersion, invoiceDesk: old, deployBlock: d.deployBlock, deployedAt: d.deployedAt }], version: 4, invoiceDesk: addr, deployBlock: block, deployTx: hash, deployedAt: new Date().toISOString(), upgradedAt: new Date().toISOString() });
+    save({ previous: [...(d.previous ?? []), { version: oldVersion, invoiceDesk: old, deployBlock: d.deployBlock, deployedAt: d.deployedAt }], version: LATEST, invoiceDesk: addr, deployBlock: block, deployTx: hash, deployedAt: new Date().toISOString(), upgradedAt: new Date().toISOString() });
     say("3. the same settings on the new desk, and the agent's signer (a window scoped to it and fUSD)");
     await companyWindow([addr, FUSD], vendors.length + 4, async (w) => {
-      const c = new Contract(addr, ART4.abi, w);
+      const c = new Contract(addr, ARTN.abi, w);
       for (const v of vendors) await sendEvm(`approveVendor(${d.vendors[v]})`, c.approveVendor(v));
       await sendEvm("setAgent(agent account)", c.setAgent(aa.evmAddr, true));
       await sendEvm("setAgentSigner(ML-DSA-87)", c.setAgentSigner(aa.evmAddr, sg.evmAddr));
@@ -608,7 +612,7 @@ const cmds = {
     });
     say("5. relink the agent's key to the new desk's pay");
     await cmds.agent("link", d.agentRule?.hours ?? "168");
-    say(`\ndone: InvoiceDeskV4 at ${addr}. The agent's payments now also need its ML-DSA-87 signature. Tell your vendors the new desk address.`);
+    say(`\ndone: InvoiceDeskV${LATEST} at ${addr}. The agent's payments need its ML-DSA-87 signature over the whole invoice, valid for minutes. Tell your vendors the new desk address.`);
   },
 
   /**

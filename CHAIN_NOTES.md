@@ -85,8 +85,8 @@ transactions.
 **11. `0x…0a02` (key status) and `0x…0a01` (ML-DSA-87 verify) work from a contract.**
 - `0x…0a02` returns the registered key, its algorithm and whether possession was proven.
 - `0x…0a01` verifies a 4,627-byte ML-DSA-87 signature against it.
-- InvoiceDeskV4 makes two such verifications per agent payment: the vendor's invoice and the agent's own
-  signature.
+- InvoiceDeskV4 and V5 make two such verifications per agent payment: the vendor's invoice and the agent's
+  own signature (on V5 over a 256-byte message that holds the invoice's digest and a deadline).
 - Local EVMs have no such precompile. Invoice Leash tests against a stand-in that answers only for real
   ML-DSA-87 tuples checked off chain ([`test/fixtures/`](test/fixtures/)).
 - Evidence: every V4 payment and refusal; the [attack lab](https://eltociear.github.io/invoice-leash/lab.html)

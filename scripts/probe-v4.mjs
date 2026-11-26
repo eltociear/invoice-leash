@@ -5,12 +5,12 @@
 //   LEASH_DIR=<CI-style keys dir> node scripts/probe-v4.mjs
 import { writeFileSync } from "node:fs";
 const ROOT = new URL("../", import.meta.url);
-process.env.LEASH_DEPLOYMENT ??= new URL("runs/live/desk.json", ROOT).pathname;
+process.env.LEASH_DEPLOYMENT ??= new URL("runs/live/desk-v4.json", ROOT).pathname;
 const { account, readDeployment } = await import("../lib/chain.mjs");
 const { signInvoiceV2, FUSD } = await import("../lib/invoices.mjs");
 const { executeV2 } = await import("../lib/agent.mjs");
 const d = readDeployment().v2;
-if (d.version !== 4) throw new Error("runs/live/desk.json is not an InvoiceDeskV4");
+if (d.version !== 4) throw new Error("runs/live/desk-v4.json is not an InvoiceDeskV4");
 const vendor = await account("vendor"), ref = `PROBE-V4-${Date.now().toString(36).toUpperCase()}`;
 const inv = signInvoiceV2(vendor, { desk: d.invoiceDesk, payer: d.payerEvm, vendor: vendor.evmAddr, token: FUSD, fusd: "1", ref, dueBy: Math.floor(Date.now() / 1000) + 30 * 86400 });
 const inbox = [{ from: "billing@dailyhosting.example", subject: `Invoice ${ref}`, body: "probe", invoice: inv }];

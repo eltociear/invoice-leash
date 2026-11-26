@@ -1,6 +1,6 @@
 {
  "what": "every public agent ML-DSA-87 signature on an InvoiceDeskV4 (relayed calldata, EVM-lane calldata, calldata in this repository), dry-run again as its agent: could the agent's classical key alone get it paid now?",
- "at": "2026-11-26T07:11:50.850Z",
+ "at": "2026-11-26T07:42:01.639Z",
  "desks": [
   "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
   "0xd8a723c91Af58A885d8E87509E7B770559c0C353"

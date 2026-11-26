@@ -16,9 +16,13 @@ const data = {
   chain: { chainId: 9800, name: "QoreChain testnet (qorechain-diana)", rpc: "https://evm-testnet.qore.host", explorer: "https://explore.qore.network/tx/", faucet: "https://dashboard.qorechain.io/faucet" },
   fusd: "0x97143B771D34ddb9130b807b135Ae675A5a963CA",
   desks: [
-    desk("The live agent's desk", "InvoiceDeskV4: the agent's payments need its own ML-DSA-87 signature too. A GitHub Actions job runs the agent here daily, with a decider that obeys every email.", live, live.version ?? 3, {
-      agentPayments: liveLog.filter((r) => r.ok && r.at >= (live.deployedAt ?? "")).map((r) => ({ at: r.at, label: r.label, link: r.link })),
-      refusals: liveLog.filter((r) => !r.ok).length }),
+    desk("The live agent's desk", "InvoiceDeskV5: the agent's payments need its own ML-DSA-87 signature over the whole invoice, valid 15 minutes. A GitHub Actions job runs the agent here daily, with a decider that obeys every email.", live, live.version ?? 3, {
+      agentPayments: [...liveLog.filter((r) => r.ok && r.at >= (live.deployedAt ?? "")).map((r) => ({ at: r.at, label: r.label, link: r.link })),
+        ...json("runs/probes/v5-bindings.json").steps.filter((st) => st.ok).map((st) => ({ at: json("runs/probes/v5-bindings.json").at, label: `probe: ${st.label}`, link: st.link }))],
+      refusals: liveLog.filter((r) => !r.ok && r.at >= (live.deployedAt ?? "")).length }),
+    (() => { const v4 = json("runs/live/desk-v4.json").v2;
+      return desk("The live agent's desk until 2026-11-26 (V4)", "InvoiceDeskV4: the compromised-agent run, the attack campaign and the window probe ran here. Kept deployed and unchanged.", v4, 4, {
+        agentPayments: liveLog.filter((r) => r.ok && r.at >= (v4.deployedAt ?? "") && r.at < (live.deployedAt ?? "9")).map((r) => ({ at: r.at, label: r.label, link: r.link })) }); })(),
     (() => { const c = json("runs/own-company-v4/desk.json").v2, rows = readFileSync(new URL("runs/own-company-v4/payments.csv", root), "utf8").trim().split("\n").slice(1).map((l) => l.split(","));
       return desk("A company set up from nothing on V4", "InvoiceDeskV4, set up with desk.mjs setup by following GETTING_STARTED.md; the Desk Console was driven in a browser on it.", c, 4, {
         agentPayments: rows.filter((r) => r[7] === "agent").map((r) => ({ at: r[0], label: `${r[1]} ${r[3]}, ${r[5]} fUSD`, link: `https://explore.qore.network/tx/${r[8]}` })) }); })(),
@@ -26,7 +30,7 @@ const data = {
       agentPayments: ownCsv.filter((r) => r[7] === "agent" && r[9] === own.invoiceDesk).map((r) => ({ at: r[0], label: `${r[1]} ${r[3]}, ${r[5]} fUSD`, link: `https://explore.qore.network/tx/${r[8]}` })) }),
     desk("The demo company (v2)", "InvoiceDeskV2, the desk the recorded runs and the attack lab use.", { ...dep.v2, vendors: Object.fromEntries(Object.entries(dep.vendors).map(([k, v]) => [v, k])) }, 2),
   ],
-  abiV2: v2.abi, abiV3: v3.abi, abiV4: v4.abi,
+  abiV2: v2.abi, abiV3: v3.abi, abiV4: v4.abi, abiV5: json("build/InvoiceDeskV5.json").abi,
   publicVendor: { address: pub.address, evm: pub.evmAddress, publicKey: pub.mlDsa87PublicKey, secretKey: pub.mlDsa87SecretKey, registerTx: pub.registerTx },
 };
 writeFileSync(new URL("docs/app-data.json", root), JSON.stringify(data) + "\n");

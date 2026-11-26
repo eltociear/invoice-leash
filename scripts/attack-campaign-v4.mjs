@@ -1,4 +1,4 @@
-// A randomized attack campaign against the live InvoiceDeskV4 (runs/live/desk.json), by dry run (eth_call)
+// A randomized attack campaign against the live InvoiceDeskV4 (runs/live/desk-v4.json), by dry run (eth_call)
 // as the agent account: it costs nothing and changes nothing, and the desk answers exactly as it would to a
 // real transaction, both ML-DSA-87 checks included. Two attackers, attacks from a seeded generator:
 //
@@ -20,7 +20,7 @@ import { generatePqcKeypair, pqcSign } from "@qorechain/sdk";
 import { rng } from "./attack-campaign.mjs";
 
 const ROOT = new URL("../", import.meta.url);
-process.env.LEASH_DEPLOYMENT ??= new URL("runs/live/desk.json", ROOT).pathname;
+process.env.LEASH_DEPLOYMENT ??= new URL("runs/live/desk-v4.json", ROOT).pathname;
 const { account } = await import("../lib/chain.mjs");
 const { signInvoiceV2, agentMessageV4, FUSD } = await import("../lib/invoices.mjs");
 const desk = new Interface(JSON.parse(readFileSync(new URL("build/InvoiceDeskV4.json", ROOT), "utf8")).abi);

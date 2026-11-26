@@ -1,8 +1,8 @@
 {
  "chain": "qorechain-diana",
- "block": 10775047,
- "at": "2026-11-26T07:17:44.215Z",
- "passed": 117,
+ "block": 10794188,
+ "at": "2026-11-26T14:52:39.952Z",
+ "passed": 119,
  "failed": 0,
  "checks": [
   {
@@ -297,7 +297,7 @@
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
    "check": "the lab can show the human path: company holds ≥300 fUSD with ≥300 allowance and ≥80 QOR; v1 payer ≥5 QOR",
-   "detail": "(400.0 fUSD, allowance 970.0, 196.70 QOR; v1 8.180 QOR)"
+   "detail": "(400.0 fUSD, allowance 970.0, 186.58 QOR; v1 8.180 QOR)"
   },
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
@@ -444,6 +444,18 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
+   "check": "InvoiceDeskV5, the live agent's desk since 2026-11-26: bytecode at 0x6A3f514e2b70bBc9B88534784cc94828e5dC668d == contracts/InvoiceDeskV5.sol; its agent signer 0x19F64D9F… has a proven ML-DSA-87 key; the agent's key may call only its pay",
+   "detail": "(upgraded from V4 with desk.mjs upgrade)"
+  },
+  {
+   "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
+   "ok": true,
+   "check": "InvoiceDeskV5, live: the classical key alone, an expired signature, the signature for a forged copy, and the signature for the invoice presented with its reissue (later due date) were all refused; on V4 the last two would have paid. The signed payment paid once; again, and the reissue: AlreadyPaid. Each of the 7 transactions re-read, the refusals decoded from the chain's record",
+   "detail": "(runs/probes/v5-bindings.json)"
+  },
+  {
+   "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
+   "ok": true,
    "check": "the agent account's own EVM window on InvoiceDeskV4 (one target: the desk): inside it, its classical key alone was reverted on chain (asked again now: BadAgentSignature), the same invoice with the agent's ML-DSA-87 signature paid; fUSD and QOR to Mallory refused by the window; after closing, refused",
    "detail": "(open DE770D33…, receipts re-read)"
   },
@@ -456,7 +468,7 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "every public agent signature on the V4 desks (70: relayed transactions, EVM-lane transactions, records here), sent again now by its agent's classical key alone: none would pay. None could later either: each is void, or its invoice id is paid",
+   "check": "every public agent signature on the V4 desks (75: relayed transactions, EVM-lane transactions, records here), sent again now by its agent's classical key alone: none would pay. None could later either: each is void, or its invoice id is paid",
    "detail": "(scripts/signature-sweep.mjs)"
   },
   {
@@ -522,8 +534,8 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "live agent: each of its 14 logged transactions re-read from the chain agrees; it last ran 2 h ago (must be < 72 h)",
-   "detail": "(desk 0x235dA591…, .github/workflows/live.yml)"
+   "check": "live agent: each of its 14 logged transactions re-read from the chain agrees; it last ran 9 h ago (must be < 72 h)",
+   "detail": "(desk 0x6A3f514e…, .github/workflows/live.yml)"
   },
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",

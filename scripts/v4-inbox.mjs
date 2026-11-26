@@ -17,7 +17,7 @@ import { Interface, JsonRpcProvider } from "ethers";
 import { evmToQor } from "@qorechain/sdk";
 
 const ROOT = new URL("../", import.meta.url);
-process.env.LEASH_DEPLOYMENT ??= new URL("runs/live/desk.json", ROOT).pathname;
+process.env.LEASH_DEPLOYMENT ??= new URL("runs/live/desk-v4.json", ROOT).pathname;
 const { account, readDeployment, EVM_RPC, EVM_CHAIN_ID } = await import("../lib/chain.mjs");
 const { signInvoiceV2, FUSD, toFusd } = await import("../lib/invoices.mjs");
 const { executeV2, isPaid } = await import("../lib/agent.mjs");
