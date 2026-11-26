@@ -3,6 +3,7 @@
 //   drill attacks  <- runs/qday-drill.json
 //   Foundry tests  <- `function test…` in test/*.t.sol;  invariants <- `function invariant_…`
 //   mutants        <- runs/mutation.txt
+//   public agent signatures <- runs/signature-sweep.json
 // A stale count in any document fails `npm test`.
 import { readFileSync, readdirSync } from "node:fs";
 
@@ -18,6 +19,7 @@ const truth = {
   mutants: Number(read("runs/mutation.txt").match(/(\d+) of \1 mutants caught/)[1]),
   mutantsV3: Number(read("runs/mutation-v3.txt").match(/(\d+) of \1 mutants caught/)[1]),
   mutantsV4: Number(read("runs/mutation-v4.txt").match(/(\d+) of \1 mutants caught/)[1]),
+  signatures: JSON.parse(read("runs/signature-sweep.json")).signatures,
 };
 const docs = ["README.md", "EVIDENCE.md", "JUDGES.md", "DECISIONS.md", "GETTING_STARTED.md", "V1.md", "THREAT_MODEL.md", "AI_USAGE.md", "QUANTUM_READINESS.md", "scripts/site.mjs", "scripts/lab.mjs"];
 const rules = [
@@ -33,6 +35,10 @@ const rules = [
   ["mutantsV3", /V3: (\d+) of \1\b/g],
   ["mutantsV4", /V4: (\d+) of \1\b/g],
   ["mutants", /(\d+)-mutant\b/g],
+  ["signatures", /(\d+) public agent signatures/g],
+  ["signatures", /verify sends all (\d+) again/g],
+  ["signatures", /signature-sweep\.json`\]\(runs\/signature-sweep\.json\): (\d+)[, ]/g],
+  ["signatures", /\| public agent signatures \| (\d+),/g],
 ];
 let bad = 0, seen = 0;
 for (const f of docs) {
