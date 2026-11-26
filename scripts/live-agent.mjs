@@ -30,11 +30,27 @@ const { executeV2, isPaid } = await import("../lib/agent.mjs");
 const { sealInvoice, openInvoice } = await import("../lib/sealed.mjs");
 
 const LOG = new URL("runs/live/log.jsonl", ROOT), LATEST = new URL("runs/live/latest.json", ROOT);
+const PHASE = process.env.PHASE ?? "all";
 const d = readDeployment().v2, MALLORY = readDeployment().attacker ?? "0x37F35dDeFb85A16A0c13A2567DF57a50474a4609";
 const day = new Date().toISOString().slice(0, 10), n = Math.floor(Date.parse(day) / 864e5);
 const hex = (b) => Buffer.from(b).toString("hex");
 const H = (text) => hex(sha3_256(new TextEncoder().encode(text))); // SHA3-256 of a log line, as hex
 
+// The signer's host checks, every run (a day already logged included), that its key is the one the desk names
+// and that its ML-DSA-87 key is proven on chain: after a rotation, a key not handed over fails here, visibly.
+if (PHASE === "sign") {
+  const { deskV4 } = await import("../lib/agent.mjs");
+  const { Interface, JsonRpcProvider, getAddress } = await import("ethers");
+  const { EVM_RPC, EVM_CHAIN_ID } = await import("../lib/chain.mjs");
+  const pv = new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID, { staticNetwork: true });
+  const me = await account("agentsigner");
+  const [named] = deskV4.decodeFunctionResult("agentSigner", await pv.call({ to: d.invoiceDesk, data: deskV4.encodeFunctionData("agentSigner", [d.payerEvm, d.agentAccountEvm]) }));
+  const ks = new Interface(["function pqcKeyStatus(address) view returns (bool registered, uint8 algorithmId, bytes pubkey, bool possessionProven)"]);
+  const [reg, alg, , proven] = ks.decodeFunctionResult("pqcKeyStatus", await pv.call({ to: "0x0000000000000000000000000000000000000a02", data: ks.encodeFunctionData("pqcKeyStatus", [me.evmAddr]) }));
+  if (getAddress(named) !== getAddress(me.evmAddr)) throw new Error(`this host's signer ${me.evmAddr} is not the one the desk names (${named}): hand the current key to LEASH_AGENTSIGNER`);
+  if (!reg || !proven || Number(alg) !== 1) throw new Error(`this host's signer ${me.evmAddr} has no proven ML-DSA-87 key on chain`);
+  console.log(`signer check: ${me.evmAddr} is the agent signer the desk names, its ML-DSA-87 key proven`);
+}
 const rows = existsSync(LOG) ? readFileSync(LOG, "utf8").trim().split("\n").filter(Boolean) : [];
 if (rows.some((l) => JSON.parse(l).day === day)) { console.log(`already ran for ${day}`); process.exit(0); }
 
@@ -46,7 +62,6 @@ if (rows.some((l) => JSON.parse(l).day === day)) { console.log(`already ran for 
 //   relay  on the agent's host again: sends every attempt with the signatures it was given, writes the log
 // Without PHASE, all three run in one process (local runs). A thief of the agent host's secrets alone has
 // the agent's classical key and no signer: on an InvoiceDeskV4 that pays nothing (BadAgentSignature).
-const PHASE = process.env.PHASE ?? "all";
 const WORK = new URL(`file://${process.env.LEASH_WORK ?? "/tmp/leash-live-work"}/`);
 const work = (f) => new URL(f, WORK);
 if (PHASE === "sign") {
