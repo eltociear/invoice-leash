@@ -1,8 +1,8 @@
 {
  "chain": "qorechain-diana",
- "block": 10802706,
- "at": "2026-11-26T18:15:17.937Z",
- "passed": 121,
+ "block": 10825499,
+ "at": "2026-11-27T03:16:13.030Z",
+ "passed": 122,
  "failed": 0,
  "checks": [
   {
@@ -438,7 +438,7 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "InvoiceDeskV4's refusals, read from the chain's own record: for each of 13 refused payments, the revert bytes in the transaction's result decode (with the contract's ABI) to the error the log states (AlreadyPaid, BadAgentSignature, BadSignature, OverDailyLimit, OverPerPaymentLimit, UnknownVendor)",
+   "check": "InvoiceDeskV4's refusals, read from the chain's own record: for each of 16 refused payments, the revert bytes in the transaction's result decode (with the contract's ABI) to the error the log states (AlreadyPaid, BadAgentSignature, BadSignature, OverDailyLimit, OverPerPaymentLimit, UnknownVendor)",
    "detail": "(tx_response.data)"
   },
   {
@@ -446,6 +446,12 @@
    "ok": true,
    "check": "InvoiceDeskV5, the live agent's desk since 2026-11-26: bytecode at 0x6A3f514e2b70bBc9B88534784cc94828e5dC668d == contracts/InvoiceDeskV5.sol; its agent signer 0x19F64D9F… has a proven ML-DSA-87 key; the agent's key may call only its pay",
    "detail": "(upgraded from V4 with desk.mjs upgrade)"
+  },
+  {
+   "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
+   "ok": true,
+   "check": "InvoiceDeskV5, asked live (the attack lab's §8): a genuine unpaid invoice is BadAgentSignature for the agent's classical key alone and for a fresh ML-DSA-87 key's signature, AgentSignatureExpired past the deadline, and payable by the company in person",
+   "detail": "(LAB-V5-GENUINE)"
   },
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
@@ -480,7 +486,7 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "every public agent signature on the V4 desks (125: relayed transactions, EVM-lane transactions, records here), sent again now by its agent's classical key alone: none would pay. None could later either: each is void, or its invoice id is paid",
+   "check": "every public agent signature on the V4 desks (126: relayed transactions, EVM-lane transactions, records here), sent again now by its agent's classical key alone: none would pay. None could later either: each is void, or its invoice id is paid",
    "detail": "(scripts/signature-sweep.mjs)"
   },
   {
@@ -534,19 +540,19 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "live agent log: 14 rows over 3 day(s), hash-chained (SHA3-256), each day signed with the relayer's on-chain ML-DSA-87 key; each day the genuine invoice paid and every attack refused (on V4 days, also the agent's classical key alone)",
-   "detail": "(2026-11-24 … 2026-11-26)"
+   "check": "live agent log: 19 rows over 4 day(s), hash-chained (SHA3-256), each day signed with the relayer's on-chain ML-DSA-87 key; each day the genuine invoice paid and every attack refused (on V4 days, also the agent's classical key alone)",
+   "detail": "(2026-11-24 … 2026-11-27)"
   },
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "live agent, V4 days: the classical-key-alone attempt is sent before the genuine invoice is paid (block heights), so only the missing ML-DSA-87 signature can refuse it: 1 day(s)",
-   "detail": "(2026-11-26)"
+   "check": "live agent, V4 days: the classical-key-alone attempt is sent before the genuine invoice is paid (block heights), so only the missing ML-DSA-87 signature can refuse it: 2 day(s)",
+   "detail": "(2026-11-26, 2026-11-27)"
   },
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "live agent: each of its 14 logged transactions re-read from the chain agrees; it last ran 13 h ago (must be < 72 h)",
+   "check": "live agent: each of its 19 logged transactions re-read from the chain agrees; it last ran 1 h ago (must be < 72 h)",
    "detail": "(desk 0x6A3f514e…, .github/workflows/live.yml)"
   },
   {

@@ -20,9 +20,10 @@ against the real contracts, and the live agent's log is checked link by link. Th
 - [Attack lab §6, Shor's gift](https://eltociear.github.io/invoice-leash/lab.html#shor): an account
   whose secp256k1 private key we publish. Your browser signs a transaction with it and sends it. The chain
   refuses: the account also has an ML-DSA-87 key, and that one is secret.
-- [Attack lab §7](https://eltociear.github.io/invoice-leash/lab.html#v4): ask InvoiceDeskV4 as the
-  agent with its classical key alone, or with an ML-DSA-87 key your browser makes: `BadAgentSignature`.
-  As the company: it would pay.
+- [Attack lab §8](https://eltociear.github.io/invoice-leash/lab.html#v5): ask the live InvoiceDeskV5 as the
+  agent with its classical key alone, or with an ML-DSA-87 key your browser makes: `BadAgentSignature`;
+  with a signature past its deadline: `AgentSignatureExpired`. As the company: it would pay.
+  ([§7](https://eltociear.github.io/invoice-leash/lab.html#v4) asks the earlier InvoiceDeskV4 the same.)
 - InvoiceDeskV5, the live desk since 2026-11-26: the agent's signature binds the whole invoice, the vendor's
   signature and a deadline. Seven attempts relayed for real: the classical key alone, an expired signature,
   a forged copy's signature, the signature presented with a reissue at a later due date: all refused; the

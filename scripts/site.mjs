@@ -121,14 +121,14 @@ footer{margin-top:64px;color:var(--dim);font-size:14px}
 <p class="lede">An invoice-paying AI agent that stays safe when its model does not, and after Q-Day. The agent checks nothing itself: every limit lives on QoreChain or in the contract, every invoice needs the vendor's ML-DSA-87 signature, and every agent payment needs the agent's own ML-DSA-87 signature too, on InvoiceDeskV5 over the whole invoice and with a 15-minute deadline. So we can hand the agent to an attacker, or to a quantum computer, and watch the chain say no.</p>
 <div class="links">
   <a href="https://github.com/eltociear/invoice-leash/blob/main/JUDGES.md" style="border-color:var(--acc);color:var(--acc)">Judges: a five-minute route</a>
-  <a href="lab.html#v4" style="border-color:var(--acc);color:var(--acc)">Try it: the agent's classical key vs the live desk (two clicks)</a>
+  <a href="lab.html#v5" style="border-color:var(--acc);color:var(--acc)">Try it: the agent's classical key vs the live desk (two clicks)</a>
   <a href="app.html" style="border-color:var(--acc);color:var(--acc)">Desk Console: the live desks, or your own</a>
 </div>
 <p class="dim" style="font-size:14px;margin-top:-6px"><a href="#requirements">Track requirements, on chain</a> · <a href="#verify">Verify it yourself</a> · <a href="lab.html">Attack lab</a> · <a href="https://youtu.be/dyHS4OQdb9Y">Demo video (2:46)</a> · <a href="#found">What we found about spending rules</a> · <a href="record.html#mcp">Claude Code via MCP</a> · <a href="https://github.com/eltociear/invoice-leash/blob/main/THREAT_MODEL.md">Threat model</a> · <a href="https://github.com/eltociear/invoice-leash">Code</a> · <a href="https://build.qorechain.io/p/invoice-leash">Entry page</a></p>
 
 <div class="stats">
   <div class="stat"><b>${[...new Set(liveRows.map((r) => r.day))].length} day${[...new Set(liveRows.map((r) => r.day))].length === 1 ? "" : "s"}</b><span>of <a href="#live">the live agent</a>: key in GitHub Secrets, daily in GitHub Actions; each day the genuine invoice paid, every attack refused (<a href="https://github.com/eltociear/invoice-leash/tree/main/runs/live#where-each-day-ran">where each day ran</a>)</span></div>
-  <div class="stat"><b>0</b><span>paid by the agent's own classical key alone on <a href="lab.html#v4">InvoiceDeskV4</a> and the live <a href="#v5">V5</a> (<code>BadAgentSignature</code>), after Q-Day included</span></div>
+  <div class="stat"><b>0</b><span>paid by the agent's own classical key alone on <a href="lab.html#v4">InvoiceDeskV4</a> and the live <a href="lab.html#v5">V5</a> (<code>BadAgentSignature</code>), after Q-Day included</span></div>
   <div class="stat"><b>${campaign.paid}</b><span>of ${campaign.count.toLocaleString()} <a href="#campaign">dry-run attacks</a> on the live InvoiceDeskV5 would pay; all ${campaign.agentsig.count.toLocaleString()} with the agent's key but not its signer refused</span></div>
   <div class="stat"><b>${verifyCount} checks</b><span><a href="#verify">npm run verify</a> re-reads every claim from the chain, keyless; CI runs it daily</span></div>
 </div>

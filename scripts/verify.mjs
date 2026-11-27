@@ -15,7 +15,8 @@
 import solc from "solc";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { AbiCoder, Interface, JsonRpcProvider, getAddress, formatUnits, keccak256 } from "ethers";
-import { qorToEvm } from "@qorechain/sdk";
+import { qorToEvm, generatePqcKeypair, pqcSign } from "@qorechain/sdk";
+import { agentMessageV5 } from "../lib/invoices.mjs";
 import net from "node:net";
 
 // Public testnet endpoints over flaky networks: give each connection attempt time, and retry
@@ -449,6 +450,16 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
       const rule5 = (live5.agentRule?.allowedEvmCalls ?? []).join() === `${DL5}/${desk5.getFunction("pay").selector}`;
       ok(code5 && ks5[0] && ks5[3] && Number(ks5[1]) === 1 && rule5 && (live5.previous ?? []).some((p) => p.version === 4 && getAddress(p.invoiceDesk) === DL4),
         `InvoiceDeskV5, the live agent's desk since 2026-11-26: bytecode at ${DL5} == contracts/InvoiceDeskV5.sol; its agent signer ${named5.slice(0, 10)}… has a proven ML-DSA-87 key; the agent's key may call only its pay`, "(upgraded from V4 with desk.mjs upgrade)");
+      // the attack lab's §8 (runs/live/v5-lab-invoice.json): a genuine unpaid invoice, asked as the agent with no
+      // ML-DSA-87 signature, with a fresh key's, with one past its deadline, and as the company
+      {
+        const lab5 = json("runs/live/v5-lab-invoice.json"), l5 = lab5.invoice, now5 = Math.floor(Date.now() / 1000), k5 = generatePqcKeypair();
+        const ask = async (from, sig, until) => { try { await provider.call({ from, to: DL5, data: desk5.encodeFunctionData("pay", [lab5.payer, l5.token, l5.vendor, l5.amount, l5.id, l5.dueBy, l5.signature, sig, until]) }); return "WOULD PAY"; } catch (e) { try { return desk5.parseError(e.data ?? e.info?.error?.data)?.name ?? "?"; } catch { return "?"; } } };
+        const fresh = (until) => "0x" + Buffer.from(pqcSign(k5.secretKey, agentMessageV5({ desk: DL5, payer: lab5.payer, agent: lab5.agent, invoice: l5, validUntil: until }))).toString("hex");
+        const got = [await ask(lab5.agent, "0x", now5 + 900), await ask(lab5.agent, fresh(now5 + 900), now5 + 900), await ask(lab5.agent, fresh(now5 - 60), now5 - 60), await ask(lab5.payer, "0x", 0)];
+        ok(getAddress(lab5.desk) === DL5 && got.join() === "BadAgentSignature,BadAgentSignature,AgentSignatureExpired,WOULD PAY",
+          "InvoiceDeskV5, asked live (the attack lab's §8): a genuine unpaid invoice is BadAgentSignature for the agent's classical key alone and for a fresh ML-DSA-87 key's signature, AgentSignatureExpired past the deadline, and payable by the company in person", `(${l5.ref})`);
+      }
       // the V5 campaign (runs/campaign-v5.json): 2,000 dry-run attacks on the live V5 desk; a sample, kept as
       // full calldata, asked again now with no keys. Every signature in it carries the campaign's deadline: past
       // it, the attacks that got past the agent-signature check before answer AgentSignatureExpired instead

@@ -27,6 +27,7 @@ const data = {
     { key: "big", label: "Genuine, but 300 fUSD", note: "Over the agent's 100 fUSD per-payment limit. Ask as the agent, then as the company.", inv: pick(lab[7].invoice) },
   ],
   pub: (({ address, evmAddress, secp256k1PrivateKey }) => ({ address, evm: evmAddress, key: secp256k1PrivateKey }))(json("runs/qday-public.json")), attacker: dep.attacker,
+  v5: (() => { const l = json("runs/live/v5-lab-invoice.json"), pr = json("runs/probes/v5-bindings.json"); return { desk: l.desk, payer: l.payer, agent: l.agent, inv: l.invoice, paidLink: pr.steps.find((s) => s.expect === "PAID").link, expiredLink: pr.steps.find((s) => s.expect === "AgentSignatureExpired").link }; })(),
   v4: (() => { const l = json("runs/live/v4-lab-invoice.json"), pr = json("runs/probes/v4-agent-sig.json"); return { desk: l.desk, payer: l.payer, agent: l.agent, inv: l.invoice, paidLink: pr.steps[1].link, refusedLink: pr.steps[0].link }; })(),
   messages: json("runs/messages.json").map((m) => ({ name: m.name, signer: m.signer, signerEvm: qorToEvm(m.signer), text: m.text, chainId: m.chainId, pq: m.signature.pq.signature, expect: m.expect })),
   chainRefusals: [
@@ -79,11 +80,11 @@ ol.log{font-size:13px;color:var(--dim);padding-left:20px;margin:0}ol.log li{marg
 </style></head>
 <body><main>
 <div class="top"><h1>Attack lab: make Invoice Leash pay</h1><a href="./">← the recorded runs</a></div>
-<div class="card" style="border-color:var(--acc);margin-bottom:14px"><b>Start here (two clicks):</b> <a href="#v4">§7, InvoiceDeskV4</a> (the live desk until 2026-11-26; the live <a href="index.html#v5">V5</a> keeps this check and binds more). Press "As the agent: classical key only" and the desk answers <code>BadAgentSignature</code>, what a key derived after Q-Day gets; press "As the company" and the same invoice would pay.</div>
+<div class="card" style="border-color:var(--acc);margin-bottom:14px"><b>Start here (two clicks):</b> <a href="#v5">§8, the live InvoiceDeskV5</a>. Press "As the agent: classical key only" and the live desk answers <code>BadAgentSignature</code>, what a key derived after Q-Day gets; press "As the company" and the same invoice would pay. Then try a signature from a post-quantum key made in your tab, or one whose 15-minute deadline has passed.</div>
 <p>Then try to break the rest. Pick a real fUSD invoice, change anything, choose who sends it, and ask the <b>legacy InvoiceDeskV2 on the QoreChain testnet</b> (the demo's recorded desk; V4 and V5 keep all its checks) whether it would pay. Your browser sends an <code>eth_call</code> to <code>${data.rpc}</code>; the ML-DSA-87 check is the chain's own precompile. Nothing is sent and nothing is spent, so try as much as you like. You can also <a href="#you">be the vendor</a>: make an ML-DSA-87 key in this tab and sign an invoice yourself, or <a href="#msg">check a company instruction</a>, including a Q-Day forgery.</p>
 <p class="live"><span class="dot" id="dot"></span><span id="live">connecting to qorechain-diana…</span></p>
 
-<div class="card" style="font-size:14px;margin-bottom:18px"><b>Which desk is which.</b> §1–5 and the lists at the end use <b>InvoiceDeskV2</b>, the demo's recorded desk (<a href="https://explore.qore.network/address/${data.desk}">${data.desk.slice(0, 10)}…</a>). §6 is an ordinary account. §7 asks <b>InvoiceDeskV4</b>, the live agent's desk until 2026-11-26 (<a href="https://explore.qore.network/address/${json("runs/live/desk-v4.json").v2.invoiceDesk}">${json("runs/live/desk-v4.json").v2.invoiceDesk.slice(0, 10)}…</a>). V3 and V4 keep V2's checks and add per-vendor invoice ids and late settlement (V3) and the agent's own ML-DSA-87 signature (V4).</div>
+<div class="card" style="font-size:14px;margin-bottom:18px"><b>Which desk is which.</b> §1–5 and the lists at the end use <b>InvoiceDeskV2</b>, the demo's recorded desk (<a href="https://explore.qore.network/address/${data.desk}">${data.desk.slice(0, 10)}…</a>). §6 is an ordinary account. §8 asks <b>InvoiceDeskV5</b>, the live agent's desk since 2026-11-26 (<a href="https://explore.qore.network/address/${json("runs/live/v5-lab-invoice.json").desk}">${json("runs/live/v5-lab-invoice.json").desk.slice(0, 10)}…</a>); §7, <b>InvoiceDeskV4</b>, the live agent's desk until 2026-11-26 (<a href="https://explore.qore.network/address/${json("runs/live/desk-v4.json").v2.invoiceDesk}">${json("runs/live/desk-v4.json").v2.invoiceDesk.slice(0, 10)}…</a>). V3 and V4 keep V2's checks and add per-vendor invoice ids and late settlement (V3) and the agent's own ML-DSA-87 signature (V4), over the whole invoice and with a deadline (V5).</div>
 
 <h2>1. Start from</h2>
 <div class="presets" id="presets"></div>
@@ -147,6 +148,14 @@ ol.log{font-size:13px;color:var(--dim);padding-left:20px;margin:0}ol.log li{marg
 <p class="dim" style="font-size:14px;margin-bottom:0">With the real signer's ML-DSA-87 signature, the agent does pay: the same kind of invoice, live, refused without the signature (<a id="v4ref">tx</a>) and paid with it (<a id="v4paid">tx</a>).</p>
 </div>
 
+<h2 id="v5">8. The live desk, InvoiceDeskV5: the agent's key, a key made here, a signature past its deadline</h2>
+<div class="card you">
+<p style="margin-top:0">The live agent's desk. Every agent payment needs the agent's <b>ML-DSA-87</b> signature over the whole invoice (its digest, the due date included), the hash of the vendor's signature and a deadline 15 minutes ahead, checked by the precompile against the signer the company named. Ask it about a genuine, unpaid invoice (Daily Hosting Co, 3 fUSD, <code>LAB-V5-GENUINE</code>), as the agent's account:</p>
+<div class="btns"><button type="button" class="main" id="v5-none">As the agent: classical key only</button><button type="button" id="v5-mine">As the agent: an ML-DSA-87 signature from a key made here</button><button type="button" id="v5-late">As the agent: a signature whose deadline passed a minute ago</button><button type="button" id="v5-company">As the company, in person</button></div>
+<div class="local" id="v5out">Nothing asked yet.</div>
+<p class="dim" style="font-size:14px;margin-bottom:0">The deadline is checked before the signature, so any signature past it is <code>AgentSignatureExpired</code>. With the real signer's signature, in time, the agent does pay: live, <a id="v5paid">paid</a>; the same signer's signature past its deadline, <a id="v5exp">refused</a> (<a href="https://github.com/eltociear/invoice-leash/blob/main/runs/probes/v5-bindings.json">all seven attempts</a>).</p>
+</div>
+
 <h2>The company's leash on its agent, read live</h2>
 <div class="card kv" id="state"><span class="dim">reading…</span></div>
 
@@ -190,7 +199,7 @@ async function rpc(method, params) {
 let liveShown = false;
 function markLive() { if (liveShown) return; liveShown = true; $("dot").classList.add("on"); fetch(D.rpc, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_blockNumber", params: [] }) }).then((r) => r.json()).then((r) => { $("live").textContent = "live: qorechain-diana, block " + parseInt(r.result, 16).toLocaleString(); }).catch(() => { $("live").textContent = "live: qorechain-diana"; }); }
 // a first read that fails offers a retry instead of a dead end
-function load(id, fn) { fn().catch((e) => { $(id).innerHTML = "could not read the chain: " + h(e.message) + ' <a href="#" data-retry>retry</a>'; $(id).querySelector("[data-retry]").onclick = (ev) => { ev.preventDefault(); $(id).textContent = "reading the chain\u2026"; load(id, fn); }; }); }
+function loadInto(id, fn) { fn().catch((e) => { $(id).innerHTML = "could not read the chain: " + h(e.message) + ' <a href="#" data-retry>retry</a>'; $(id).querySelector("[data-retry]").onclick = (ev) => { ev.preventDefault(); $(id).textContent = "reading the chain\u2026"; loadInto(id, fn); }; }); }
 const h = (x) => String(x ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const noPQ = () => new Promise((r, j) => { if (window.mldsa) return r(); document.addEventListener("mldsa", r, { once: true }); setTimeout(() => j(new Error("the ML-DSA-87 module did not load")), 15000); });
 const call = async (to, i, fn, args) => i.decodeFunctionResult(fn, (await rpc("eth_call", [{ to, data: i.encodeFunctionData(fn, args) }, "latest"])).result);
@@ -374,7 +383,7 @@ $("pubgo").onclick = async () => {
   } catch (e) { $("pubout").textContent = "Could not send: " + e.message; }
   finally { $("pubgo").disabled = false; pubState().catch(() => {}); }
 };
-load("pubstate", pubState);
+loadInto("pubstate", pubState);
 // §7: InvoiceDeskV4, asked as the agent without (or with a wrong) ML-DSA-87 signature, and as the company
 const desk4 = new E.Interface(["function pay(address,address,address,uint256,bytes32,uint64,bytes,bytes) payable",
   "error NotPayersAgent(address)", "error AgentSignerNotSet(address)", "error AgentKeyNotProven(address)", "error BadAgentSignature()", "error UnknownVendor(address)", "error BadSignature()", "error AlreadyPaid(bytes32)", "error PastDue(uint64)", "error OverPerPaymentLimit(uint256,uint256)", "error OverDailyLimit(uint256,uint256,uint256)", "error TransferFailed()", "error ZeroAmount()", "error WrongAmount(uint256,uint256)", "error AgentCannotPayNative()", "error VendorKeyNotProven(address)"]);
@@ -396,9 +405,36 @@ $("v4-mine").onclick = async () => {
   } catch (e) { $("v4out").textContent = e.message; }
 };
 $("v4-company").onclick = () => v4ask("as the company, in person (no agent signature needed)", D.v4.payer, "0x").catch((e) => { $("v4out").textContent = e.message; });
+// §8: the live InvoiceDeskV5, asked as the agent without, with a wrong, or with a late ML-DSA-87 signature, and as the company
+const desk5 = new E.Interface(["function pay(address,address,address,uint256,bytes32,uint64,bytes,bytes,uint64) payable", "error AgentSignatureExpired(uint64)",
+  ...desk4.fragments.filter((f) => f.type === "error").map((f) => f.format("full"))]);
+$("v5paid").href = D.v5.paidLink; $("v5exp").href = D.v5.expiredLink;
+const v5ask = async (label, from, agentSig, validUntil) => {
+  const i = D.v5.inv;
+  const r = await rpc("eth_call", [{ from, to: D.v5.desk, data: desk5.encodeFunctionData("pay", [D.v5.payer, i.token, i.vendor, i.amount, i.id, i.dueBy, i.signature, agentSig, validUntil]) }, "latest"]);
+  let v = "WOULD PAY"; if (r.error) { try { v = desk5.parseError(r.error.data).name; } catch { v = r.error.message; } }
+  $("v5out").innerHTML = ($("v5out").textContent === "Nothing asked yet." ? "" : $("v5out").innerHTML + "<br>") + h(label) + ": " + (v === "WOULD PAY" ? '<b class="ok">WOULD PAY</b>' : '<b class="no">' + h(v) + "</b>");
+};
+// the bytes the desk's agentMessage() builds: the invoice's digest, the vendor signature's hash, the deadline
+const v5msg = (validUntil) => {
+  const i = D.v5.inv, abi = E.AbiCoder.defaultAbiCoder();
+  const digest = E.keccak256(abi.encode(["bytes32", "uint256", "address", "address", "address", "address", "uint256", "bytes32", "uint64"],
+    [E.keccak256(E.toUtf8Bytes("LEASH-INVOICE-v2")), 9800, D.v5.desk, D.v5.payer, i.vendor, i.token, i.amount, i.id, i.dueBy]));
+  return E.getBytes(abi.encode(["bytes32", "uint256", "address", "address", "address", "bytes32", "bytes32", "uint64"],
+    [E.keccak256(E.toUtf8Bytes("LEASH-AGENT-PAY-v2")), 9800, D.v5.desk, D.v5.payer, D.v5.agent, digest, E.keccak256(i.signature), validUntil]));
+};
+const v5sign = async (label, validUntil) => {
+  try { await noPQ(); const k = window.mldsa.keygen(); await v5ask(label, D.v5.agent, E.hexlify(window.mldsa.sign(v5msg(validUntil), k.secretKey)), validUntil); }
+  catch (e) { $("v5out").textContent = e.message; }
+};
+const nowS = () => Math.floor(Date.now() / 1000);
+$("v5-none").onclick = () => v5ask("as the agent, classical key only", D.v5.agent, "0x", nowS() + 900).catch((e) => { $("v5out").textContent = e.message; });
+$("v5-mine").onclick = () => v5sign("as the agent, a valid ML-DSA-87 signature over this invoice, deadline 15 minutes ahead, by a key made in this tab (not the named signer's)", nowS() + 900);
+$("v5-late").onclick = () => v5sign("as the agent, a signature whose deadline passed a minute ago", nowS() - 60);
+$("v5-company").onclick = () => v5ask("as the company, in person (no agent signature needed)", D.v5.payer, "0x", 0).catch((e) => { $("v5out").textContent = e.message; });
 load(D.presets[0]);
 rpc("eth_blockNumber", []).catch(() => { if (!liveShown) $("live").textContent = "could not reach the testnet RPC yet (each button retries)"; });
-load("state", state);
+loadInto("state", state);
 </script>
 </body></html>
 `;

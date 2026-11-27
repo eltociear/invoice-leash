@@ -1,5 +1,5 @@
 // Every inline script on the published pages must parse: a quote slip in a template literal once broke the
-// live attack lab silently. Also checks the in-browser ML-DSA-87 bundle signs and verifies like the SDK.
+// live attack lab silently, and so did a function declared twice. Also checks the in-browser ML-DSA-87 bundle signs and verifies like the SDK.
 import { readFileSync, readdirSync } from "node:fs";
 import { pqcVerify, generatePqcKeypair } from "@qorechain/sdk";
 const docs = new URL("../docs/", import.meta.url);
@@ -8,6 +8,11 @@ for (const f of readdirSync(docs).filter((f) => f.endsWith(".html"))) {
   const html = readFileSync(new URL(f, docs), "utf8");
   for (const [, js] of html.matchAll(/<script>([\s\S]*?)<\/script>/g)) {
     try { new Function(js); n++; } catch (e) { console.error(`✗ docs/${f}: ${e.message}`); process.exit(1); }
+    // a second top-level function with the same name silently replaces the first (hoisting): two load()s once
+    // made the lab throw on its first live read, and every button after it did nothing
+    const names = [...js.matchAll(/^(?:async )?function (\w+)\(/gm)].map((m) => m[1]);
+    const dup = names.find((x, i) => names.indexOf(x) !== i);
+    if (dup) { console.error(`✗ docs/${f}: function ${dup} is declared twice`); process.exit(1); }
   }
 }
 // standalone page scripts (docs/*.js) must parse too
