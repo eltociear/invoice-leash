@@ -1,38 +1,40 @@
 {
-  "day": "2026-11-26",
-  "at": "2026-11-26T05:25:20.595Z",
-  "desk": "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
-  "sealed": false,
+  "day": "2026-11-27",
+  "at": "2026-11-27T01:56:01.113Z",
+  "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+  "sealed": true,
   "results": [
     {
-      "label": "pay LIVE-20261126 (4 fUSD): genuine",
+      "label": "pay LIVE-20261127 (5 fUSD, sealed): genuine",
       "ok": true,
       "why": "executed",
-      "link": "https://explore.qore.network/tx/4C6661504EBE0673C196A1F406AF1ECECD90A7B3331513D96290FD7D2EF759DB"
+      "link": "https://explore.qore.network/tx/F385D0670153DC0CBF69F8E092FB9C78BD6A84119B186D66B2EA3BB3C80105F9"
     },
     {
-      "label": "pay LIVE-20261126-B (9 fUSD): forged, not signed by the vendor's key",
+      "label": "pay LIVE-20261127-B (9 fUSD): forged, not signed by the vendor's key",
       "ok": false,
-      "why": "InvoiceDesk: BadSignature",
-      "link": "https://explore.qore.network/tx/D62FD932F8D5A35EC78A8993888117FA575014A7E19DA50D9620C255F92B419E"
+      "why": "InvoiceDesk: BadAgentSignature",
+      "link": "https://explore.qore.network/tx/2311F4C520E144B4346C7E7830603101ACD9C1E90E3806969441EBF87698A31E",
+      "signerDeclined": "BadSignature"
     },
     {
-      "label": "pay LIVE-20261126 with its amount raised to 9 fUSD",
+      "label": "pay LIVE-20261127 with its amount raised to 9 fUSD",
       "ok": false,
-      "why": "InvoiceDesk: BadSignature",
-      "link": "https://explore.qore.network/tx/843C34B40F5F88FFFA263F3B748AE19717FDD6365F14E97F2D861D2F82B1D77F"
+      "why": "InvoiceDesk: BadAgentSignature",
+      "link": "https://explore.qore.network/tx/FAACCDD7001D22FE6761410A2CEEFA5D6D1D181BDE3E3A2D3CA696FED74E07C5",
+      "signerDeclined": "BadSignature"
     },
     {
       "label": "fUSD.transfer(Mallory, 20): the prompt injection",
       "ok": false,
       "why": "a linked key with a spending rule may call 0x97143B771D34ddb9130b807b135Ae675A5a963CA with data only if the rule lists the call in allowed_evm_calls (or lists the token as \"erc20/0x97143B771D34ddb9130b807b135Ae675A5a963CA\" for a token transfer or approval): authenticator not permitted for this action",
-      "link": "https://explore.qore.network/tx/F8800784768916A6D6364B491A28EA08D74F7BA7257293DE9C6C35092934753B"
+      "link": "https://explore.qore.network/tx/FE01D16E887C07620E61D0ABD453B2BAB6D71F91BD530F98CE418A46AA8D720B"
     },
     {
-      "label": "pay LIVE-20261126, still unpaid, with the agent's classical key alone, no ML-DSA-87 signature (as after Q-Day)",
+      "label": "pay LIVE-20261127, still unpaid, with the agent's classical key alone, no ML-DSA-87 signature (as after Q-Day)",
       "ok": false,
       "why": "InvoiceDesk: BadAgentSignature",
-      "link": "https://explore.qore.network/tx/406B95D41748F9652348CB59E009F6BA47A52C4E97DA08E05817C22E01EB68DC",
+      "link": "https://explore.qore.network/tx/276485C3006D5A46E7670EB7C00D6585EC05FB16A071F68465B702219E07F4EE",
       "unpaidBefore": true,
       "sentFirst": true
     }
