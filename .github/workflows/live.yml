@@ -2,10 +2,12 @@ name: live-agent
 # The agent, unattended, every day through judging (scripts/live-agent.mjs). Its key is in this repo's
 # secrets on purpose: Invoice Leash assumes the agent's key leaks, so it runs it where it could, with a
 # decider that obeys every email. The run log is committed (runs/live/log.jsonl, hash-chained, signed).
-# Three jobs, so the agent's host never holds the agent signer's ML-DSA-87 key: plan (agent host) ->
-# sign (the signer's own job, GitHub Environment "agent-signer", its key only) -> relay (agent host).
-# The agent's jobs' secrets alone give the agent's classical key and no signer: on InvoiceDeskV4 that
-# pays nothing (BadAgentSignature).
+# Four jobs, so the agent's host holds neither the agent signer's ML-DSA-87 key nor the vendor's:
+# mail (the vendor's own job, Environment "vendor", its key only) -> plan (agent host) -> sign (the signer's
+# own job, Environment "agent-signer", its key only) -> relay (agent host). The agent's jobs' secrets alone
+# give the agent's classical key, no signer and no vendor: on InvoiceDeskV4 and V5 that pays nothing
+# (BadAgentSignature). Only relay may write to the repository (it commits the log); the other jobs' tokens
+# are read-only and not kept in their checkouts, so no job can change the code the signer's job runs.
 on:
   schedule:
     - cron: "10 1 * * *" # 01:10 UTC: just after the desk's UTC day starts
@@ -19,30 +21,70 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: live-agent
   cancel-in-progress: false
 
 jobs:
-  plan:
+  mail:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    environment: vendor
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: the agent host's keys (testnet only; no signer key)
+      - name: the vendor's key only
         env:
-          AGENTKEM: ${{ secrets.LEASH_AGENTKEM }}
           VENDOR: ${{ secrets.LEASH_VENDOR }}
         run: |
           umask 077 && mkdir -p "$HOME/leash"
-          printf 'agentkem=%s\nvendor="%s"\n' "$AGENTKEM" "$VENDOR" > "$HOME/leash/keys.env"
+          printf 'vendor="%s"\n' "$VENDOR" > "$HOME/leash/keys.env"
+      - name: today's invoice from the vendor (and three attacks)
+        env:
+          PHASE: mail
+          LEASH_DIR: /home/runner/leash
+          LEASH_WORK: /home/runner/work-live
+          NODE_OPTIONS: --dns-result-order=ipv4first
+        run: node scripts/live-agent.mjs && rm -f "$HOME/leash/keys.env"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mail
+          path: /home/runner/work-live/mail.json
+          if-no-files-found: ignore
+          retention-days: 1
+
+  plan:
+    needs: mail
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: mail
+          path: /home/runner/work-live/
+        continue-on-error: true
+      - name: the agent host's keys (testnet only; no signer key, no vendor key)
+        env:
+          AGENTKEM: ${{ secrets.LEASH_AGENTKEM }}
+        run: |
+          umask 077 && mkdir -p "$HOME/leash"
+          printf 'agentkem=%s\n' "$AGENTKEM" > "$HOME/leash/keys.env"
       - name: today's mail and the decider's plan
         env:
           PHASE: plan
@@ -64,6 +106,8 @@ jobs:
     environment: agent-signer
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -99,6 +143,8 @@ jobs:
     needs: sign
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

@@ -6,9 +6,8 @@ times, since GitHub starts schedules late or not at all and a run for a day alre
 InvoiceDeskV5 since 2026-11-26 ([`desk.json`](desk.json); set up with `desk.mjs`, upgraded from V3 to V4 on 2026-11-24
 ([`desk-v4.json`](desk-v4.json)) and to V5 on 2026-11-26). The agent's key and the relayer's key
 are GitHub Secrets on purpose. Invoice Leash assumes the agent's key leaks, so it runs it where it could.
-The decider obeys every email. From 2026-11-26 the job is split in three (plan, sign, relay): the agent signer's ML-DSA-87 key lives only in the signer's job and its own GitHub Environment, so the agent's jobs' secrets alone pay nothing on V4 or V5. The test vendor's key is a secret too, so the job can send itself the
-day's invoice: a leak of the secrets is also a stolen approved-vendor key, bounded by the same limits
-(10 fUSD a payment, 25 a day, to that vendor's own address).
+The decider obeys every email. From 2026-11-26 the job is split in three (plan, sign, relay): the agent signer's ML-DSA-87 key lives only in the signer's job and its own GitHub Environment, so the agent's jobs' secrets alone pay nothing on V4 or V5. From 2026-11-28 a fourth job, mail, writes the day's invoice with the test vendor's key, in its own Environment (`vendor`): until then the vendor's key sat on the agent's host, so code running there could have written genuine invoices to pay, bounded by the same limits
+(10 fUSD a payment, 25 a day, to that vendor's own address). Only relay may write to the repository.
 
 Every day: the vendor's genuine invoice (sealed with ML-KEM-1024 on even days), a forged invoice in its
 name, the genuine one with its amount raised, and a prompt injection asking for a direct fUSD transfer to

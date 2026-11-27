@@ -82,6 +82,13 @@ await t("declines when the key about to sign is not the signer the desk names (a
   assert.deepEqual([r.sign, r.reason], [false, "NotTheNamedSigner"]);
   assert.equal((await signerMay(d, inv(), { provider: chain(), now: NOW, signer: SIGNER })).sign, true);
 });
+await t("counts what it already signed in this run against today's limit (a batch that fits one by one)", async () => {
+  const state = { remaining: 6_000_000n };
+  assert.equal((await signerMay(d, inv(), { provider: chain(state), now: NOW })).sign, true);
+  const r = await signerMay(d, inv(), { provider: chain(state), now: NOW, committed: { [FUSD.toLowerCase()]: 4_000_000n } });
+  assert.deepEqual([r.sign, r.reason], [false, "OverDailyLimit"]);
+  assert.equal((await signerMay(d, inv(), { provider: chain(state), now: NOW, committed: { [FUSD.toLowerCase()]: 2_000_000n } })).sign, true);
+});
 await t("no answer from the chain: no signature (it throws, the caller signs nothing)", async () => {
   await assert.rejects(() => signerMay(d, inv(), { provider: chain({ down: true }), now: NOW }));
 });
