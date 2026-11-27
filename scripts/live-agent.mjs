@@ -51,6 +51,12 @@ if (PHASE === "sign") {
   if (!reg || !proven || Number(alg) !== 1) throw new Error(`this host's signer ${me.evmAddr} has no proven ML-DSA-87 key on chain`);
   console.log(`signer check: ${me.evmAddr} is the agent signer the desk names, its ML-DSA-87 key proven`);
 }
+// The vendor's host checks, every run, that its key is the desk's approved vendor (a key not handed over fails here)
+if (PHASE === "mail") {
+  const v = await account("vendor"), named = Object.keys(d.vendors ?? {}).map((x) => x.toLowerCase());
+  if (!named.includes(v.evmAddr.toLowerCase())) throw new Error(`this host's vendor ${v.evmAddr} is not the desk's vendor (${named.join(", ")})`);
+  console.log(`vendor check: ${v.evmAddr} is the desk's vendor (${d.vendors[Object.keys(d.vendors).find((x) => x.toLowerCase() === v.evmAddr.toLowerCase())]})`);
+}
 const rows = existsSync(LOG) ? readFileSync(LOG, "utf8").trim().split("\n").filter(Boolean) : [];
 if (rows.some((l) => JSON.parse(l).day === day)) { console.log(`already ran for ${day}`); process.exit(0); }
 
