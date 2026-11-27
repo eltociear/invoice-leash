@@ -1,0 +1,71 @@
+{
+  "at": "2026-11-27T03:58:58.849Z",
+  "items": [
+    {
+      "i": 0,
+      "ref": "LA-2001",
+      "id": "0xfd8188986d1226b385f15984280acdbbf2c151af574266aca4c66ab0bd54c9c7",
+      "vendor": "0x5c3e85fae2b5fb5e7bab2ec9e7cdcc737633603c",
+      "vendorName": "Lighthouse Analytics",
+      "amount": "20 fUSD",
+      "note": "",
+      "verdict": "ALREADY PAID",
+      "why": "the desk has paid this invoice id for you (node desk.mjs export)"
+    },
+    {
+      "i": 1,
+      "ref": "LA-2002",
+      "id": "0x9409ab7d0135ac7d8a58f2011f412b10d2155f7546b815676ac224efe946e946",
+      "vendor": "0x5c3e85fae2b5fb5e7bab2ec9e7cdcc737633603c",
+      "vendorName": "Lighthouse Analytics",
+      "amount": "15 fUSD",
+      "note": "sealed (opened with the agent's ML-KEM-1024 key)",
+      "verdict": "ALREADY PAID",
+      "why": "the desk has paid this invoice id for you (node desk.mjs export)"
+    },
+    {
+      "i": 2,
+      "ref": "LA-2003",
+      "id": "0xc4e19f2e9e94a1ab52f0aeecdc3053ab926c4e7ff55228931d235db85dc99669",
+      "vendor": "0x5c3e85fae2b5fb5e7bab2ec9e7cdcc737633603c",
+      "vendorName": "Lighthouse Analytics",
+      "amount": "45 fUSD",
+      "note": "",
+      "verdict": "ALREADY PAID",
+      "why": "the desk has paid this invoice id for you (node desk.mjs export)"
+    },
+    {
+      "i": 3,
+      "ref": "LA-1990",
+      "id": "0xb9c3d6f4149ad0bf8483c2a9f1e395e18b08fc04ba1512e055066bd94d0224c6",
+      "vendor": "0x5c3e85fae2b5fb5e7bab2ec9e7cdcc737633603c",
+      "vendorName": "Lighthouse Analytics",
+      "amount": "12 fUSD",
+      "note": "",
+      "verdict": "ALREADY PAID",
+      "why": "the desk has paid this invoice id for you (node desk.mjs export)"
+    },
+    {
+      "i": 4,
+      "ref": "LA-2001",
+      "id": "0xfd8188986d1226b385f15984280acdbbf2c151af574266aca4c66ab0bd54c9c7",
+      "vendor": "0x5c3e85fae2b5fb5e7bab2ec9e7cdcc737633603c",
+      "vendorName": "Lighthouse Analytics",
+      "amount": "29 fUSD",
+      "note": "",
+      "verdict": "REJECTED",
+      "why": "BadSignature: the ML-DSA-87 signature does not match: not what the vendor signed (edited after signing, or signed by another key); the genuine invoice with this number is already paid"
+    },
+    {
+      "i": 5,
+      "ref": "HC-7001",
+      "id": "0x783868c1ebfebd7143ba52db2affb9398a34a1b2ac1af0db827c0c65a1766340",
+      "vendor": "0xd63f7eff477a055609908d5aeb1e2079eb1c1965",
+      "vendorName": null,
+      "amount": "8 fUSD",
+      "verdict": "REJECTED",
+      "why": "UnknownVendor: not one of your approved vendors (node desk.mjs vendor add <address> <name>, if you trust it)",
+      "note": ""
+    }
+  ]
+}

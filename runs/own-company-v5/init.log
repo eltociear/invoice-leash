@@ -1,0 +1,7 @@
+keys: ~/.config/leash-c5/keys.env (mode 600). Back it up: it holds the company's keys.
+
+company account   qor1nzl7h4nh9w5tcz6kseq4ryy226zj8dceaj2xn7  (EVM 0x98bfebd6772ba8bc0b56864151908a568523b719)
+  fund it from the faucet (https://dashboard.qorechain.io/faucet, or the QoreX wallet): about 10 QOR for fees,
+  plus the fUSD you want the desk to pay invoices with.
+
+then: node desk.mjs setup

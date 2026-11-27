@@ -1,8 +1,8 @@
 {
  "chain": "qorechain-diana",
- "block": 10826971,
- "at": "2026-11-27T03:51:17.126Z",
- "passed": 123,
+ "block": 10827618,
+ "at": "2026-11-27T04:06:37.092Z",
+ "passed": 124,
  "failed": 0,
  "checks": [
   {
@@ -452,6 +452,12 @@
    "ok": true,
    "check": "InvoiceDeskV5, asked live (the attack lab's §8): a genuine unpaid invoice is BadAgentSignature for the agent's classical key alone and for a fresh ML-DSA-87 key's signature, AgentSignatureExpired past the deadline, and payable by the company in person",
    "detail": "(LAB-V5-GENUINE)"
+  },
+  {
+   "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
+   "ok": true,
+   "check": "a fourth company set up from nothing with desk.mjs on InvoiceDeskV5 (byte-for-byte this source): 2 paid by the agent (one sealed with ML-KEM-1024), 2 by the company in person (one past due, one over the agent's limit); each payment re-read and paid() true; its agent's classical key alone: BadAgentSignature",
+   "detail": "(0x259482c9…, runs/own-company-v5/)"
   },
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",

@@ -2,8 +2,8 @@
 
 This guide sets up your own payment desk on the QoreChain testnet (`qorechain-diana`): your company, your
 vendors, your agent. It takes about 15 minutes. Every step below was run end to end on the testnet, and
-the latest run, on an InvoiceDeskV4 from nothing, is in [`runs/own-company-v4/`](runs/own-company-v4/) (the first, on V2, in
-[`runs/own-company/`](runs/own-company/)). `npm run verify` re-checks both every day.
+the latest run, on an InvoiceDeskV5 from nothing, is in [`runs/own-company-v5/`](runs/own-company-v5/) (before it: V4 in
+[`runs/own-company-v4/`](runs/own-company-v4/), with the Desk Console and a signer rotation; V2 in [`runs/own-company/`](runs/own-company/)). `npm run verify` re-checks them every day.
 
 Two programs, used by two parties:
 
@@ -150,7 +150,7 @@ invoice, with a deadline):
 - A zero-amount invoice is refused (`ZeroAmount`). The desk also checks that the vendor received exactly
   the invoiced amount.
 
-All of this was run on the testnet on a V4 desk set up from nothing ([`runs/own-company-v4/`](runs/own-company-v4/): an over-limit invoice and an overdue one settled in person) and on a V3 desk ([`runs/own-company-v3/`](runs/own-company-v3/): two vendors' `INV-2001`, both paid).
+All of this was run on the testnet on a V5 desk set up from nothing ([`runs/own-company-v5/`](runs/own-company-v5/): an over-limit invoice and an overdue one settled in person), on a V4 one ([`runs/own-company-v4/`](runs/own-company-v4/)) and on a V3 desk ([`runs/own-company-v3/`](runs/own-company-v3/): two vendors' `INV-2001`, both paid).
 
 **Set up before V5?** `node desk.mjs upgrade` deploys a V5 desk and copies your vendors, agent, limits
 and allowance. It switches the agent off on the old desk, sets the old allowance to 0, and relinks the

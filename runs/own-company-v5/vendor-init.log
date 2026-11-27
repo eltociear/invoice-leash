@@ -1,0 +1,4 @@
+keys: ~/.config/leash-c5-vendor/keys.env (mode 600). Back it up.
+
+your address  qor1tslgt7hzkha4u7at9my70nwvwdmrxcpuf9x0h9  (EVM 0x5c3e85fae2b5fb5e7bab2ec9e7cdcc737633603c)
+fund it with about 1 QOR (faucet), then: node vendor.mjs register

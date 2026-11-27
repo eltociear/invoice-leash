@@ -23,6 +23,9 @@ const data = {
     (() => { const v4 = json("runs/live/desk-v4.json").v2;
       return desk("The live agent's desk until 2026-11-26 (V4)", "InvoiceDeskV4: the compromised-agent run, the attack campaign and the window probe ran here. Kept deployed and unchanged.", v4, 4, {
         agentPayments: liveLog.filter((r) => r.ok && r.at >= (v4.deployedAt ?? "") && r.at < (live.deployedAt ?? "9")).map((r) => ({ at: r.at, label: r.label, link: r.link })) }); })(),
+    (() => { const c = json("runs/own-company-v5/desk.json").v2, rows = readFileSync(new URL("runs/own-company-v5/payments.csv", root), "utf8").trim().split("\n").slice(1).map((l) => l.split(","));
+      return desk("A company set up from nothing on V5", "InvoiceDeskV5, set up on 2026-11-27 with desk.mjs setup by following GETTING_STARTED.md: Lighthouse Analytics, one sealed invoice, one past due and one over the limit paid in person.", c, 5, {
+        agentPayments: rows.filter((r) => r[7] === "agent").map((r) => ({ at: r[0], label: `${r[1]} ${r[3]}, ${r[5]} fUSD`, link: `https://explore.qore.network/tx/${r[8]}` })) }); })(),
     (() => { const c = json("runs/own-company-v4/desk.json").v2, rows = readFileSync(new URL("runs/own-company-v4/payments.csv", root), "utf8").trim().split("\n").slice(1).map((l) => l.split(","));
       return desk("A company set up from nothing on V4", "InvoiceDeskV4, set up with desk.mjs setup by following GETTING_STARTED.md; the Desk Console was driven in a browser on it.", c, 4, {
         agentPayments: rows.filter((r) => r[7] === "agent").map((r) => ({ at: r[0], label: `${r[1]} ${r[3]}, ${r[5]} fUSD`, link: `https://explore.qore.network/tx/${r[8]}` })) }); })(),

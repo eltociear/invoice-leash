@@ -110,7 +110,7 @@ transaction stops the agent, without touching the chain link or the money.
 | Off chain | the v1 demo inbox and six tamperings, with real ML-DSA-87 and throwaway keys; what the agent and MCP tools are shown and trust (signed amounts, malformed sealed invoices, the company-only message check, expiry, chain id) | `npm test` |
 | The signer's guard | what the agent's signer will sign (`lib/agent.mjs` `signerMay`), against a stand-in desk: it signs only what the desk would pay now, by the signer the desk names; it declines everything else, a forgery or a past-due invoice included (the agent's message does not bind the due date or the vendor's signature, so such a signature could pay a genuine invoice with the same fields), signs nothing when the chain does not answer, and never puts an agent signature in the dry run (18 cases, `test/guard.test.mjs`) | `npm test` |
 | Documents | every link into this repository and the site resolves (file and anchor); every count the documents state (checks, drill attacks, tests, invariants, mutants, public agent signatures) against its source; `verify` fails if its own count drifts from the documents | `npm test` |
-| On chain | 123 read-only checks against the live testnet | `npm run verify` |
+| On chain | 124 read-only checks against the live testnet | `npm run verify` |
 
 ### Cryptography inventory (QoreScan)
 

@@ -460,6 +460,25 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
         ok(getAddress(lab5.desk) === DL5 && got.join() === "BadAgentSignature,BadAgentSignature,AgentSignatureExpired,WOULD PAY",
           "InvoiceDeskV5, asked live (the attack lab's §8): a genuine unpaid invoice is BadAgentSignature for the agent's classical key alone and for a fresh ML-DSA-87 key's signature, AgentSignatureExpired past the deadline, and payable by the company in person", `(${l5.ref})`);
       }
+      // a fourth company, set up from nothing on InvoiceDeskV5 with desk.mjs (runs/own-company-v5/)
+      {
+        const c5d = json("runs/own-company-v5/desk.json").v2, DC5 = getAddress(c5d.invoiceDesk);
+        const rows = readFileSync(new URL("runs/own-company-v5/payments.csv", root), "utf8").trim().split("\n").slice(1).map((l) => l.split(","));
+        let txOk = 0, paidOk = 0;
+        for (const r of rows) {
+          const [, , vendor, , id, , , by, tx] = r;
+          if (by === "company") { const rc = await provider.send("eth_getTransactionReceipt", [tx.startsWith("0x") ? tx : "0x" + tx]); if (rc?.status === "0x1") txOk++; }
+          else { const t = (await rest(`/cosmos/tx/v1beta1/txs/${tx}`))?.tx_response; if (t && t.code === 0 && !t.events.some((e) => e.type === "abstractaccount_execution_failed")) txOk++; }
+          if (desk5.decodeFunctionResult("paid", await provider.call({ to: DC5, data: desk5.encodeFunctionData("paid", [getAddress(c5d.payerEvm), getAddress(vendor), id]) }))[0]) paidOk++;
+        }
+        const la = json("runs/own-company-v5/invoices/LA-2001.json").invoice, n5 = Math.floor(Date.now() / 1000) + 900; let alone = null;
+        try { await provider.call({ from: c5d.agentAccountEvm, to: DC5, data: desk5.encodeFunctionData("pay", [c5d.payerEvm, la.token, la.vendor, la.amount, la.id, la.dueBy, la.signature, "0x", n5]) }); alone = "would pay"; }
+        catch (e) { try { alone = desk5.parseError(e.data ?? e.info?.error?.data)?.name; } catch { alone = null; } }
+        const byAgent = rows.filter((r) => r[7] === "agent").length, byCompany = rows.length - byAgent;
+        ok(c5d.version === 5 && (await provider.getCode(DC5)).slice(2) === c5.evm.deployedBytecode.object && rows.length === 4 && txOk === rows.length && paidOk === rows.length && byAgent === 2 && alone === "BadAgentSignature",
+          `a fourth company set up from nothing with desk.mjs on InvoiceDeskV5 (byte-for-byte this source): ${byAgent} paid by the agent (one sealed with ML-KEM-1024), ${byCompany} by the company in person (one past due, one over the agent's limit); each payment re-read and paid() true; its agent's classical key alone: ${alone}`,
+          `(${DC5.slice(0, 10)}…, runs/own-company-v5/)`);
+      }
       // the V5 campaign (runs/campaign-v5.json): 2,000 dry-run attacks on the live V5 desk; a sample, kept as
       // full calldata, asked again now with no keys. Every signature in it carries the campaign's deadline: past
       // it, the attacks that got past the agent-signature check before answer AgentSignatureExpired instead

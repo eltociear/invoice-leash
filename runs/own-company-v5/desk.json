@@ -1,0 +1,33 @@
+{
+  "v2": {
+    "version": 5,
+    "invoiceDesk": "0x259482c9e4dD6194f0f5247d73E54DBE7A5AeFaE",
+    "token": "0x97143B771D34ddb9130b807b135Ae675A5a963CA",
+    "payer": "qor1nzl7h4nh9w5tcz6kseq4ryy226zj8dceaj2xn7",
+    "payerEvm": "0x98bfebd6772ba8bc0b56864151908a568523b719",
+    "agentAccount": "qor1fnlfj2slka9z2hm2ymu2kr6qekcc0zskw0jt69",
+    "agentAccountEvm": "0x4cfe992a1fb74a255f6a26f8ab0f40cdb1878a16",
+    "gas": "qor1drxnedsktu3vr2aexca93tupae28qx7e8cpyas",
+    "deployedAt": "2026-11-27T03:55:11.085Z",
+    "deployBlock": 10827367,
+    "deployTx": "0xda2f5a1a81067bb77a67564cc413608ad7c49bc6cfb6121832216941a1e23c99",
+    "vendors": {
+      "0x5c3E85FAe2B5fB5e7BAB2eC9e7Cdcc737633603c": "Lighthouse Analytics"
+    },
+    "limits": {
+      "perPayment": "30",
+      "daily": "60",
+      "allowance": "200"
+    },
+    "agentRule": {
+      "allowedDenoms": [
+        "erc20/0x4604e7e45b2ecdbfbdc157103f5b2b62cb16451a"
+      ],
+      "allowedEvmCalls": [
+        "0x259482c9e4dD6194f0f5247d73E54DBE7A5AeFaE/0x02378ba6"
+      ],
+      "hours": "720",
+      "linkTx": "D685198F7B60CDDAF8E8AF916E80919B2F6ABC63F3CA67AC148FF10AE9CF1762"
+    }
+  }
+}

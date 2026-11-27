@@ -1,0 +1,14 @@
+  0  ALREADY PAID    LA-2001                            20 fUSD      Lighthouse Analytics
+       the desk has paid this invoice id for you (node desk.mjs export)
+  1  ALREADY PAID    LA-2002                            15 fUSD      Lighthouse Analytics
+       the desk has paid this invoice id for you (node desk.mjs export) · sealed (opened with the agent's ML-KEM-1024 key)
+  2  ALREADY PAID    LA-2003                            45 fUSD      Lighthouse Analytics
+       the desk has paid this invoice id for you (node desk.mjs export)
+  3  ALREADY PAID    LA-1990                            12 fUSD      Lighthouse Analytics
+       the desk has paid this invoice id for you (node desk.mjs export)
+  4  REJECTED        LA-2001                            29 fUSD      Lighthouse Analytics
+       BadSignature: the ML-DSA-87 signature does not match: not what the vendor signed (edited after signing, or signed by another key); the genuine invoice with this number is already paid
+  5  REJECTED        HC-7001                            8 fUSD       
+       UnknownVendor: not one of your approved vendors (node desk.mjs vendor add <address> <name>, if you trust it)
+
+saved to ~/.config/leash-c5/triage.json. next: node desk.mjs run (pays only AGENT PAYS)

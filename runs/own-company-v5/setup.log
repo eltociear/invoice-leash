@@ -1,0 +1,26 @@
+1. the company's ML-DSA-87 key
+  owner ML-DSA-87 key registered        135EA6A4FFDB6F279D19CB75B533F83AD84BA2559858D719D97B1D8E50024C68
+2. fee money: the fee wallet (relays the agent's requests) and the agent account (its own setup)
+  sent 3 QOR to qor1drxnedsktu3vr2aexca93tupae28qx7e8cpyas  395774F3BB54FFBD0CE03EA742463E43D77894E41C018ACCFE4806698BAFD1D8
+  sent 1 QOR to qor1fnlfj2slka9z2hm2ymu2kr6qekcc0zskw0jt69  103298690EE9D74E018C44982D433382C6BA233124DDFC929D887A58C519F705
+  sent 0.3 QOR to qor1wgaecgnkgg3ecerhqkp2q4yze8ffenn0qe6zwk  852D7CED28156646A59B510058230501B6A0FEAA9AABC0465188869F4A25174F
+3. ML-DSA-87 keys for the fee wallet and the agent account
+  gas ML-DSA-87 key registered        347BE435E3C0F71EB9A92AD966277EFCDF660A5414A699F93D3B2D9851F8B76F
+  agentacct ML-DSA-87 key registered        E212DD05F9D57F8D69958FAED666C67AF1FE69F6C4B7A3AB5AC8F3CC9E3DFC01
+  agentsigner ML-DSA-87 key registered        874DAC8DAEC53F0CB8131ED5F4B930A7A740C347D3B12CE9BABB8DB746826FC4
+4. your InvoiceDeskV5 (a contract creation has no target, so it gets its own one-transaction window)
+  deployed                   0xda2f5a1a81067bb77a67564cc413608ad7c49bc6cfb6121832216941a1e23c99
+  InvoiceDeskV5 at 0x259482c9e4dD6194f0f5247d73E54DBE7A5AeFaE
+5. the desk's settings, in one window scoped to the desk and fUSD
+  setAgent(agent account)    0x40510664e5414a648cba28197db089b997cfde4f1757b5669668a6f7553f5cfd
+  setAgentSigner(ML-DSA-87)  0x4301fd122b108c1f551cf8396dae3e25f0b77fde2b95dd7dcc188f058528a616
+  setLimit(30, 60)           0xe9124de7adcf7feb8082d11a8ec2b4a58351dc583e18c3fdb241964e63893544
+  fUSD.approve(desk, 200)    0xbd56880273bf75d63075ed08d0054c0b2d871bc72dfaccbbc1f9cc4d221065f7
+6. the agent's key, linked to the agent account: no denom it holds, one call (the desk's pay)
+  agent key linked for 720 h: only 0x259482c9e4dD6194f0f5247d73E54DBE7A5AeFaE.pay  D685198F7B60CDDAF8E8AF916E80919B2F6ABC63F3CA67AC148FF10AE9CF1762
+7. the agent account's ML-KEM-1024 key, so vendors can seal invoices to it
+  registered                 4B83F2E6D96E1B40FA05D03C962903B01CE99D58C1DC4E2A1069FBB485FD3B37
+8. treasury and float
+  float 60 fUSD (ERC-20, the desk pays from it), treasury 40 fUSD (bank coin, moves only with ML-DSA-87)  0E3762447237AA2AA3E790375D8B6AB50D514835E3B09829B5D41A94C8311F8F
+
+done. next: approve your vendors (node desk.mjs vendor add <address> <name>), then node desk.mjs status
