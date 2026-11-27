@@ -72,7 +72,7 @@ Environment) and signs only what the desk would pay right then.
 | **The company** (payer) | its fUSD, in its own account (no vault). Most of it as the bank coin, which moves only with ML-DSA-87; a float as ERC-20 for the desk to pull | approve vendors, name agents, set limits, give the desk an allowance, freeze. Hybrid secp256k1 + **ML-DSA-87** keys |
 | **The agent's account** | no fUSD; a little QOR for its own setup fees | one thing, through its QoreChain spending rule: call the desk's `pay`. Its rule lists no denom it holds, so the agent's key moves nothing |
 | **The agent's key** | nothing | sign requests for the agent's account (ed25519, linked, expires). A relayer submits them. **On V4 and V5 it is not enough**: see step 2 |
-| **The agent's signer** (V4, V5) | nothing | sign each payment with **ML-DSA-87**; the company names this signer to the desk |
+| **The agent's signer** (V4, V5) | nothing | sign each payment with **ML-DSA-87**; the company names this signer to the desk. Stolen together with the agent's key, it still pays only genuine invoices of approved vendors, within the limits ([threat model](THREAT_MODEL.md); [`runs/v5-compromised.json`](runs/v5-compromised.json)) |
 | **[`InvoiceDeskV5`](contracts/InvoiceDeskV5.sol)**, the live desk ([`V4`](contracts/InvoiceDeskV4.sol): step 2 without the due date, the vendor's signature and the deadline; [`V3`](contracts/InvoiceDeskV3.sol): no step 2) | nothing (it pulls company → vendor in one call) | pay an invoice for the company only if every check below passes |
 
 What `pay` checks, all on chain, in this order:
