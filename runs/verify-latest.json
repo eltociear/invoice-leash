@@ -1,7 +1,7 @@
 {
  "chain": "qorechain-diana",
- "block": 10827618,
- "at": "2026-11-27T04:06:37.092Z",
+ "block": 10829153,
+ "at": "2026-11-27T04:43:08.690Z",
  "passed": 124,
  "failed": 0,
  "checks": [
@@ -456,7 +456,7 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "a fourth company set up from nothing with desk.mjs on InvoiceDeskV5 (byte-for-byte this source): 2 paid by the agent (one sealed with ML-KEM-1024), 2 by the company in person (one past due, one over the agent's limit); each payment re-read and paid() true; its agent's classical key alone: BadAgentSignature",
+   "check": "a fourth company set up from nothing with desk.mjs on InvoiceDeskV5 (byte-for-byte this source): 4 paid by the agent (LA-2002 sealed with ML-KEM-1024), 2 by the company in person (LA-1990 after its due date, LA-2003 over the agent's limit); each payment re-read and paid() true; its agent's classical key alone: BadAgentSignature. Through the Desk Console its signer was rotated: the desk names the new one, and the agent paid 2 with it",
    "detail": "(0x259482c9…, runs/own-company-v5/)"
   },
   {
@@ -492,7 +492,7 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "every public agent signature on the V4 desks (128: relayed transactions, EVM-lane transactions, records here), sent again now by its agent's classical key alone: none would pay. None could later either: each is void, or its invoice id is paid",
+   "check": "every public agent signature on the V4 desks (132: relayed transactions, EVM-lane transactions, records here), sent again now by its agent's classical key alone: none would pay. None could later either: each is void, or its invoice id is paid",
    "detail": "(scripts/signature-sweep.mjs)"
   },
   {
@@ -558,7 +558,7 @@
   {
    "section": "9. v2: fUSD invoices; the agent acts as its own account, which holds nothing",
    "ok": true,
-   "check": "live agent: each of its 19 logged transactions re-read from the chain agrees; it last ran 2 h ago (must be < 72 h)",
+   "check": "live agent: each of its 19 logged transactions re-read from the chain agrees; it last ran 3 h ago (must be < 72 h)",
    "detail": "(desk 0x6A3f514e…, .github/workflows/live.yml)"
   },
   {

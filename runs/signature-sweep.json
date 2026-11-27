@@ -1,16 +1,17 @@
 {
  "what": "every public agent ML-DSA-87 signature on an InvoiceDeskV4 or V5 (relayed calldata, EVM-lane calldata, calldata in this repository), dry-run again as its agent: could the agent's classical key alone get it paid now?",
- "at": "2026-11-27T03:35:47.809Z",
+ "at": "2026-11-27T04:36:01.271Z",
  "desks": [
   "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
   "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
-  "0xd8a723c91Af58A885d8E87509E7B770559c0C353"
+  "0xd8a723c91Af58A885d8E87509E7B770559c0C353",
+  "0x259482c9e4dD6194f0f5247d73E54DBE7A5AeFaE"
  ],
- "signatures": 126,
+ "signatures": 132,
  "now": {
   "BadAgentSignature": 67,
-  "AgentSignatureExpired": 51,
-  "AlreadyPaid": 1,
+  "AgentSignatureExpired": 55,
+  "AlreadyPaid": 3,
   "NotPayersAgent": 7
  },
  "wouldPay": 0,
@@ -717,6 +718,34 @@
    "later": "never: past its deadline (InvoiceDeskV5)"
   },
   {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "4000000",
+   "id": "0xd7199c7d4770d1d954e30d6b236b7be1d2303643a48828b103bb141ef01489eb",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "tx 2F584A57370117D56CF8C8CECC94DDF3A1E383AD2EF0D653FE5EB7786EAA686E",
+    "tx 2F584A57370117D56CF8C8CECC94DDF3A1E383AD2EF0D653FE5EB7786EAA686E"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "6000000",
+   "id": "0x6e27ae04a78762c86aea7bb071d260890ee74facd277edc760718da8fa7782a6",
+   "dueBy": 1814399999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "tx FF7334FD57EF3B20A64BDA44240F26DBFEE7398D9CE3FF0405A36376A493C841",
+    "tx FF7334FD57EF3B20A64BDA44240F26DBFEE7398D9CE3FF0405A36376A493C841"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
    "desk": "0xd8a723c91Af58A885d8E87509E7B770559c0C353",
    "from": "0xf6a78b7EeFB2C84EC39869df6CC3F3eb843659F8",
    "vendor": "0xD63f7EFf477a055609908d5AEB1E2079EB1c1965",
@@ -805,6 +834,58 @@
    "now": "AlreadyPaid",
    "where": [
     "tx 894164F133E3F6E1EB37D646621C0E3D115DAC382D4860EF3819220781A307CE"
+   ],
+   "later": "never: this vendor's invoice id is paid, and that record never clears"
+  },
+  {
+   "desk": "0x259482c9e4dD6194f0f5247d73E54DBE7A5AeFaE",
+   "from": "0x4cFE992a1FB74A255F6A26F8aB0F40cdB1878A16",
+   "vendor": "0x5c3E85FAe2B5fB5e7BAB2eC9e7Cdcc737633603c",
+   "amount": "20000000",
+   "id": "0xfd8188986d1226b385f15984280acdbbf2c151af574266aca4c66ab0bd54c9c7",
+   "dueBy": 1801439999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "tx D6D83F2C4193D554FF48DCB75F16730F205735AE0CEC36356FC1B06094D1C910"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x259482c9e4dD6194f0f5247d73E54DBE7A5AeFaE",
+   "from": "0x4cFE992a1FB74A255F6A26F8aB0F40cdB1878A16",
+   "vendor": "0x5c3E85FAe2B5fB5e7BAB2eC9e7Cdcc737633603c",
+   "amount": "15000000",
+   "id": "0x9409ab7d0135ac7d8a58f2011f412b10d2155f7546b815676ac224efe946e946",
+   "dueBy": 1801439999,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "tx 851FAF62EE49D574975B431B238D060545092BE5A1E198A3CABB06C0F8CA03F7"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x259482c9e4dD6194f0f5247d73E54DBE7A5AeFaE",
+   "from": "0x4cFE992a1FB74A255F6A26F8aB0F40cdB1878A16",
+   "vendor": "0x5c3E85FAe2B5fB5e7BAB2eC9e7Cdcc737633603c",
+   "amount": "10000000",
+   "id": "0xdf9dc7f5847399a6578b56cb985675fbb3c4309f3622430643e7483f9ca1511a",
+   "dueBy": 1801439999,
+   "now": "AlreadyPaid",
+   "where": [
+    "tx DFE6AAED96EFAFA185AD2821EB317504D9E3C3A4EB3B1C66243FF00EA9BDE500"
+   ],
+   "later": "never: this vendor's invoice id is paid, and that record never clears"
+  },
+  {
+   "desk": "0x259482c9e4dD6194f0f5247d73E54DBE7A5AeFaE",
+   "from": "0x4cFE992a1FB74A255F6A26F8aB0F40cdB1878A16",
+   "vendor": "0x5c3E85FAe2B5fB5e7BAB2eC9e7Cdcc737633603c",
+   "amount": "8000000",
+   "id": "0xc8e7f84d1b3e989eabcbd3804d702498ef3c79c3b8f6c2bfab7236bee527e03a",
+   "dueBy": 1801439999,
+   "now": "AlreadyPaid",
+   "where": [
+    "tx BF4A846DD701D0A4BE4243AB266A679A6490085EFBD1CC89B86DA775C87AAC33"
    ],
    "later": "never: this vendor's invoice id is paid, and that record never clears"
   },

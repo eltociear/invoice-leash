@@ -186,7 +186,7 @@ this repository. Each is sent again as its agent, by dry run. `npm run verify` r
 
 | | |
 |---|---|
-| public agent signatures | 126, on the live V5 and V4 desks and the third company's |
+| public agent signatures | 132, on the live V5 and V4 desks and the third and fourth companies' |
 | would pay now, first sweep | 3: the compromised run's `OverDailyLimit` refusal (10 fUSD), the campaign's signed control (1 fUSD), an early V4 probe that ran out of gas (1 fUSD) |
 | what was done | the company paid those three in person, so they answer `AlreadyPaid` ([`0x47c9edd7…`](https://explore.qore.network/tx/0x47c9edd7b395e558c6d734051049cbbdb496b1101a95530cd5a245ec6154ff0d), [`0x15d52551…`](https://explore.qore.network/tx/0x15d525512ff31b94a9e7362e7267f1949f9566feedb87f7c0bc910be20d98ed5), [`0x1f5b2a21…`](https://explore.qore.network/tx/0x1f5b2a21088984cc206722dc100077ddc78a45744db13762a76f9a7503895550)); both desks then rotated their signers ([live](runs/live/signer-rotate.log), [third company](runs/own-company-v4/signer-rotate.log), and once more from the Desk Console in a browser: [`runs/console-rotate-v4.json`](runs/console-rotate-v4.json)), so every signature an old signer made is `BadAgentSignature` now |
 | would pay now | **0** ([`runs/signature-sweep.json`](runs/signature-sweep.json)) |

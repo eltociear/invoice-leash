@@ -55,7 +55,10 @@ if (PHASE === "sign") {
 if (PHASE === "mail") {
   const v = await account("vendor"), named = Object.keys(d.vendors ?? {}).map((x) => x.toLowerCase());
   if (!named.includes(v.evmAddr.toLowerCase())) throw new Error(`this host's vendor ${v.evmAddr} is not the desk's vendor (${named.join(", ")})`);
-  console.log(`vendor check: ${v.evmAddr} is the desk's vendor (${d.vendors[Object.keys(d.vendors).find((x) => x.toLowerCase() === v.evmAddr.toLowerCase())]})`);
+  const { deskOf } = await import("../lib/agent.mjs"), { JsonRpcProvider } = await import("ethers"), { EVM_RPC, EVM_CHAIN_ID } = await import("../lib/chain.mjs");
+  const dk = deskOf(d), pv = new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID, { staticNetwork: true });
+  if (!dk.decodeFunctionResult("approved", await pv.call({ to: d.invoiceDesk, data: dk.encodeFunctionData("approved", [d.payerEvm, v.evmAddr]) }))[0]) throw new Error(`the desk does not approve this host's vendor ${v.evmAddr} on chain`);
+  console.log(`vendor check: ${v.evmAddr} is the desk's vendor, approved on chain (${d.vendors[Object.keys(d.vendors).find((x) => x.toLowerCase() === v.evmAddr.toLowerCase())]})`);
 }
 const rows = existsSync(LOG) ? readFileSync(LOG, "utf8").trim().split("\n").filter(Boolean) : [];
 if (rows.some((l) => JSON.parse(l).day === day)) { console.log(`already ran for ${day}`); process.exit(0); }
@@ -156,6 +159,16 @@ if (PHASE === "relay") {
   // what the signer declined is still sent, unsigned, as a compromised agent host would: the chain refuses it
   // (BadAgentSignature), and no agent signature for it exists anywhere
   plan.forEach((st, k) => { if (sigs[k]) st.agentSignature = sigs[k]; if (sigs.declined?.[k]) { st.withoutAgentSignature = true; st.signerDeclined = sigs.declined[k]; } });
+  // V5: each signature lives 15 minutes. A relay that starts late (a queued runner) must not send signatures
+  // about to expire: the genuine invoice would be refused (AgentSignatureExpired) and the day logged as such.
+  // Stop before sending anything; the next scheduled run starts over (mail, plan, sign) with fresh ones.
+  const untils = Object.entries(sigs).filter(([k]) => k !== "declined").map(([, v]) => Number(v?.validUntil ?? Infinity));
+  if (untils.length && Number.isFinite(Math.min(...untils))) {
+    const { JsonRpcProvider } = await import("ethers");
+    const { EVM_RPC, EVM_CHAIN_ID } = await import("../lib/chain.mjs");
+    const chainNow = (await new JsonRpcProvider(EVM_RPC, EVM_CHAIN_ID, { staticNetwork: true }).getBlock("latest")).timestamp;
+    if (Math.min(...untils) < chainNow + 300) throw new Error(`the agent signatures expire at ${new Date(Math.min(...untils) * 1000).toISOString()}, under 5 minutes after the chain's time now: nothing sent; the next run signs afresh`);
+  }
 }
 const order = d.version >= 4 ? [4, 0, 1, 2, 3] : plan.map((_, i) => i); // log rows keep plan positions
 const results = [];

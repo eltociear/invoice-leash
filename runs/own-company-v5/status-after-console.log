@@ -1,0 +1,10 @@
+company       qor1nzl7h4nh9w5tcz6kseq4ryy226zj8dceaj2xn7  12.732723 QOR  ML-DSA-87 registered
+fee wallet    qor1drxnedsktu3vr2aexca93tupae28qx7e8cpyas  1.92 QOR  (pays for the agent's requests)
+agent account qor1fnlfj2slka9z2hm2ymu2kr6qekcc0zskw0jt69  0.64 QOR  ML-DSA-87 registered
+desk          InvoiceDeskV5 0x259482c9e4dD6194f0f5247d73E54DBE7A5AeFaE; agent signer 0xe807B08a…, ML-DSA-87 registered
+fUSD          float 42 fUSD (ERC-20, what the desk pays from), treasury 48 fUSD (bank coin); desk allowance 90 fUSD
+agent         ON in the desk; limits 30 fUSD a payment, 60 fUSD a day; 7 fUSD left today (UTC)
+agent key     linked until 2026-12-27T03:55:40.000Z
+vendors       1 approved (node desk.mjs vendors)
+
+next: add invoices: node desk.mjs inbox add <file.json>; payments so far: node desk.mjs export

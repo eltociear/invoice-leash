@@ -1,0 +1,25 @@
+{
+ "what": "the Desk Console driven in a real browser (Playwright) against desk.mjs serve",
+ "at": "2026-11-27T04:31:08.011Z",
+ "steps": [
+  {
+   "step": "rotate",
+   "page": "new agent signer (every signature the old one made is void): done the old signer 0x723b9c227642239c64770582a05482c9d29cce6f kept in keys.env as agentsigner_retired_20261127T04311458 1. the new signer 0xe807b08ac53a7f7eca7f1111dadb148f969a7646: fee money and its ML-DSA-87 key on chain agentsigner ML-DSA-87 key registered 1664898F41173A95134B386A9776C9D4C7C494AC176881FD725D33DC689860E7 2. name it in the desk (one-transaction window) setAgentSigner(new) 0x0976d93cdbeb743ae25b86137893ba4a4a822f6f9dbaaaac2d9bed61114716f7 every signature 0x723b9C227642239c64770582A05482C9D29Cce6F made is void now. Give the new key to the signer's host (LEASH_AGENTSIGNER, or its keys.env). new agent signer (every signature the old one made is void): working (each step is a real testnet transaction)… Nothing yet."
+  },
+  {
+   "step": "triage",
+   "page": "#InvoiceAmountVerdict0LA-2001Lighthouse Analytics20 fUSDALREADY PAIDthe desk has paid this invoice id for you (node desk.mjs export)1LA-2002Lighthouse Analytics15 fUSDALREADY PAIDthe desk has paid this invoice id for you (node desk.mjs export)2LA-2003Lighthouse Analytics45 fUSDALREADY PAIDthe desk has paid this invoice id for you (node desk.mjs export)3LA-1990Lighthouse Analytics12 fUSDALREADY PAIDthe desk has paid this invoice id for you (node desk.mjs export)4LA-2001Lighthouse Analytics29 fUSDREJECTEDBadSignature: the ML-DSA-87 signature does not match: not what the vendor signed (edited after signing, or signed by another key); the genuine invoice with this number is already paid5HC-70018 fUSDREJECTEDUnknownVendor: not one of your approved vendors (node desk.mjs vendor add <address> <name>, if you trust it)6LA-2010Lighthouse Analytics10 fUSDAGENT PAYSapproved vendor, valid ML-DSA-87 signature, unpaid, not past due, within the agent's limits7LA-2011Lighthouse Analytics8 fUSDAGENT PAYSapproved vendor, valid ML-DSA-87 signature, unpaid, not past due, within the agent's limits"
+  },
+  {
+   "step": "run",
+   "page": "the agent pays what triage allows: done PAID LA-2010 10 fUSD https://explore.qore.network/tx/DFE6AAED96EFAFA185AD2821EB317504D9E3C3A4EB3B1C66243FF00EA9BDE500 PAID LA-2011 8 fUSD https://explore.qore.network/tx/BF4A846DD701D0A4BE4243AB266A679A6490085EFBD1CC89B86DA775C87AAC33 the agent pays what triage allows: working (each step is a real testnet transaction)… triage: done 0 ALREADY PAID LA-2001 20 fUSD Lighthouse Analytics the desk has paid this invoice id for you (node desk.mjs export) 1 ALREADY PAID LA-2002 15 fUSD Lighthouse Analytics the desk has paid this invoice id for you (node desk.mjs export) · sealed (opened with the agent's ML-KEM-1024 key) 2 ALREADY PAID LA-2003 45 fUSD Lighthouse Analytics the desk has paid this invoice id for you (node desk.mjs export) 3 ALREADY PAID LA-1990 12 fUSD Lighthouse Analytics the desk has paid this invoice id for you (node desk.mjs export) 4 REJECTED LA-2001 29 fUSD Lighthouse Analytics BadSignature: the ML-DSA-87 signature does not match: not what the vendor signed (edited after signing, or signed by another key); the genuine invoice with this number is already paid 5 REJECTED HC-7001 8 fUSD UnknownVendor: not one of your approved vendors ("
+  },
+  {
+   "step": "export",
+   "page": "paid_at_utcvendor_nameinvoice_refamountpaid_by2026-11-27T04:32:27.000ZLighthouse AnalyticsLA-20118.0agent2026-11-27T04:32:20.000ZLighthouse AnalyticsLA-201010.0agent2026-11-27T03:58:36.000ZLighthouse AnalyticsLA-200345.0company2026-11-27T03:58:02.000ZLighthouse AnalyticsLA-199012.0company2026-11-27T03:57:42.000ZLighthouse AnalyticsLA-200215.0agent2026-11-27T03:57:35.000ZLighthouse AnalyticsLA-200120.0agent Download payments.csv"
+  }
+ ],
+ "statusBefore": "qor1nzl7h4nh9w5tcz6kseq4ryy226zj8dceaj2xn7your company (hybrid keys, 13.396019 QOR) InvoiceDeskV50x259482c9e4… ONagent in the desk · key linked until 2026-12-27T03:55Z 30 fUSD / 60 fUSDagent limits · 25 fUSD left today 60 fUSDfloat (ERC-20) · treasury 48 fUSD Next: new invoices: node desk.mjs triage",
+ "statusAfter": "qor1nzl7h4nh9w5tcz6kseq4ryy226zj8dceaj2xn7your company (hybrid keys, 12.732723 QOR) InvoiceDeskV50x259482c9e4… ONagent in the desk · key linked until 2026-12-27T03:55Z 30 fUSD / 60 fUSDagent limits · 7 fUSD left today 42 fUSDfloat (ERC-20) · treasury 48 fUSD Next: add invoices: node desk.mjs inbox add <file.json>; payments so far: node desk.mjs export",
+ "pageErrors": []
+}

@@ -375,7 +375,9 @@ const v5sign = async (label, validUntil) => {
 const nowS = () => Math.floor(Date.now() / 1000);
 $("v5-none").onclick = () => v5ask("as the agent, classical key only", D.v5.agent, "0x", nowS() + 900).catch((e) => { $("v5out").textContent = e.message; });
 $("v5-mine").onclick = () => v5sign("as the agent, a valid ML-DSA-87 signature over this invoice, deadline 15 minutes ahead, by a key made in this tab (not the named signer's)", nowS() + 900);
-$("v5-late").onclick = () => v5sign("as the agent, a signature whose deadline passed a minute ago", nowS() - 60);
+// the deadline is checked against the chain's clock, so "a minute ago" is the latest block's time less 60 s
+const chainS = async () => { const r = await rpc("eth_getBlockByNumber", ["latest", false]); return r.result ? parseInt(r.result.timestamp, 16) : nowS(); };
+$("v5-late").onclick = async () => v5sign("as the agent, a signature whose deadline passed a minute ago", (await chainS().catch(() => nowS())) - 60);
 $("v5-company").onclick = () => v5ask("as the company, in person (no agent signature needed)", D.v5.payer, "0x", 0).catch((e) => { $("v5out").textContent = e.message; });
 load(D.presets[0]);
 rpc("eth_blockNumber", []).catch(() => { if (!liveShown) $("live").textContent = "could not reach the testnet RPC yet (each button retries)"; });

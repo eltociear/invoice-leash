@@ -28,6 +28,15 @@
       ],
       "hours": "720",
       "linkTx": "D685198F7B60CDDAF8E8AF916E80919B2F6ABC63F3CA67AC148FF10AE9CF1762"
-    }
+    },
+    "pendingSigner": null,
+    "signerRotations": [
+      {
+        "at": "2026-11-27T04:31:55.135Z",
+        "from": "0x723b9C227642239c64770582A05482C9D29Cce6F",
+        "to": "0xe807b08ac53a7f7eca7f1111dadb148f969a7646",
+        "tx": "0x0976d93cdbeb743ae25b86137893ba4a4a822f6f9dbaaaac2d9bed61114716f7"
+      }
+    ]
   }
 }

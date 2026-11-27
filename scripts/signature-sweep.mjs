@@ -76,8 +76,8 @@ async function later(row, a, d) {
 }
 
 export async function sweep() {
-// every desk of version 4 or later: the live desk now and before (desk-v4.json), the third company's
-const desks = ["runs/live/desk.json", "runs/live/desk-v4.json", "runs/own-company-v4/desk.json"].map((p) => ({ record: p, ...json(p).v2 })).filter((d) => d.version >= 4)
+// every desk of version 4 or later: the live desk now and before (desk-v4.json), the third company's and the fourth's
+const desks = ["runs/live/desk.json", "runs/live/desk-v4.json", "runs/own-company-v4/desk.json", "runs/own-company-v5/desk.json"].map((p) => ({ record: p, ...json(p).v2 })).filter((d) => d.version >= 4)
   .filter((d, i, all) => all.findIndex((x) => getAddress(x.invoiceDesk) === getAddress(d.invoiceDesk)) === i);
 const byDesk = new Map(desks.map((d) => [getAddress(d.invoiceDesk), d]));
 const found = new Map(); // one entry per (desk, calldata)

@@ -17,8 +17,9 @@ Keys and mnemonics stay in `~/.config`; nothing secret is in this folder.
 | person | `desk.mjs pay 3`, then `pay 2` | [`pay.log`](pay.log): the overdue LA-1990 settled in person; the 45 fUSD LA-2003 first refused with the reason and the fix (`TransferFailed`: float too low), then paid after `desk.mjs treasury 45` ([`treasury.log`](treasury.log)) |
 | accounting | `desk.mjs export` | [`payments.csv`](payments.csv): 4 payments, read from the chain |
 | final | `desk.mjs triage`, `status` | [`triage-after.log`](triage-after.log), [`status.log`](status.log) |
+| console | `desk.mjs serve`, the [Desk Console](https://eltociear.github.io/invoice-leash/app.html) driven in a real browser (`scripts/console-e2e.mjs rotate,triage,run,export`), after two more invoices (LA-2010, the sealed LA-2011) and more test fUSD ([CCBFD0B8…](https://explore.qore.network/tx/CCBFD0B8AF4454A692CF47861C0DC788DEF1E13204F08806CD02D28808E91CF4); `treasury 60`, [`treasury-2.log`](treasury-2.log)) | [`../console-e2e-v5.json`](../console-e2e-v5.json): "New agent signer" (every signature the old one made void), triage, the agent paid LA-2010 and LA-2011 with the new signer, the CSV export; no page errors. [`payments.csv`](payments.csv) now has 6 rows; [`status-after-console.log`](status-after-console.log) |
 
 `npm run verify` re-checks this desk: its bytecode against `contracts/InvoiceDeskV5.sol`, every payment in
 `payments.csv` (`paid()` true, each transaction re-read), and that the agent's classical key alone is
-`BadAgentSignature` here too. In this run `desk.mjs run` signed on the same machine as the agent; GETTING_STARTED
+`BadAgentSignature` here too, and that the signer the desk names is the one the Console rotated to, with the agent paying after. In this run `desk.mjs run` signed on the same machine as the agent; GETTING_STARTED
 shows how to keep the signer on another host, as the live agent does.
