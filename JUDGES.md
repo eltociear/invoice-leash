@@ -63,7 +63,7 @@ signature with QoreChain's precompile.
 | QoreChain tech (25) | the PQC precompiles in the contract; hybrid accounts; an authenticator with a spending rule; EVM windows with `allowed_targets`; `MsgExecuteEVM`; QoreSign; QoreSeal and the KEM registry; `MsgConvertCoin` / `MsgConvertERC20`; the AMM; QoreScan; QoreChain's MCP server; eleven measured notes for builders, each with its transaction ([CHAIN_NOTES.md](CHAIN_NOTES.md)) |
 | Post-quantum (20) | [QUANTUM_READINESS.md](QUANTUM_READINESS.md): every algorithm in the system and what a quantum computer does to it; the Q-Day drill; Shor's gift; on InvoiceDeskV4 and V5 the agent's own classical key pays nothing its ML-DSA-87 signer did not sign, and on V5 a signature binds the whole invoice and expires in minutes ([live](runs/probes/v5-bindings.json)) ([live](runs/probes/v4-agent-sig.json)), the signer signs nothing the desk would refuse, and none of the 126 public agent signatures would pay again ([sweep](runs/signature-sweep.json)); no classical-only lane on the chain at all ([record](runs/probes/no-pq-evm.json)) |
 | Originality (15) | the finding above; an agent whose key is kept where it can leak, on purpose |
-| Clarity (15) | the [site](https://eltociear.github.io/invoice-leash/), the [video](https://youtu.be/dyHS4OQdb9Y), [GETTING_STARTED.md](GETTING_STARTED.md), [THREAT_MODEL.md](THREAT_MODEL.md) |
+| Clarity (15) | the [site](https://eltociear.github.io/invoice-leash/), the [video](https://youtu.be/evNAZJs4cFg), [GETTING_STARTED.md](GETTING_STARTED.md), [THREAT_MODEL.md](THREAT_MODEL.md) |
 
 ## The chain's own words
 
