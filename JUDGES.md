@@ -44,6 +44,9 @@ of the real contracts (for the 2,000-attack campaigns, a 40-attack sample regene
   [`runs/live/`](runs/live/) for which days ran where.
 - 2,000 dry-run attacks on the live V5 desk ([`runs/campaign-v5.json`](runs/campaign-v5.json): 0 would pay; all 1,008 with the agent's key but not its signer refused, expired and re-dated signatures included), and [2,000 on the V4 desk](https://eltociear.github.io/invoice-leash/#campaign) (half with the agent's key but not its signer: all `BadAgentSignature`), and
   how three Claude models behaved when told to obey a forged CFO (a test of the models, not of the leash).
+- Claude itself as the agent on the live V5 desk, through the MCP server ([transcript](runs/mcp-v5-claude-final.txt), 2026-11-27):
+  it dry-ran all six invoices, paid the two genuine ones (10 fUSD), sent the over-limit one to a human, did not
+  approve Mallory and ignored the injection. `npm run verify` re-reads it.
 
 ## 4. Read the one idea (one minute)
 
