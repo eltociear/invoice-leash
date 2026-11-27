@@ -25,7 +25,7 @@ Environment) and signs only what the desk would pay right then.
 > ```
 >
 > 122 checks against the live testnet: the deployed contracts are byte-for-byte this source, every
-> recorded transaction is re-read, every attack is replayed. Last run: [`runs/verify-latest.txt`](runs/verify-latest.txt)
+> recorded transaction is re-read, every recorded attack is asked again (each 2,000-attack campaign: a sample). Last run: [`runs/verify-latest.txt`](runs/verify-latest.txt)
 > ([JSON](runs/verify-latest.json)). CI runs it daily, with 213 Foundry tests and 25 invariants.
 
 ## In one minute
@@ -60,7 +60,7 @@ Environment) and signs only what the desk would pay right then.
 |---|---|
 | **Works** (25) | `npm run verify` (122 checks); the [live agent](runs/live/); a [third company set up from nothing on V4](runs/own-company-v4/) with `desk.mjs` (and a [second](runs/own-company-v3/), on V3); the [Desk Console](runs/console-e2e-v4.json) driven in a real browser; 100% coverage and 27 Halmos proofs ([`runs/halmos.txt`](runs/halmos.txt)) |
 | **QoreChain tech** (25) | the ML-DSA-87 precompiles `0x…0a01`/`0a02` inside the contract; hybrid accounts; an authenticator with a spending rule; EVM windows with `allowed_targets`; `MsgExecuteEVM` relaying; QoreSign; QoreSeal ML-KEM-1024 and the KEM registry; `MsgConvertCoin`/`MsgConvertERC20`; the AMM; QoreScan; QoreChain's MCP server |
-| **Post-quantum** (20) | [QUANTUM_READINESS.md](QUANTUM_READINESS.md): every algorithm in the system, the Q-Day drill, Shor's gift, no classical-only lane; on InvoiceDeskV4 and V5 the agent's classical key alone pays nothing its signer did not sign, even inside its own EVM window ([`runs/probes/window-v4.json`](runs/probes/window-v4.json)); its signer runs on a separate host and signs nothing the desk would refuse; none of the 125 public agent signatures would pay again ([sweep](runs/signature-sweep.json)); `desk.mjs signer rotate` voids them all at once; on V5 each signature also expires in minutes and binds the vendor's signature and due date ([live](runs/probes/v5-bindings.json)) |
+| **Post-quantum** (20) | [QUANTUM_READINESS.md](QUANTUM_READINESS.md): every algorithm in the system, the Q-Day drill, Shor's gift, no classical-only lane; on InvoiceDeskV4 and V5 the agent's classical key alone pays nothing its signer did not sign, even inside its own EVM window ([`runs/probes/window-v4.json`](runs/probes/window-v4.json)); its signer runs on a separate host and signs nothing the desk would refuse; none of the 126 public agent signatures would pay again ([sweep](runs/signature-sweep.json)); `desk.mjs signer rotate` voids them all at once; on V5 each signature also expires in minutes and binds the vendor's signature and due date ([live](runs/probes/v5-bindings.json)) |
 | **Originality** (15) | the finding above, and the redesign it forced; an agent whose key is kept where it can leak, on purpose |
 | **Clarity** (15) | the [site](https://eltociear.github.io/invoice-leash/), [JUDGES.md](JUDGES.md), [GETTING_STARTED.md](GETTING_STARTED.md), [THREAT_MODEL.md](THREAT_MODEL.md), [DECISIONS.md](DECISIONS.md); the track's requirements one by one: [EVIDENCE.md](EVIDENCE.md#the-tracks-requirements-and-where-each-one-is-shown-on-chain) |
 

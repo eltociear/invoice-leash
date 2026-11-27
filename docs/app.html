@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Invoice Leash: Desk Console</title>
 <link rel="icon" href="data:,">
-<meta name="description" content="Watch the live InvoiceDeskV4 and the other desks on QoreChain testnet with no wallet, or run your own desk from the page through a local signer that keeps your hybrid keys on your machine.">
+<meta name="description" content="Watch the live InvoiceDeskV5 and the other desks on QoreChain testnet with no wallet, or run your own desk from the page through a local signer that keeps your hybrid keys on your machine.">
 <style>
 p, li, td, code, .mono, span { overflow-wrap: anywhere; }
 pre { overflow-x: auto; max-width: 100%; white-space: pre-wrap; }
@@ -35,7 +35,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}td,th{text-align:left;p
 <div class="card">
 <p style="margin-top:0"><b>Why there is no MetaMask button.</b> On this chain an ordinary EVM wallet cannot send anything. We tried, with a fresh funded key, and QoreChain answered: <span class="mono small">“has no usable registered post-quantum key; the EVM lane requires one, like every other lane”</span>. Every transaction needs an ML-DSA-87 key (<a href="https://github.com/eltociear/invoice-leash/blob/main/runs/probes/no-pq-evm.json">the record</a>).</p>
 <p>So the console signs with <b>your own hybrid keys (secp256k1 + ML-DSA-87), on your machine</b>. Run the local signer, then open the link it prints. The page talks to it on 127.0.0.1, and your keys never leave your computer. Chrome asks once whether this page may <i>access devices on your local network</i>: allow it, since that is how the page reaches your signer.</p>
-<pre class="card mono small" style="margin:8px 0">node desk.mjs init &amp;&amp; node desk.mjs setup    # once: your company, your InvoiceDeskV4 (GETTING_STARTED.md)
+<pre class="card mono small" style="margin:8px 0">node desk.mjs init &amp;&amp; node desk.mjs setup    # once: your company, your InvoiceDeskV5 (GETTING_STARTED.md)
 node desk.mjs serve                            # prints: …/app.html#local=http://127.0.0.1:8742&amp;token=…</pre>
 <div class="row"><div><label for="lurl">Local signer</label><input id="lurl" value="http://127.0.0.1:8742"></div><div><label for="ltok">Token (from desk.mjs serve)</label><input id="ltok" placeholder="paste it, or open the printed link"></div></div>
 <div class="btns"><button class="main" id="lconnect">Connect to my desk</button></div>

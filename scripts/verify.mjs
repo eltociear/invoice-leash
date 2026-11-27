@@ -403,7 +403,7 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
     const out4 = JSON.parse(solc.compile(JSON.stringify({ language: "Solidity", sources: { "InvoiceDeskV4.sol": { content: readFileSync(new URL("contracts/InvoiceDeskV4.sol", root), "utf8") } },
       settings: { optimizer: { enabled: true, runs: 200 }, evmVersion: "paris", outputSelection: { "*": { InvoiceDeskV4: ["abi", "evm.deployedBytecode.object"] } } } })));
     const c4 = out4.contracts["InvoiceDeskV4.sol"].InvoiceDeskV4, desk4 = new Interface(c4.abi), DL4 = getAddress(liveRec.invoiceDesk);
-    ok(liveRec.version === 4 && (await provider.getCode(DL4)).slice(2) === c4.evm.deployedBytecode.object, `InvoiceDeskV4, the live agent's desk: bytecode at ${DL4} == contracts/InvoiceDeskV4.sol`);
+    ok(liveRec.version === 4 && (await provider.getCode(DL4)).slice(2) === c4.evm.deployedBytecode.object, `InvoiceDeskV4, the live agent's desk until 2026-11-26: bytecode at ${DL4} == contracts/InvoiceDeskV4.sol`);
     const pr4 = json("runs/probes/v4-agent-sig.json"), [noSig, withSig] = pr4.steps;
     const [t1, t2] = await Promise.all([rest(`/cosmos/tx/v1beta1/txs/${noSig.link.slice(-64)}`), rest(`/cosmos/tx/v1beta1/txs/${withSig.link.slice(-64)}`)]);
     const failedEv = t1?.tx_response?.events?.some((e) => e.type === "abstractaccount_execution_failed");
@@ -539,7 +539,7 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
       for (const x of s4.sample) { const now = await ask4(x.from, x.data, x.value); if (now === x.outcome) same++; else if (rotated && now === "BadAgentSignature") voided++; }
       const ctl = await ask4(s4.control.from, s4.control.data);
       ok(s4.desk === liveRec.invoiceDesk && c4.paid === 0 && c4.network === 0 && c4.control === "PAID" && c4.agentsig.badAgentSignature === c4.agentsig.count && same + voided === s4.sample.length && (rotated ? ctl === "BadAgentSignature" : ["PAID", "OverDailyLimit", "AlreadyPaid"].includes(ctl)),
-        `${c4.count.toLocaleString()} dry-run attacks on the live InvoiceDeskV4: 0 would pay. A compromised agent with its signer (invoice tamperings): refused by the vendor's signature and the desk's rules. The agent's key without its signer: ${c4.agentsig.badAgentSignature} of ${c4.agentsig.count} BadAgentSignature. ${s4.sample.length} sampled attacks asked again now: ${same} answer as recorded${voided ? `, ${voided} are BadAgentSignature since the signer that signed them was rotated away` : ""}`,
+        `${c4.count.toLocaleString()} dry-run attacks on InvoiceDeskV4 (the live desk until 2026-11-26): 0 would pay. A compromised agent with its signer (invoice tamperings): refused by the vendor's signature and the desk's rules. The agent's key without its signer: ${c4.agentsig.badAgentSignature} of ${c4.agentsig.count} BadAgentSignature. ${s4.sample.length} sampled attacks asked again now: ${same} answer as recorded${voided ? `, ${voided} are BadAgentSignature since the signer that signed them was rotated away` : ""}`,
         `(control now: ${ctl === "PAID" ? "would pay" : ctl === "BadAgentSignature" ? "its signer rotated away, so its public signature pays nothing" : ctl === "AlreadyPaid" ? "settled in person since" : "today's limit used"})`);
     }
     // every agent ML-DSA-87 signature ever made public on a V4 desk (relayed calldata, EVM-lane calldata, this
@@ -655,7 +655,7 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
     const orderOk = firstDays.every((dd) => { const r = rows.filter((x) => x.day === dd); return r[4].unpaidBefore === true && height[r[4].link] < height[r[0].link]; });
     const lateDays = days.filter((dd) => dd >= "2026-11-26" && rows.filter((x) => x.day === dd).length === 5);
     ok(orderOk && lateDays.every((dd) => firstDays.includes(dd)),
-      `live agent, V4 days: the classical-key-alone attempt is sent before the genuine invoice is paid (block heights), so only the missing ML-DSA-87 signature can refuse it: ${firstDays.length ? `${firstDays.length} day(s)` : "none yet, pending the first day in this order (2026-11-26)"}`,
+      `live agent, V4 and V5 days: the classical-key-alone attempt is sent before the genuine invoice is paid (block heights), so only the missing ML-DSA-87 signature can refuse it: ${firstDays.length ? `${firstDays.length} day(s)` : "none yet, pending the first day in this order (2026-11-26)"}`,
       firstDays.length ? `(${firstDays.join(", ")})` : "(from 2026-11-26; on 2026-11-25 it was sent after the payment)");
     const last = Date.parse(rows.at(-1).at);
     ok(withTx > 0 && txOk === withTx && Date.now() - last < 3 * 86400e3, `live agent: each of its ${withTx} logged transactions re-read from the chain agrees; it last ran ${((Date.now() - last) / 3600e3).toFixed(0)} h ago (must be < 72 h)`,
@@ -716,7 +716,7 @@ section("9. v2: fUSD invoices; the agent acts as its own account, which holds no
     }
     const g = cp.genuine, control = await ask({ from: live.agentAccountEvm, payer: live.payerEvm, token: g.token, vendor: g.vendor, amount: BigInt(g.amount), id: g.id, dueBy: g.dueBy, signature: g.signature, value: 0n }, live);
     ok(cp.paid === 0 && cp.network === 0 && cp.outcomes.length === cp.count && cp.signedOutcomes.every(([, o, e]) => o === e) && same === 40 && refused === 40 && control === "PAID",
-      `attack campaign: ${cp.count} random attacks + ${cp.signedOutcomes.length} signed ones against the live desk, none paid; 40 of them regenerated now and asked again: same answers; the genuine control still passes`,
+      `attack campaign: ${cp.count} random attacks + ${cp.signedOutcomes.length} signed ones against InvoiceDeskV3 (the live desk on 2026-11-24), none paid; 40 of them regenerated now and asked again: same answers; the genuine control still passes`,
       `(seed ${cp.seed}, ${Object.keys(cp.byKind).length} kinds)`);
   }
 

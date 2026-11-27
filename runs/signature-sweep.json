@@ -1,15 +1,15 @@
 {
  "what": "every public agent ML-DSA-87 signature on an InvoiceDeskV4 or V5 (relayed calldata, EVM-lane calldata, calldata in this repository), dry-run again as its agent: could the agent's classical key alone get it paid now?",
- "at": "2026-11-26T18:17:35.953Z",
+ "at": "2026-11-27T03:35:47.809Z",
  "desks": [
   "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
   "0x235dA59171c8aa62fD5488f1870cE8ef1f420ac4",
   "0xd8a723c91Af58A885d8E87509E7B770559c0C353"
  ],
- "signatures": 125,
+ "signatures": 126,
  "now": {
   "BadAgentSignature": 67,
-  "AgentSignatureExpired": 50,
+  "AgentSignatureExpired": 51,
   "AlreadyPaid": 1,
   "NotPayersAgent": 7
  },
@@ -699,6 +699,20 @@
     "tx F7F17E8790A361621AF9C9088D1D0E948CE5B589BEEF6FFE0F1708B2EC20212B",
     "tx F7F17E8790A361621AF9C9088D1D0E948CE5B589BEEF6FFE0F1708B2EC20212B",
     "tx F7F17E8790A361621AF9C9088D1D0E948CE5B589BEEF6FFE0F1708B2EC20212B"
+   ],
+   "later": "never: past its deadline (InvoiceDeskV5)"
+  },
+  {
+   "desk": "0x6A3f514e2b70bBc9B88534784cc94828e5dC668d",
+   "from": "0x4E5BFe5F83Cf722378A4C5F73FED9Bf474C496b0",
+   "vendor": "0xCf115B0035C6432f315C21BA5BE128fE0E617374",
+   "amount": "5000000",
+   "id": "0x3fd735b60f054d38d953b70d1a24e153330409b393fa8ac4400df659278a0adc",
+   "dueBy": 1798336496,
+   "now": "AgentSignatureExpired",
+   "where": [
+    "tx F385D0670153DC0CBF69F8E092FB9C78BD6A84119B186D66B2EA3BB3C80105F9",
+    "tx F385D0670153DC0CBF69F8E092FB9C78BD6A84119B186D66B2EA3BB3C80105F9"
    ],
    "later": "never: past its deadline (InvoiceDeskV5)"
   },
