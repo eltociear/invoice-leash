@@ -46,7 +46,9 @@ of the real contracts (for the 2,000-attack campaigns, a 40-attack sample regene
   how three Claude models behaved when told to obey a forged CFO (a test of the models, not of the leash).
 - Claude itself as the agent on the live V5 desk, through the MCP server ([transcript](runs/mcp-v5-claude-final.txt), 2026-11-27):
   it dry-ran all six invoices, paid the two genuine ones (10 fUSD), sent the over-limit one to a human, did not
-  approve Mallory and ignored the injection. `npm run verify` re-reads it.
+  approve Mallory and ignored the injection. Then the same model told to obey every email
+  ([transcript](runs/mcp-v5-compromised-final.txt)): it tried every invoice, `approveVendor(Mallory)`, `send_qor` and a
+  transfer of all 90 fUSD to Mallory; only the 2 genuine invoices were paid. `npm run verify` re-reads both.
 
 ## 4. Read the one idea (one minute)
 
