@@ -26,7 +26,7 @@ Environment) and signs only what the desk would pay right then.
 >
 > 122 checks against the live testnet: the deployed contracts are byte-for-byte this source, every
 > recorded transaction is re-read, every recorded attack is asked again (each 2,000-attack campaign: a sample). Last run: [`runs/verify-latest.txt`](runs/verify-latest.txt)
-> ([JSON](runs/verify-latest.json)). CI runs it daily, with 213 Foundry tests and 25 invariants.
+> ([JSON](runs/verify-latest.json)). CI runs it daily, with 215 Foundry tests and 25 invariants.
 
 ## In one minute
 
@@ -140,7 +140,7 @@ account holds no fUSD and its key may move nothing; the company's money moves on
 
 | What | Result | Record |
 |---|---|---|
-| InvoiceDeskV5, live: the classical key alone; a signer's signature past its deadline; the signature for a forged copy; the signature for an invoice presented with its reissue (later due date) | all refused (`BadAgentSignature`, `AgentSignatureExpired`); on V4 the last two would have paid. The signed payment paid once | [`runs/probes/v5-bindings.json`](runs/probes/v5-bindings.json) |
+| InvoiceDeskV5, live: the classical key alone; a signer's signature past its deadline; the signature for a forged copy; the signature for an invoice presented with its reissue (later due date) | all refused (`BadAgentSignature`, `AgentSignatureExpired`); on V4 the last two would have paid ([V4 tests: `test_v4_limit_*`](test/InvoiceDeskV4.t.sol)). The signed payment paid once | [`runs/probes/v5-bindings.json`](runs/probes/v5-bindings.json) |
 | A decider that obeys every email, on the live InvoiceDeskV5 (forgeries, edits, Mallory's own valid key, injections, the agent's classical key alone first, a replay, both limits) | 3 genuine invoices paid (17 fUSD), 13 refused, 0 to the attacker | [`runs/v5-compromised.json`](runs/v5-compromised.json) |
 | The same, on InvoiceDeskV4 (forgeries, edits, Mallory's own valid key, injections, the agent's classical key alone, a replay, both limits) | 3 genuine invoices paid (17 fUSD), 13 refused, 0 to the attacker | [`runs/v4-compromised.json`](runs/v4-compromised.json), [site](https://eltociear.github.io/invoice-leash/#v4run) |
 | The same, recorded earlier on InvoiceDeskV2 | 3 paid, 13 refused, 0 to the attacker | [EVIDENCE.md](EVIDENCE.md#the-demo-inbox-v2-fusd) |
@@ -184,7 +184,7 @@ For your own company: `node desk.mjs mcp`. The recorded sessions: [EVIDENCE.md](
 |---|---|
 | Symbolic proofs | 27 properties proved for every input with Halmos (8 for InvoiceDeskV3, 9 for V4, 10 for V5, including "an agent with no named ML-DSA-87 signer pays nothing" and "an agent payment after its signature's deadline never succeeds"), with the signature check stubbed to accept anything, so they hold even against a valid ML-DSA-87 signature ([`runs/halmos.txt`](runs/halmos.txt)) |
 | Coverage | 100% of lines, statements, branches and functions, all five contracts ([`runs/coverage.txt`](runs/coverage.txt)) |
-| Foundry | 213 Foundry tests with real ML-DSA-87 fixtures, and 25 invariants |
+| Foundry | 215 Foundry tests with real ML-DSA-87 fixtures, and 25 invariants |
 | Mutation | every injected bug caught: V2 14 of 14 mutants, V3: 18 of 18, V4: 25 of 25, V5: 34 of 34, including the agent signature left unchecked or the amount, invoice id, token or agent left out of what it signs ([`runs/mutation.txt`](runs/mutation.txt), [`runs/mutation-v3.txt`](runs/mutation-v3.txt), [`runs/mutation-v5.txt`](runs/mutation-v5.txt), [`runs/mutation-v4.txt`](runs/mutation-v4.txt)) |
 | Off chain | `npm test`: invoices, what the agent is shown, page scripts, and every count the documents state |
 | Analysis | Slither: informational only ([`runs/slither.txt`](runs/slither.txt)); QoreScan CBOM ([`cbom/`](cbom/)) |

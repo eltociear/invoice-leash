@@ -357,6 +357,30 @@ contract InvoiceDeskV4Test is Test {
         desk.pay(c.payer, c.token, payable(c.vendor), c.amount, c.id, c.dueBy, c.signature, _asig(c));
     }
 
+    /// V4's limit, kept as a test so the claim is checked: the agent's message names vendor, token, amount and
+    /// invoice id, not the vendor's signature or the due date. So an agent signature made for a FORGED copy
+    /// (a signer that signs what it is asked) pays the genuine invoice with the same fields, and one made for
+    /// an invoice pays its reissue at any later due date. InvoiceDeskV5 binds both (its tests: BadAgentSignature).
+    function test_v4_limit_a_forged_copys_agent_signature_pays_the_genuine_invoice() public {
+        _asAgent();
+        Case memory forged = _named("forged_by_mallory_as_hostline");
+        Case memory g = _named("genuine_fusd");
+        assertEq(keccak256(forged.message), keccak256(g.message), "same fields");
+        bytes memory forForged = _asig(forged); // what a signer asked to sign the forged copy produces
+        vm.prank(agent);
+        vm.expectRevert(InvoiceDeskV4.BadSignature.selector); // the forged copy itself: refused
+        desk.pay(forged.payer, forged.token, payable(forged.vendor), forged.amount, forged.id, forged.dueBy, forged.signature, forForged);
+        vm.prank(agent); // the genuine invoice, with the forged copy's agent signature: paid on V4
+        desk.pay(g.payer, g.token, payable(g.vendor), g.amount, g.id, g.dueBy, g.signature, forForged);
+        assertEq(fusd.balanceOf(hostline), g.amount);
+    }
+    function test_v4_limit_the_agent_message_does_not_name_the_due_date() public view {
+        Case memory g = _named("genuine_fusd");
+        bytes memory m = desk.agentMessage(g.payer, agent, g.token, g.vendor, g.amount, g.id);
+        assertEq(keccak256(m), keccak256(abi.encode(keccak256("LEASH-AGENT-PAY-v1"), block.chainid, address(desk), g.payer, agent, g.vendor, g.token, g.amount, g.id)),
+            "every field it binds; no due date, no vendor signature: one signature serves every reissue of this id");
+    }
+
     function test_agent_pays_from_the_payers_balance_and_holds_nothing() public {
         _asAgent();
         Case memory c = _named("genuine_fusd");
