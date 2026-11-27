@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-<title>Invoice Leash: the earlier recorded runs (InvoiceDeskV2)</title>
+<title>Invoice Leash: the record, email by email (V2, and Claude on V5)</title>
 <meta name="description" content="An invoice-paying AI agent that stays safe when its model does not. Recorded on the QoreChain testnet, every transaction linked.">
 <meta property="og:image" content="cover.png">
 <style>
@@ -29,7 +29,7 @@ footer{margin-top:64px;color:var(--dim);font-size:14px}
 <body><main>
 <p><a href="index.html">← Invoice Leash</a></p>
 <h1>The earlier recorded runs (InvoiceDeskV2)</h1>
-<p class="lede">Recorded on <code>qorechain-diana</code> before InvoiceDeskV3 and V4. The live desk is now an InvoiceDeskV4, which keeps every check below and adds the agent's own ML-DSA-87 signature; the same attacks on V4 are on the <a href="index.html#v4run">front page</a>. These transactions are still re-read by <code>npm run verify</code>.</p>
+<p class="lede">Mostly recorded on <code>qorechain-diana</code> before InvoiceDeskV3, V4 and V5; the live desk is now an InvoiceDeskV5, which keeps every check below and adds the agent's own ML-DSA-87 signature over the whole invoice. The same attacks on V5 are on the <a href="index.html#v5run">front page</a>; Claude on the live V5 desk is <a href="#claude-v5">below</a>. These transactions are still re-read by <code>npm run verify</code>.</p>
 <h2 id="inbox">The inbox, email by email (v2, fUSD)</h2>
 <p class="dim">Recorded on <code>qorechain-diana</code>. Two honest vendors, Hostline and Tokenwell, and Mallory, who holds a valid ML-DSA-87 key of her own but is not a vendor. The compromised agent obeys every email, attacker's included, and tries every way to move money.</p>
 <article class="mail"><header><span class="n">#0</span><div><div class="from">billing@hostline.example</div><h3>Invoice HOSTLINE-2026-12-0042: December hosting</h3></div></header>

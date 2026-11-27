@@ -29,7 +29,8 @@ of the real contracts (for the 2,000-attack campaigns, a 40-attack sample regene
   a forged copy's signature, the signature presented with a reissue at a later due date: all refused; the
   signed payment paid once ([`runs/probes/v5-bindings.json`](runs/probes/v5-bindings.json), re-read by `npm run verify`).
 - [Attack lab §1–4](https://eltociear.github.io/invoice-leash/lab.html): change any field of a real
-  invoice, or sign one with an ML-DSA-87 key your browser makes, and ask the real desk.
+  invoice, or sign one with an ML-DSA-87 key your browser makes, and ask the demo's InvoiceDeskV2 on chain
+  (V3 to V5 keep all its checks). Every button in the lab is an `eth_call` dry run: the chain's answer, nothing sent.
 
 ## 3. Watch it run (one minute)
 
@@ -61,9 +62,9 @@ signature with QoreChain's precompile.
 
 | Criterion | Evidence |
 |---|---|
-| Works (25) | `npm run verify`; 100% coverage of the contracts, 27 properties proved with Halmos ([`runs/halmos.txt`](runs/halmos.txt)); the live agent; a fourth company set up from nothing with `desk.mjs` on InvoiceDeskV5 ([`runs/own-company-v5/`](runs/own-company-v5/)); a third on InvoiceDeskV4, and the Desk Console driven in a browser on it ([`runs/own-company-v4/`](runs/own-company-v4/), [`runs/console-e2e-v4.json`](runs/console-e2e-v4.json)); a second, upgraded to V3 ([`runs/own-company-v3/`](runs/own-company-v3/)); the V4 attack campaign ([`runs/campaign-v4.json`](runs/campaign-v4.json)) |
+| Works (25) | `npm run verify`; 100% coverage of the contracts, 27 properties proved with Halmos ([`runs/halmos.txt`](runs/halmos.txt)); the live agent; a fourth company set up from nothing with `desk.mjs` on InvoiceDeskV5 ([`runs/own-company-v5/`](runs/own-company-v5/)); a third on InvoiceDeskV4, and the Desk Console driven in a browser on it ([`runs/own-company-v4/`](runs/own-company-v4/), [`runs/console-e2e-v4.json`](runs/console-e2e-v4.json)); a second, upgraded to V3 ([`runs/own-company-v3/`](runs/own-company-v3/)); the V5 attack campaign ([`runs/campaign-v5.json`](runs/campaign-v5.json); on V4: [`runs/campaign-v4.json`](runs/campaign-v4.json)) |
 | QoreChain tech (25) | the PQC precompiles in the contract; hybrid accounts; an authenticator with a spending rule; EVM windows with `allowed_targets`; `MsgExecuteEVM`; QoreSign; QoreSeal and the KEM registry; `MsgConvertCoin` / `MsgConvertERC20`; the AMM; QoreScan; QoreChain's MCP server; eleven measured notes for builders, each with its transaction ([CHAIN_NOTES.md](CHAIN_NOTES.md)) |
-| Post-quantum (20) | [QUANTUM_READINESS.md](QUANTUM_READINESS.md): every algorithm in the system and what a quantum computer does to it; the Q-Day drill; Shor's gift; on InvoiceDeskV4 and V5 the agent's own classical key pays nothing its ML-DSA-87 signer did not sign, and on V5 a signature binds the whole invoice and expires in minutes ([live](runs/probes/v5-bindings.json)) ([live](runs/probes/v4-agent-sig.json)), the signer signs nothing the desk would refuse, and none of the 132 public agent signatures would pay again ([sweep](runs/signature-sweep.json)); no classical-only lane on the chain at all ([record](runs/probes/no-pq-evm.json)) |
+| Post-quantum (20) | [QUANTUM_READINESS.md](QUANTUM_READINESS.md): every algorithm in the system and what a quantum computer does to it; the Q-Day drill; Shor's gift; on InvoiceDeskV4 and V5 the agent's own classical key pays nothing its ML-DSA-87 signer did not sign, and on V5 a signature binds the whole invoice and expires in minutes ([V5, live](runs/probes/v5-bindings.json); [V4, live](runs/probes/v4-agent-sig.json)), the signer signs nothing the desk would refuse, and none of the 132 public agent signatures would pay again ([sweep](runs/signature-sweep.json)); no classical-only lane on the chain at all ([record](runs/probes/no-pq-evm.json)) |
 | Originality (15) | the finding above; an agent whose key is kept where it can leak, on purpose |
 | Clarity (15) | the [site](https://eltociear.github.io/invoice-leash/), the [video](https://youtu.be/evNAZJs4cFg), [GETTING_STARTED.md](GETTING_STARTED.md), [THREAT_MODEL.md](THREAT_MODEL.md) |
 

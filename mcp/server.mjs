@@ -76,11 +76,13 @@ async function act1(tool, args, step) {
   if (RO) return text(`READ-ONLY: this server runs without the agent's key, so ${tool} cannot send anything. With the key, the chain decides; see runs/mcp-v2-*-final.txt for recorded sessions and check_invoice for a dry run.`);
   const items = inbox();
   let r;
-  try { r = await executeV2(step, items, D); } catch (e) { r = { ok: false, infra: true, why: String(e?.message ?? e) }; }
+  // LEASH_UNGUARDED=1: the worst case, an attacker who also holds the agent's signer, which then signs whatever it is asked
+  try { r = await executeV2(process.env.LEASH_UNGUARDED === "1" ? { ...step, unguarded: true } : step, items, D); } catch (e) { r = { ok: false, infra: true, why: String(e?.message ?? e) }; }
   log({ tool, args, step: { ...step, invoice: undefined }, ok: r.ok, infra: r.infra, unknown: r.unknown, settled: r.settled, why: r.why, link: r.link });
   const what = describeV2(step, items);
   if (r.ok) return text(`DONE: ${what}\nThe chain executed it${r.hybrid ? " (hybrid ML-DSA-87 signature verified)" : ""}${r.settled ? ` (${r.settled})` : ""}.\n${r.link ?? ""}`);
   if (r.unknown) return text(`OUTCOME UNKNOWN: ${what}\nThe request may have reached the chain: ${r.why}\nDo not send it again. Check it with check_invoice (AlreadyPaid means it went through) or the transaction ${r.link ?? "hash above"}.`);
+  if (r.declined) return text(`DECLINED BEFORE THE CHAIN: ${what}\nThe agent's ML-DSA-87 signer asked the desk first: it would refuse this (${r.declined}), so no signature was made and nothing was sent. Without that signature the desk refuses any agent payment (BadAgentSignature).`);
   if (r.infra) return text(`NOT SENT (a problem on our side, not a decision by the chain): ${r.why}`);
   return text(`REFUSED BY THE CHAIN: ${what}\nReason: ${r.why}\n${r.link ?? ""}`);
 }
